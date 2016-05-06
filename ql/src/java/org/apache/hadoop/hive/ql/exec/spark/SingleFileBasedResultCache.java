@@ -185,6 +185,7 @@ public class SingleFileBasedResultCache {
         }
       }
       ObjectPair<HiveKey, BytesWritable> pair = buffer.remove();
+      lock.notifyAll();
       return new Tuple2<>(pair.getFirst(), pair.getSecond());
     }
   }
@@ -196,8 +197,8 @@ public class SingleFileBasedResultCache {
       }
       if (buffer.size() >= numRecordsInMem) {
         try {
-          spill();
-        } catch (IOException e) {
+          lock.wait();
+        } catch (InterruptedException e) {
           setDone(e);
           throw new RuntimeException("Failed to spill rows to disk.", e);
         }
