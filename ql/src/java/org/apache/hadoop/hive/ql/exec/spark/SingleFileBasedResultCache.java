@@ -53,7 +53,14 @@ public class SingleFileBasedResultCache {
 
   public SingleFileBasedResultCache() throws IOException {
     buffer = new ArrayDeque<>(numRecordsInMem);
-    File parentDir = File.createTempFile("hive-resultcache", "");
+    File parentDir;
+    while (true) {
+      parentDir = File.createTempFile("hive-resultcache", "");
+      if (parentDir.delete() && parentDir.mkdir()) {
+        parentDir.deleteOnExit();
+        break;
+      }
+    }
     file = File.createTempFile("ResultCache", ".tmp", parentDir);
     spillFile = new RandomAccessFile(file, "rws");
     readPosInFile = 0;
