@@ -195,7 +195,7 @@ public class SingleFileBasedResultCache {
       if (done) {
         throw new IllegalStateException("Already done and no more data can be written.");
       }
-      if (buffer.size() >= numRecordsInMem) {
+      while (buffer.size() >= numRecordsInMem) {
         try {
           lock.wait();
         } catch (InterruptedException e) {
