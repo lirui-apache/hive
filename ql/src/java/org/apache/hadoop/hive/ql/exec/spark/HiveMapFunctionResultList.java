@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.ql.exec.spark;
 import java.io.IOException;
 import java.util.Iterator;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.BytesWritable;
 
 import scala.Tuple2;
@@ -37,8 +38,8 @@ public class HiveMapFunctionResultList extends
    */
   public HiveMapFunctionResultList(
       Iterator<Tuple2<BytesWritable, BytesWritable>> inputIterator,
-      SparkRecordHandler handler) {
-    super(inputIterator, handler.jc);
+      SparkRecordHandler handler, Configuration conf) {
+    super(inputIterator, conf);
     recordHandler = handler;
   }
 

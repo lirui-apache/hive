@@ -51,7 +51,8 @@ public class HiveMapFunction extends HivePairFlatMapFunction<
       mapRecordHandler = new SparkMapRecordHandler();
     }
 
-    HiveMapFunctionResultList result = new HiveMapFunctionResultList(it, mapRecordHandler);
+    HiveMapFunctionResultList result = new HiveMapFunctionResultList(
+        it, mapRecordHandler, jobConf);
     mapRecordHandler.init(jobConf, result, sparkReporter);
 
     return result;

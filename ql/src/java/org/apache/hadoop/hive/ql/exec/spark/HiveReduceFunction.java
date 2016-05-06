@@ -42,7 +42,7 @@ public class HiveReduceFunction extends HivePairFlatMapFunction<
 
     SparkReduceRecordHandler reducerRecordhandler = new SparkReduceRecordHandler();
     HiveReduceFunctionResultList result =
-        new HiveReduceFunctionResultList(it, reducerRecordhandler);
+        new HiveReduceFunctionResultList(it, reducerRecordhandler, jobConf);
     reducerRecordhandler.init(jobConf, result, sparkReporter);
 
     return result;

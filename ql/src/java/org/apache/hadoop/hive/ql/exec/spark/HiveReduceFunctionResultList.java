@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.ql.exec.spark;
 import java.io.IOException;
 import java.util.Iterator;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.ql.io.HiveKey;
 import org.apache.hadoop.io.BytesWritable;
 
@@ -38,8 +39,8 @@ public class HiveReduceFunctionResultList extends
    */
   public HiveReduceFunctionResultList(
       Iterator<Tuple2<HiveKey, Iterable<BytesWritable>>> inputIterator,
-      SparkReduceRecordHandler reducer) {
-    super(inputIterator, reducer.jc);
+      SparkReduceRecordHandler reducer, Configuration conf) {
+    super(inputIterator, conf);
     this.reduceRecordHandler = reducer;
   }
 
