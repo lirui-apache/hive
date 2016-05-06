@@ -50,7 +50,7 @@ public abstract class HiveBaseFunctionResultList<T> implements
 
   // Contains results from last processed input record.
   private final HiveKVResultCache lastRecordOutput;
-  private SingleFileBasedResultCache resultCache;
+  private AggressiveResultCache resultCache;
   private boolean iteratorAlreadyCreated = false;
 
   public HiveBaseFunctionResultList(Iterator<T> inputIterator, Configuration conf) {
@@ -112,11 +112,7 @@ public abstract class HiveBaseFunctionResultList<T> implements
     }
 
     public NewResultIterator() {
-      try {
-        resultCache = new SingleFileBasedResultCache();
-      } catch (IOException e) {
-        throw new IllegalStateException("Failed to create result cache.", e);
-      }
+      resultCache = new AggressiveResultCache();
       Thread processor = new Thread(new ProcessorRunnable());
       processor.setDaemon(true);
       processor.setName("RecordProcessorThread");
@@ -129,6 +125,9 @@ public abstract class HiveBaseFunctionResultList<T> implements
         return true;
       }
       resultCache.clear();
+      if (resultCache.getError() != null) {
+        throw new RuntimeException("Error while processing input.", resultCache.getError());
+      }
       return false;
     }
 
