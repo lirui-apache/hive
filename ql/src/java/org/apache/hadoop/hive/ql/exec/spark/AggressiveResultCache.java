@@ -24,12 +24,13 @@ import scala.Tuple2;
 
 import java.util.NoSuchElementException;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class AggressiveResultCache {
   private static final int numRecordsInMem = 2048;
 
-  private final Queue<ObjectPair<HiveKey, BytesWritable>> buffer;
+  private final BlockingQueue<ObjectPair<HiveKey, BytesWritable>> buffer;
   private volatile boolean done;
   private final Object lock;
   private volatile Throwable error;
@@ -44,7 +45,12 @@ public class AggressiveResultCache {
     if (done) {
       throw new IllegalStateException("Already done and no more data can be written.");
     }
-    buffer.add(new ObjectPair<>(key, value));
+    try {
+      buffer.put(new ObjectPair<>(key, value));
+    } catch (InterruptedException e) {
+      setDone(e);
+      throw new RuntimeException("Interrupted whiling waiting to insert.", e);
+    }
     synchronized (lock) {
       lock.notifyAll();
     }
@@ -68,7 +74,7 @@ public class AggressiveResultCache {
           lock.wait(2000);
         } catch (InterruptedException e) {
           setDone(e);
-          throw new RuntimeException("Interrupted while waiting.", e);
+          throw new RuntimeException("Interrupted while waiting to read.", e);
         }
       }
     }
@@ -77,7 +83,13 @@ public class AggressiveResultCache {
 
   // Caller is responsible to check hasNext first.
   public Tuple2<HiveKey, BytesWritable> next() {
-    ObjectPair<HiveKey, BytesWritable> pair = buffer.remove();
+    ObjectPair<HiveKey, BytesWritable> pair;
+    try {
+      pair = buffer.take();
+    } catch (InterruptedException e) {
+      setDone(e);
+      throw new RuntimeException("Interrupted while waiting to read.", e);
+    }
     return new Tuple2<>(pair.getFirst(), pair.getSecond());
   }
 
