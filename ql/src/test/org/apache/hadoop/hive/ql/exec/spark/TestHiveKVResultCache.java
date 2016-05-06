@@ -27,6 +27,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.ql.io.HiveKey;
 import org.apache.hadoop.io.BytesWritable;
 import org.junit.Test;
@@ -181,7 +182,7 @@ public class TestHiveKVResultCache {
     private LinkedBlockingQueue<Boolean> queue;
 
     MyHiveFunctionResultList(Iterator inputIterator) {
-      super(inputIterator);
+      super(inputIterator, new Configuration());
     }
 
     void init(long rows, int threshold, int separate, String p1, String p2) {

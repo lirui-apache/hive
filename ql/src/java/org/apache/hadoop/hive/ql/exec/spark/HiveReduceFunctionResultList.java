@@ -39,7 +39,7 @@ public class HiveReduceFunctionResultList extends
   public HiveReduceFunctionResultList(
       Iterator<Tuple2<HiveKey, Iterable<BytesWritable>>> inputIterator,
       SparkReduceRecordHandler reducer) {
-    super(inputIterator);
+    super(inputIterator, reducer.jc);
     this.reduceRecordHandler = reducer;
   }
 

@@ -38,7 +38,7 @@ public class HiveMapFunctionResultList extends
   public HiveMapFunctionResultList(
       Iterator<Tuple2<BytesWritable, BytesWritable>> inputIterator,
       SparkRecordHandler handler) {
-    super(inputIterator);
+    super(inputIterator, handler.jc);
     recordHandler = handler;
   }
 

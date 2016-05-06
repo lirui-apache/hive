@@ -22,8 +22,11 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.io.HiveKey;
 import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 
 import scala.Tuple2;
@@ -43,27 +46,35 @@ public abstract class HiveBaseFunctionResultList<T> implements
   private static final long serialVersionUID = -1L;
   private final Iterator<T> inputIterator;
   private boolean isClosed = false;
+  private final boolean newResultCache;
 
   // Contains results from last processed input record.
   private final HiveKVResultCache lastRecordOutput;
+  private SingleFileBasedResultCache resultCache;
   private boolean iteratorAlreadyCreated = false;
 
-  public HiveBaseFunctionResultList(Iterator<T> inputIterator) {
+  public HiveBaseFunctionResultList(Iterator<T> inputIterator, Configuration conf) {
     this.inputIterator = inputIterator;
     this.lastRecordOutput = new HiveKVResultCache();
+    newResultCache = HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVE_SPARK_NEW_RESULTCACHE);
   }
 
   @Override
   public Iterator iterator() {
     Preconditions.checkState(!iteratorAlreadyCreated, "Iterator can only be created once.");
     iteratorAlreadyCreated = true;
-    return new ResultIterator();
+    return newResultCache ? new NewResultIterator() : new ResultIterator();
   }
 
   @Override
   public void collect(HiveKey key, BytesWritable value) throws IOException {
-    lastRecordOutput.add(SparkUtilities.copyHiveKey(key),
-        SparkUtilities.copyBytesWritable(value));
+    if (newResultCache) {
+      resultCache.add(SparkUtilities.copyHiveKey(key),
+          SparkUtilities.copyBytesWritable(value));
+    } else {
+      lastRecordOutput.add(SparkUtilities.copyHiveKey(key),
+          SparkUtilities.copyBytesWritable(value));
+    }
   }
 
   /** Process the given record. */
@@ -76,6 +87,64 @@ public abstract class HiveBaseFunctionResultList<T> implements
 
   /** Close the record processor. */
   protected abstract void closeRecordProcessor();
+
+  public class NewResultIterator implements Iterator {
+
+    private class ProcessorRunnable implements Runnable {
+
+      @Override
+      public void run() {
+        while (inputIterator.hasNext() && !processingDone()) {
+          try {
+            processNextRecord(inputIterator.next());
+          } catch (IOException e) {
+            resultCache.setDone(e);
+            throw new IllegalStateException("Error while processing input.", e);
+          }
+        }
+        if (!isClosed) {
+          closeRecordProcessor();
+          isClosed = true;
+        }
+        // make sure to mark the cache done after closing the record processor
+        resultCache.setDone(null);
+      }
+    }
+
+    public NewResultIterator() {
+      try {
+        resultCache = new SingleFileBasedResultCache();
+      } catch (IOException e) {
+        throw new IllegalStateException("Failed to create result cache.", e);
+      }
+      Thread processor = new Thread(new ProcessorRunnable());
+      processor.setDaemon(true);
+      processor.setName("RecordProcessorThread");
+      processor.start();
+    }
+
+    @Override
+    public boolean hasNext() {
+      if (resultCache.hasNext()) {
+        return true;
+      }
+      resultCache.clear();
+      return false;
+    }
+
+    @Override
+    public Tuple2<HiveKey, BytesWritable> next() {
+      if (hasNext()) {
+        return resultCache.next();
+      }
+      throw new NoSuchElementException("There are no more elements");
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException("Iterator.remove() is not supported");
+    }
+  }
 
   /** Implement Iterator interface. */
   public class ResultIterator implements Iterator {
