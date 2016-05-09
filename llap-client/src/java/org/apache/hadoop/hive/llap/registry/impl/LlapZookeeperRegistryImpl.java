@@ -89,6 +89,7 @@ public class LlapZookeeperRegistryImpl implements ServiceRegistry {
   private static final String IPC_MNG = "llapmng";
   private static final String IPC_SHUFFLE = "shuffle";
   private static final String IPC_LLAP = "llap";
+  private static final String IPC_OUTPUTFORMAT = "llapoutputformat";
   private final static String ROOT_NAMESPACE = "llap";
   private final static String USER_SCOPE_PATH_PREFIX = "user-";
 
@@ -177,7 +178,7 @@ public class LlapZookeeperRegistryImpl implements ServiceRegistry {
     // worker does not respond due to communication interruptions it will retain the same sequence
     // number when it returns back. If session timeout expires, the node will be deleted and new
     // addition of the same node (restart) will get next sequence number
-    this.userPathPrefix = USER_SCOPE_PATH_PREFIX + RegistryUtils.currentUser();
+    this.userPathPrefix = USER_SCOPE_PATH_PREFIX + getZkPathUser(this.conf);
     this.pathPrefix = "/" + userPathPrefix + "/" + instanceName + "/workers/worker-";
     this.instancesCache = null;
     this.instances = null;
@@ -212,6 +213,13 @@ public class LlapZookeeperRegistryImpl implements ServiceRegistry {
     return quorum.toString();
   }
 
+  private String getZkPathUser(Configuration conf) {
+    // External LLAP clients would need to set LLAP_ZK_REGISTRY_USER to the LLAP daemon user (hive),
+    // rather than relying on RegistryUtils.currentUser().
+    String user = HiveConf.getVar(conf, ConfVars.LLAP_ZK_REGISTRY_USER, RegistryUtils.currentUser());
+    return user;
+  }
+
   public Endpoint getRpcEndpoint() {
     final int rpcPort = HiveConf.getIntVar(conf, ConfVars.LLAP_DAEMON_RPC_PORT);
     return RegistryTypeUtils.ipcEndpoint(IPC_LLAP, new InetSocketAddress(hostname, rpcPort));
@@ -244,6 +252,11 @@ public class LlapZookeeperRegistryImpl implements ServiceRegistry {
         HiveConf.getIntVar(conf, ConfVars.LLAP_MANAGEMENT_RPC_PORT)));
   }
 
+  public Endpoint getOutputFormatEndpoint() {
+    return RegistryTypeUtils.ipcEndpoint(IPC_OUTPUTFORMAT, new InetSocketAddress(hostname,
+        HiveConf.getIntVar(conf, ConfVars.LLAP_DAEMON_OUTPUT_SERVICE_PORT)));
+  }
+
   @Override
   public String register() throws IOException {
     ServiceRecord srv = new ServiceRecord();
@@ -252,6 +265,7 @@ public class LlapZookeeperRegistryImpl implements ServiceRegistry {
     srv.addInternalEndpoint(getMngEndpoint());
     srv.addInternalEndpoint(getShuffleEndpoint());
     srv.addExternalEndpoint(getServicesEndpoint());
+    srv.addInternalEndpoint(getOutputFormatEndpoint());
 
     for (Map.Entry<String, String> kv : this.conf) {
       if (kv.getKey().startsWith(HiveConf.PREFIX_LLAP)
@@ -314,7 +328,7 @@ public class LlapZookeeperRegistryImpl implements ServiceRegistry {
     if (ix > 0) {
       pathToCheck = pathToCheck.substring(0, ix);
     }
-    List<ACL> acls = zooKeeperClient.usingNamespace(null).getACL().forPath(pathToCheck);
+    List<ACL> acls = zooKeeperClient.getACL().forPath(pathToCheck);
     if (acls == null || acls.isEmpty()) {
       // Can there be no ACLs? There's some access (to get ACLs), so assume it means free for all.
       throw new SecurityException("No ACLs on "  + pathToCheck);
@@ -343,6 +357,7 @@ public class LlapZookeeperRegistryImpl implements ServiceRegistry {
     private final int rpcPort;
     private final int mngPort;
     private final int shufflePort;
+    private final int outputFormatPort;
     private final String serviceAddress;
 
     public DynamicServiceInstance(ServiceRecord srv) throws IOException {
@@ -355,6 +370,7 @@ public class LlapZookeeperRegistryImpl implements ServiceRegistry {
       final Endpoint shuffle = srv.getInternalEndpoint(IPC_SHUFFLE);
       final Endpoint rpc = srv.getInternalEndpoint(IPC_LLAP);
       final Endpoint mng = srv.getInternalEndpoint(IPC_MNG);
+      final Endpoint outputFormat = srv.getInternalEndpoint(IPC_OUTPUTFORMAT);
       final Endpoint services = srv.getExternalEndpoint(IPC_SERVICES);
 
       this.host =
@@ -368,6 +384,9 @@ public class LlapZookeeperRegistryImpl implements ServiceRegistry {
               AddressTypes.ADDRESS_PORT_FIELD));
       this.shufflePort =
           Integer.parseInt(RegistryTypeUtils.getAddressField(shuffle.addresses.get(0),
+              AddressTypes.ADDRESS_PORT_FIELD));
+      this.outputFormatPort =
+          Integer.valueOf(RegistryTypeUtils.getAddressField(outputFormat.addresses.get(0),
               AddressTypes.ADDRESS_PORT_FIELD));
       this.serviceAddress =
           RegistryTypeUtils.getAddressField(services.addresses.get(0), AddressTypes.ADDRESS_URI);
@@ -431,6 +450,11 @@ public class LlapZookeeperRegistryImpl implements ServiceRegistry {
     @Override
     public int getManagementPort() {
       return mngPort;
+    }
+
+    @Override
+    public int getOutputFormatPort() {
+      return outputFormatPort;
     }
 
     // Relying on the identity hashCode and equality, since refreshing instances retains the old copy

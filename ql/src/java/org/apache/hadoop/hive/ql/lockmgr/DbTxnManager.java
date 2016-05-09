@@ -19,6 +19,7 @@ package org.apache.hadoop.hive.ql.lockmgr;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.ql.io.AcidUtils;
 import org.apache.hive.common.util.ShutdownHookManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,6 +107,8 @@ public class DbTxnManager extends HiveTxnManagerImpl {
 
   @Override
   public long openTxn(String user) throws LockException {
+    //todo: why don't we lock the snapshot here???  Instead of having client make an explicit call
+    //whenever it chooses
     init();
     if(isTxnOpen()) {
       throw new LockException("Transaction already opened. " + JavaUtils.txnIdToString(txnId));
@@ -131,8 +134,17 @@ public class DbTxnManager extends HiveTxnManagerImpl {
 
   @Override
   public void acquireLocks(QueryPlan plan, Context ctx, String username) throws LockException {
-    acquireLocks(plan, ctx, username, true);
-    startHeartbeat();
+    try {
+      acquireLocks(plan, ctx, username, true);
+      startHeartbeat();
+    }
+    catch(LockException e) {
+      if(e.getCause() instanceof TxnAbortedException) {
+        txnId = 0;
+        statementId = -1;
+      }
+      throw e;
+    }
   }
 
   /**
@@ -156,7 +168,7 @@ public class DbTxnManager extends HiveTxnManagerImpl {
     // For each source to read, get a shared lock
     for (ReadEntity input : plan.getInputs()) {
       if (!input.needsLock() || input.isUpdateOrDelete()) {
-        // We don't want to acquire readlocks during update or delete as we'll be acquiring write
+        // We don't want to acquire read locks during update or delete as we'll be acquiring write
         // locks instead.
         continue;
       }
@@ -213,6 +225,17 @@ public class DbTxnManager extends HiveTxnManagerImpl {
           break;
 
         case INSERT:
+          t = output.getTable();
+          if(t == null) {
+            throw new IllegalStateException("No table info for " + output);
+          }
+          if(AcidUtils.isAcidTable(t)) {
+            compBuilder.setShared();
+          }
+          else {
+            compBuilder.setExclusive();
+          }
+          break;
         case DDL_SHARED:
           compBuilder.setShared();
           break;
@@ -308,8 +331,9 @@ public class DbTxnManager extends HiveTxnManagerImpl {
       LOG.error("Metastore could not find " + JavaUtils.txnIdToString(txnId));
       throw new LockException(e, ErrorMsg.TXN_NO_SUCH_TRANSACTION, JavaUtils.txnIdToString(txnId));
     } catch (TxnAbortedException e) {
-      LOG.error("Transaction " + JavaUtils.txnIdToString(txnId) + " aborted");
-      throw new LockException(e, ErrorMsg.TXN_ABORTED, JavaUtils.txnIdToString(txnId));
+      LockException le = new LockException(e, ErrorMsg.TXN_ABORTED, JavaUtils.txnIdToString(txnId), e.getMessage());
+      LOG.error(le.getMessage());
+      throw le;
     } catch (TException e) {
       throw new LockException(ErrorMsg.METASTORE_COMMUNICATION_FAILED.getMsg(),
           e);
@@ -377,8 +401,9 @@ public class DbTxnManager extends HiveTxnManagerImpl {
         LOG.error("Unable to find transaction " + JavaUtils.txnIdToString(txnId));
         throw new LockException(e, ErrorMsg.TXN_NO_SUCH_TRANSACTION, JavaUtils.txnIdToString(txnId));
       } catch (TxnAbortedException e) {
-        LOG.error("Transaction aborted " + JavaUtils.txnIdToString(txnId));
-        throw new LockException(e, ErrorMsg.TXN_ABORTED, JavaUtils.txnIdToString(txnId));
+        LockException le = new LockException(e, ErrorMsg.TXN_ABORTED, JavaUtils.txnIdToString(txnId), e.getMessage());
+        LOG.error(le.getMessage());
+        throw le;
       } catch (TException e) {
         throw new LockException(
             ErrorMsg.METASTORE_COMMUNICATION_FAILED.getMsg() + "(" + JavaUtils.txnIdToString(txnId)

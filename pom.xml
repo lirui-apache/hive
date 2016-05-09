@@ -50,6 +50,7 @@
     <module>service</module>
     <module>llap-common</module>
     <module>llap-client</module>
+    <module>llap-ext-client</module>
     <module>llap-tez</module>
     <module>llap-server</module>
     <module>shims</module>
@@ -134,6 +135,8 @@
     <hadoop.version>2.6.0</hadoop.version>
     <hadoop.bin.path>${basedir}/${hive.path.to.root}/testutils/hadoop</hadoop.bin.path>
     <hbase.version>1.1.1</hbase.version>
+    <!-- required for logging test to avoid including hbase which pulls disruptor transitively -->
+    <disruptor.version>3.3.0</disruptor.version>
     <!-- httpcomponents are not always in version sync -->
     <httpcomponents.client.version>4.4</httpcomponents.client.version>
     <httpcomponents.core.version>4.4</httpcomponents.core.version>
@@ -1034,6 +1037,8 @@
             <!-- EnforceReadOnlyTables hook and QTestUtil -->
             <test.src.tables>src,src1,srcbucket,srcbucket2,src_json,src_thrift,src_sequencefile,srcpart,alltypesorc,src_hbase,cbo_t1,cbo_t2,cbo_t3,src_cbo,part,lineitem</test.src.tables>
             <java.security.krb5.conf>${test.tmp.dir}/conf/krb5.conf</java.security.krb5.conf>
+            <!-- Required by spark to work around SPARK-14958 -->
+            <antlr.version>${antlr.version}</antlr.version>
           </systemPropertyVariables>
         </configuration>
       </plugin>

@@ -408,8 +408,31 @@ public class VectorizationContext {
     VectorExpression expr = null;
     switch (mode) {
       case FILTER:
-        //Important: It will come here only if the column is being used as a boolean
-        expr = new SelectColumnIsTrue(columnNum);
+        // Evaluate the column as a boolean, converting if necessary.
+        TypeInfo typeInfo = exprDesc.getTypeInfo();
+        if (typeInfo.getCategory() == Category.PRIMITIVE &&
+            ((PrimitiveTypeInfo) typeInfo).getPrimitiveCategory() == PrimitiveCategory.BOOLEAN) {
+          expr = new SelectColumnIsTrue(columnNum);
+        } else {
+          // Ok, we need to convert.
+          ArrayList<ExprNodeDesc> exprAsList = new ArrayList<ExprNodeDesc>(1);
+          exprAsList.add(exprDesc);
+
+          // First try our cast method that will handle a few special cases.
+          VectorExpression castToBooleanExpr = getCastToBoolean(exprAsList);
+          if (castToBooleanExpr == null) {
+
+            // Ok, try the UDF.
+            castToBooleanExpr = getVectorExpressionForUdf(null, UDFToBoolean.class, exprAsList,
+                Mode.PROJECTION, null);
+            if (castToBooleanExpr == null) {
+              throw new HiveException("Cannot vectorize converting expression " +
+                  exprDesc.getExprString() + " to boolean");
+            }
+          }
+          expr = new SelectColumnIsTrue(castToBooleanExpr.getOutputColumn());
+          expr.setChildExpressions(new VectorExpression[] {castToBooleanExpr});
+        }
         break;
       case PROJECTION:
         expr = new IdentityExpression(columnNum, exprDesc.getTypeString());
@@ -787,7 +810,7 @@ public class VectorizationContext {
                 || arg0Type(expr).equals("float"))) {
       return true;
     } else if (gudf instanceof GenericUDFBetween && (mode == Mode.PROJECTION)) {
-      // between has 4 args here, but can be vectorized like this 
+      // between has 4 args here, but can be vectorized like this
       return true;
     }
     return false;
@@ -1518,6 +1541,13 @@ public class VectorizationContext {
      */
 
     VectorExpression expr = null;
+
+    // Validate the IN items are only constants.
+    for (ExprNodeDesc inListChild : childrenForInList) {
+      if (!(inListChild instanceof ExprNodeConstantDesc)) {
+        throw new HiveException("Vectorizing IN expression only supported for constant values");
+      }
+    }
 
     // determine class
     Class<?> cl = null;
