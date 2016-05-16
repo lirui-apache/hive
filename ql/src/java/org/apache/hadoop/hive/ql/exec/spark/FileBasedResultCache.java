@@ -156,30 +156,41 @@ class FileBasedResultCache {
     if (done) {
       throw new IllegalStateException("Already done and no more data can be written.");
     }
-    if (writeCursor >= IN_MEMORY_NUM_ROWS) { // Write buffer is full
-      if (!readBufferUsed) { // Read buffer isn't used, switch buffer
+    while (writeCursor >= IN_MEMORY_NUM_ROWS) {
+      if (!readBufferUsed) {
         switchBufferAndResetCursor();
-      } else {
-        // Need to spill from write buffer to disk
-        try {
-          if (output == null) {
-            setupOutput();
-          }
-          for (int i = 0; i < IN_MEMORY_NUM_ROWS; i++) {
-            ObjectPair<HiveKey, BytesWritable> pair = writeBuffer[i];
-            writeHiveKey(output, pair.getFirst());
-            writeValue(output, pair.getSecond());
-            pair.setFirst(null);
-            pair.setSecond(null);
-          }
-          writeCursor = 0;
-        } catch (Exception e) {
-          clear(); // Clean up the cache
-          setDone(e);
-          throw new RuntimeException("Failed to spill rows to disk", e);
-        }
+        break;
+      }
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        throw new RuntimeException("Interrupted waiting to write data.", e);
       }
     }
+//    if (writeCursor >= IN_MEMORY_NUM_ROWS) { // Write buffer is full
+//      if (!readBufferUsed) { // Read buffer isn't used, switch buffer
+//        switchBufferAndResetCursor();
+//      } else {
+//        // Need to spill from write buffer to disk
+//        try {
+//          if (output == null) {
+//            setupOutput();
+//          }
+//          for (int i = 0; i < IN_MEMORY_NUM_ROWS; i++) {
+//            ObjectPair<HiveKey, BytesWritable> pair = writeBuffer[i];
+//            writeHiveKey(output, pair.getFirst());
+//            writeValue(output, pair.getSecond());
+//            pair.setFirst(null);
+//            pair.setSecond(null);
+//          }
+//          writeCursor = 0;
+//        } catch (Exception e) {
+//          clear(); // Clean up the cache
+//          setDone(e);
+//          throw new RuntimeException("Failed to spill rows to disk", e);
+//        }
+//      }
+//    }
     ObjectPair<HiveKey, BytesWritable> pair = writeBuffer[writeCursor++];
     pair.setFirst(key);
     pair.setSecond(value);
@@ -232,54 +243,68 @@ class FileBasedResultCache {
   public synchronized Tuple2<HiveKey, BytesWritable> next() {
     Preconditions.checkState(hasNext());
     if (!readBufferUsed) {
-      try {
-        if (input == null && output != null) {
-          // Close output stream if open
-          output.close();
-          output = null;
-
-          FileInputStream fis = null;
-          try {
-            fis = new FileInputStream(tmpFile);
-            input = new Input(fis);
-          } finally {
-            if (input == null && fis != null) {
-              fis.close();
-            }
-          }
-        }
-        if (input != null) {
-          // Load next batch from disk
-          for (int i = 0; i < IN_MEMORY_NUM_ROWS; i++) {
-            ObjectPair<HiveKey, BytesWritable> pair = readBuffer[i];
-            pair.setFirst(readHiveKey(input));
-            pair.setSecond(readValue(input));
-          }
-          if (input.eof()) {
-            input.close();
-            input = null;
-          }
-          rowsInReadBuffer = IN_MEMORY_NUM_ROWS;
-          readBufferUsed = true;
-          readCursor = 0;
-        } else if (writeCursor == 1) {
-          ObjectPair<HiveKey, BytesWritable> pair = writeBuffer[0];
-          Tuple2<HiveKey, BytesWritable> row = new Tuple2<HiveKey, BytesWritable>(
-              pair.getFirst(), pair.getSecond());
-          pair.setFirst(null);
-          pair.setSecond(null);
-          writeCursor = 0;
-          return row;
-        } else {
-          // No record on disk, more data in write buffer
-          switchBufferAndResetCursor();
-        }
-      } catch (Exception e) {
-        clear(); // Clean up the cache
-        setDone(e);
-        throw new RuntimeException("Failed to load rows from disk", e);
+      if (writeCursor == 1) {
+        ObjectPair<HiveKey, BytesWritable> pair = writeBuffer[0];
+        Tuple2<HiveKey, BytesWritable> row = new Tuple2<HiveKey, BytesWritable>(
+            pair.getFirst(), pair.getSecond());
+        pair.setFirst(null);
+        pair.setSecond(null);
+        writeCursor = 0;
+        notifyAll();
+        return row;
+      } else {
+        switchBufferAndResetCursor();
       }
     }
+//    if (!readBufferUsed) {
+//      try {
+//        if (input == null && output != null) {
+//          // Close output stream if open
+//          output.close();
+//          output = null;
+//
+//          FileInputStream fis = null;
+//          try {
+//            fis = new FileInputStream(tmpFile);
+//            input = new Input(fis);
+//          } finally {
+//            if (input == null && fis != null) {
+//              fis.close();
+//            }
+//          }
+//        }
+//        if (input != null) {
+//          // Load next batch from disk
+//          for (int i = 0; i < IN_MEMORY_NUM_ROWS; i++) {
+//            ObjectPair<HiveKey, BytesWritable> pair = readBuffer[i];
+//            pair.setFirst(readHiveKey(input));
+//            pair.setSecond(readValue(input));
+//          }
+//          if (input.eof()) {
+//            input.close();
+//            input = null;
+//          }
+//          rowsInReadBuffer = IN_MEMORY_NUM_ROWS;
+//          readBufferUsed = true;
+//          readCursor = 0;
+//        } else if (writeCursor == 1) {
+//          ObjectPair<HiveKey, BytesWritable> pair = writeBuffer[0];
+//          Tuple2<HiveKey, BytesWritable> row = new Tuple2<HiveKey, BytesWritable>(
+//              pair.getFirst(), pair.getSecond());
+//          pair.setFirst(null);
+//          pair.setSecond(null);
+//          writeCursor = 0;
+//          return row;
+//        } else {
+//          // No record on disk, more data in write buffer
+//          switchBufferAndResetCursor();
+//        }
+//      } catch (Exception e) {
+//        clear(); // Clean up the cache
+//        setDone(e);
+//        throw new RuntimeException("Failed to load rows from disk", e);
+//      }
+//    }
     ObjectPair<HiveKey, BytesWritable> pair = readBuffer[readCursor];
     Tuple2<HiveKey, BytesWritable> row = new Tuple2<HiveKey, BytesWritable>(
         pair.getFirst(), pair.getSecond());
@@ -290,6 +315,7 @@ class FileBasedResultCache {
       rowsInReadBuffer = 0;
       readCursor = 0;
     }
+    notifyAll();
     return row;
   }
 

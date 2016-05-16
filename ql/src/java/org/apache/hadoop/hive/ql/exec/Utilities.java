@@ -438,7 +438,7 @@ public final class Utilities {
         }
         gWorkMap.get(conf).put(path, gWork);
       } else if (LOG.isDebugEnabled()) {
-        LOG.info("Found plan in cache for name: " + name);
+        LOG.debug("Found plan in cache for name: " + name);
       }
       return gWork;
     } catch (FileNotFoundException fnf) {
