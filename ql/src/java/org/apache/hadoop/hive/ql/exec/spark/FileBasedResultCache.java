@@ -45,7 +45,6 @@ import com.google.common.base.Preconditions;
  */
 @SuppressWarnings("unchecked")
 class FileBasedResultCache {
-  private static final Logger LOG = LoggerFactory.getLogger(FileBasedResultCache.class);
 
   @VisibleForTesting
   static final int IN_MEMORY_NUM_ROWS = 2048;
@@ -87,9 +86,9 @@ class FileBasedResultCache {
     if (done) {
       throw new IllegalStateException("Already done and no more data can be written.");
     }
-    if (size.get() == buffer.length) {
+    if (size.get() >= buffer.length) {
       synchronized (size) {
-        while (size.get() == buffer.length) {
+        while (size.get() >= buffer.length) {
           if (done) {
             throw new IllegalStateException("Already done and no more data can be written.");
           }
@@ -113,17 +112,15 @@ class FileBasedResultCache {
     }
     if (size.getAndIncrement() == 0) {
       synchronized (size) {
-        if (size.get() > 0) {
-          size.notifyAll();
-        }
+        size.notifyAll();
       }
     }
   }
 
   public boolean hasNext() {
-    if (size.get() == 0 && !done) {
+    if (size.get() <= 0 && !done) {
       synchronized (size) {
-        while (size.get() == 0) {
+        while (size.get() <= 0) {
           if (done) {
             return false;
           }
@@ -150,9 +147,7 @@ class FileBasedResultCache {
     }
     if (size.getAndDecrement() == buffer.length) {
       synchronized (size) {
-        if (size.get() < buffer.length) {
-          size.notifyAll();
-        }
+        size.notifyAll();
       }
     }
     return row;
