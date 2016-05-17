@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,25 +48,34 @@ class FileBasedResultCache {
   private static final Logger LOG = LoggerFactory.getLogger(FileBasedResultCache.class);
 
   @VisibleForTesting
-  static final int IN_MEMORY_NUM_ROWS = 1024;
+  static final int IN_MEMORY_NUM_ROWS = 2048;
 
   private final ObjectPair<HiveKey, BytesWritable>[] buffer;
 
   private volatile int readCursor = 0;
   private volatile int writeCursor = 0;
-  private volatile int size = 0;
+  private final AtomicInteger size = new AtomicInteger(0);
 
   private volatile boolean done;
   private volatile Throwable error;
 
-  public synchronized void setDone(Throwable error) {
-    this.error = error;
-    done = true;
-    notifyAll();
+  public void setDone(Throwable error) {
+    synchronized (size) {
+      this.error = error;
+      done = true;
+      size.notifyAll();
+    }
+  }
+
+  public void clear() {
+    synchronized (size) {
+      writeCursor = readCursor = 0;
+      size.notifyAll();
+    }
   }
 
   public FileBasedResultCache() {
-    buffer = new ObjectPair[IN_MEMORY_NUM_ROWS * 2];
+    buffer = new ObjectPair[IN_MEMORY_NUM_ROWS];
     for (int i = 0; i < buffer.length; i++) {
       buffer[i] = new ObjectPair<HiveKey, BytesWritable>();
     }
@@ -73,52 +83,63 @@ class FileBasedResultCache {
     error = null;
   }
 
-  public synchronized void add(HiveKey key, BytesWritable value) {
+  public void add(HiveKey key, BytesWritable value) {
     if (done) {
       throw new IllegalStateException("Already done and no more data can be written.");
     }
-    while (size >= buffer.length) {
-      if (done) {
-        throw new IllegalStateException("Already done and no more data can be written.");
-      }
-      try {
-        wait();
-      } catch (InterruptedException e) {
-        throw new RuntimeException("Interrupted waiting to write data.", e);
+    if (size.get() == buffer.length) {
+      synchronized (size) {
+        while (size.get() == buffer.length) {
+          if (done) {
+            throw new IllegalStateException("Already done and no more data can be written.");
+          }
+          try {
+            size.wait();
+          } catch (InterruptedException e) {
+            throw new RuntimeException("Interrupted waiting to write data.", e);
+          }
+        }
       }
     }
+    doAdd(key, value);
+  }
+
+  private void doAdd(HiveKey key, BytesWritable value) {
     ObjectPair<HiveKey, BytesWritable> pair = buffer[writeCursor++];
     pair.setFirst(key);
     pair.setSecond(value);
     if (writeCursor == buffer.length) {
       writeCursor = 0;
     }
-    size++;
-    notifyAll();
-  }
-
-  public synchronized void clear() {
-    writeCursor = readCursor  = 0;
-    notifyAll();
-  }
-
-  public synchronized boolean hasNext() {
-    while (size <= 0) {
-      if (done) {
-        return false;
+    if (size.getAndIncrement() == 0) {
+      synchronized (size) {
+        if (size.get() > 0) {
+          size.notifyAll();
+        }
       }
-      try {
-        wait();
-      } catch (InterruptedException e) {
-        setDone(e);
-        throw new RuntimeException("Interrupted while waiting for data.", e);
+    }
+  }
+
+  public boolean hasNext() {
+    if (size.get() == 0 && !done) {
+      synchronized (size) {
+        while (size.get() == 0) {
+          if (done) {
+            return false;
+          }
+          try {
+            size.wait();
+          } catch (InterruptedException e) {
+            setDone(e);
+            throw new RuntimeException("Interrupted while waiting for data.", e);
+          }
+        }
       }
     }
     return error == null;
   }
 
-  public synchronized Tuple2<HiveKey, BytesWritable> next() {
-    Preconditions.checkState(hasNext());
+  public Tuple2<HiveKey, BytesWritable> next() {
     ObjectPair<HiveKey, BytesWritable> pair = buffer[readCursor++];
     Tuple2<HiveKey, BytesWritable> row = new Tuple2<HiveKey, BytesWritable>(
         pair.getFirst(), pair.getSecond());
@@ -127,8 +148,13 @@ class FileBasedResultCache {
     if (readCursor == buffer.length) {
       readCursor = 0;
     }
-    size--;
-    notifyAll();
+    if (size.getAndDecrement() == buffer.length) {
+      synchronized (size) {
+        if (size.get() < buffer.length) {
+          size.notifyAll();
+        }
+      }
+    }
     return row;
   }
 
