@@ -17,25 +17,13 @@
  */
 package org.apache.hadoop.hive.ql.exec.spark;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.hive.common.ObjectPair;
 import org.apache.hadoop.hive.ql.io.HiveKey;
 import org.apache.hadoop.io.BytesWritable;
 
 import scala.Tuple2;
-
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 
 /**
  * A circular array buffer that supports only one producer and one consumer.
@@ -43,7 +31,6 @@ import com.google.common.base.Preconditions;
 @SuppressWarnings("unchecked")
 class SingleProducerConsumerCache {
 
-  @VisibleForTesting
   static final int IN_MEMORY_NUM_ROWS = 2048;
 
   private final ObjectPair<HiveKey, BytesWritable>[] buffer;
