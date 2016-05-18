@@ -86,9 +86,9 @@ class FileBasedResultCache {
     if (done) {
       throw new IllegalStateException("Already done and no more data can be written.");
     }
-    if (size.get() >= buffer.length) {
+    if (size.get() == buffer.length) {
       synchronized (size) {
-        while (size.get() >= buffer.length) {
+        while (size.get() == buffer.length) {
           if (done) {
             throw new IllegalStateException("Already done and no more data can be written.");
           }
@@ -118,9 +118,9 @@ class FileBasedResultCache {
   }
 
   public boolean hasNext() {
-    if (size.get() <= 0 && !done) {
+    if (size.get() == 0) {
       synchronized (size) {
-        while (size.get() <= 0) {
+        while (size.get() == 0) {
           if (done) {
             return false;
           }
