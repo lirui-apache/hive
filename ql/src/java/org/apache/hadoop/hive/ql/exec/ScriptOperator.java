@@ -24,6 +24,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -396,12 +398,9 @@ public class ScriptOperator extends Operator<ScriptDesc> implements
 
         scriptPid = pb.start(); // Runtime.getRuntime().exec(wrappedCmdArgs);
 
-        DataOutputStream scriptOut = new DataOutputStream(
-            new BufferedOutputStream(scriptPid.getOutputStream()));
-        DataInputStream scriptIn = new DataInputStream(new BufferedInputStream(
-            scriptPid.getInputStream()));
-        DataInputStream scriptErr = new DataInputStream(
-            new BufferedInputStream(scriptPid.getErrorStream()));
+        OutputStream scriptOut = new BufferedOutputStream(scriptPid.getOutputStream());
+        InputStream scriptIn = new BufferedInputStream(scriptPid.getInputStream());
+        InputStream scriptErr = new BufferedInputStream(scriptPid.getErrorStream());
 
         scriptOutWriter = conf.getInRecordWriterClass().newInstance();
         scriptOutWriter.initialize(scriptOut, hconf);
