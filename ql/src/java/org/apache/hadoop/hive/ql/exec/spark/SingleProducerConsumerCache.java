@@ -17,13 +17,25 @@
  */
 package org.apache.hadoop.hive.ql.exec.spark;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.hive.common.ObjectPair;
 import org.apache.hadoop.hive.ql.io.HiveKey;
 import org.apache.hadoop.io.BytesWritable;
 
 import scala.Tuple2;
 
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 
 /**
  * A circular array buffer that supports only one producer and one consumer.
@@ -36,25 +48,25 @@ class SingleProducerConsumerCache {
 
   private final ObjectPair<HiveKey, BytesWritable>[] buffer;
 
-  private volatile int readCursor = 0;
-  private volatile int writeCursor = 0;
-  private final Object lock = new Object();
+  private int readCursor = 0;
+  private int writeCursor = 0;
+  private final AtomicInteger size = new AtomicInteger(0);
 
   private volatile boolean done;
   private volatile Throwable error;
 
   public void setDone(Throwable error) {
-    synchronized (lock) {
+    synchronized (size) {
       this.error = error;
       done = true;
-      lock.notifyAll();
+      size.notifyAll();
     }
   }
 
   public void clear() {
-    synchronized (lock) {
+    synchronized (size) {
       writeCursor = readCursor = 0;
-      lock.notifyAll();
+      size.notifyAll();
     }
   }
 
@@ -67,61 +79,46 @@ class SingleProducerConsumerCache {
     error = null;
   }
 
-  private int nextCursor(int cursor) {
-    cursor++;
-    if (cursor == buffer.length) {
-      cursor = 0;
-    }
-    return cursor;
-  }
-
-  private boolean isEmpty() {
-    return writeCursor == readCursor;
-  }
-
-  private boolean isFull() {
-    return nextCursor(writeCursor) == readCursor;
-  }
-
   public void add(HiveKey key, BytesWritable value) {
     if (done) {
       throw new IllegalStateException("Already done and no more data can be written.");
     }
-    if (isFull()) {
-      synchronized (lock) {
-        while (isFull()) {
+    if (size.get() == buffer.length) {
+      synchronized (size) {
+        while (size.get() == buffer.length) {
           if (done) {
             return;
           }
           try {
-            lock.wait();
+            size.wait();
           } catch (InterruptedException e) {
             throw new RuntimeException("Interrupted waiting to write data.", e);
           }
         }
       }
     }
-    ObjectPair<HiveKey, BytesWritable> pair = buffer[writeCursor];
+    ObjectPair<HiveKey, BytesWritable> pair = buffer[writeCursor++];
     pair.setFirst(key);
     pair.setSecond(value);
-    writeCursor = nextCursor(writeCursor);
-    // was empty before calling add
-    if (writeCursor == nextCursor(readCursor)) {
-      synchronized (lock) {
-        lock.notify();
+    if (writeCursor == buffer.length) {
+      writeCursor = 0;
+    }
+    if (size.getAndIncrement() == 0) {
+      synchronized (size) {
+        size.notify();
       }
     }
   }
 
   public boolean hasNext() {
-    if (isEmpty()) {
-      synchronized (lock) {
-        while (isEmpty()) {
+    if (size.get() == 0) {
+      synchronized (size) {
+        while (size.get() == 0) {
           if (done) {
             return false;
           }
           try {
-            lock.wait();
+            size.wait();
           } catch (InterruptedException e) {
             setDone(e);
             throw new RuntimeException("Interrupted while waiting for data.", e);
@@ -133,16 +130,17 @@ class SingleProducerConsumerCache {
   }
 
   public Tuple2<HiveKey, BytesWritable> next() {
-    ObjectPair<HiveKey, BytesWritable> pair = buffer[readCursor];
+    ObjectPair<HiveKey, BytesWritable> pair = buffer[readCursor++];
     Tuple2<HiveKey, BytesWritable> row = new Tuple2<HiveKey, BytesWritable>(
         pair.getFirst(), pair.getSecond());
     pair.setFirst(null);
     pair.setSecond(null);
-    readCursor = nextCursor(readCursor);
-    // was full before calling next
-    if (nextCursor(nextCursor(writeCursor)) == readCursor) {
-      synchronized (lock) {
-        lock.notify();
+    if (readCursor == buffer.length) {
+      readCursor = 0;
+    }
+    if (size.getAndDecrement() == buffer.length) {
+      synchronized (size) {
+        size.notify();
       }
     }
     return row;
