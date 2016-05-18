@@ -26,7 +26,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.io.HiveKey;
 import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 
 import scala.Tuple2;
@@ -50,7 +49,7 @@ public abstract class HiveBaseFunctionResultList<T> implements
 
   // Contains results from last processed input record.
   private final HiveKVResultCache lastRecordOutput;
-  private FileBasedResultCache resultCache;
+  private SingleProducerConsumerCache resultCache;
   private boolean iteratorAlreadyCreated = false;
 
   public HiveBaseFunctionResultList(Iterator<T> inputIterator, Configuration conf) {
@@ -112,7 +111,7 @@ public abstract class HiveBaseFunctionResultList<T> implements
     }
 
     public NewResultIterator() {
-      resultCache = new FileBasedResultCache();
+      resultCache = new SingleProducerConsumerCache();
       Thread processor = new Thread(new ProcessorRunnable());
       processor.setDaemon(true);
       processor.setName("RecordProcessorThread");
@@ -124,7 +123,7 @@ public abstract class HiveBaseFunctionResultList<T> implements
       if (resultCache.hasNext()) {
         return true;
       }
-      resultCache.clear();
+//      resultCache.clear();
       if (resultCache.getError() != null) {
         throw new RuntimeException("Error while processing input.", resultCache.getError());
       }
@@ -133,10 +132,8 @@ public abstract class HiveBaseFunctionResultList<T> implements
 
     @Override
     public Tuple2<HiveKey, BytesWritable> next() {
-      if (hasNext()) {
-        return resultCache.next();
-      }
-      throw new NoSuchElementException("There are no more elements");
+      // assume the user checks hasNext first
+      return resultCache.next();
     }
 
     @Override

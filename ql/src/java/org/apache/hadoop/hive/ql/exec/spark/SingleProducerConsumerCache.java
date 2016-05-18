@@ -38,21 +38,18 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
 /**
- * A cache with fixed buffer. If the buffer is full, new entries will
- * be written to disk. This class is thread safe since multiple threads
- * could access it (doesn't have to be concurrently), for example,
- * the StreamThread in ScriptOperator.
+ * A circular array buffer that supports only one producer and one consumer.
  */
 @SuppressWarnings("unchecked")
-class FileBasedResultCache {
+class SingleProducerConsumerCache {
 
   @VisibleForTesting
   static final int IN_MEMORY_NUM_ROWS = 2048;
 
   private final ObjectPair<HiveKey, BytesWritable>[] buffer;
 
-  private volatile int readCursor = 0;
-  private volatile int writeCursor = 0;
+  private int readCursor = 0;
+  private int writeCursor = 0;
   private final AtomicInteger size = new AtomicInteger(0);
 
   private volatile boolean done;
@@ -73,7 +70,7 @@ class FileBasedResultCache {
     }
   }
 
-  public FileBasedResultCache() {
+  public SingleProducerConsumerCache() {
     buffer = new ObjectPair[IN_MEMORY_NUM_ROWS];
     for (int i = 0; i < buffer.length; i++) {
       buffer[i] = new ObjectPair<HiveKey, BytesWritable>();
@@ -90,7 +87,7 @@ class FileBasedResultCache {
       synchronized (size) {
         while (size.get() == buffer.length) {
           if (done) {
-            throw new IllegalStateException("Already done and no more data can be written.");
+            return;
           }
           try {
             size.wait();
@@ -100,10 +97,6 @@ class FileBasedResultCache {
         }
       }
     }
-    doAdd(key, value);
-  }
-
-  private void doAdd(HiveKey key, BytesWritable value) {
     ObjectPair<HiveKey, BytesWritable> pair = buffer[writeCursor++];
     pair.setFirst(key);
     pair.setSecond(value);
@@ -112,7 +105,7 @@ class FileBasedResultCache {
     }
     if (size.getAndIncrement() == 0) {
       synchronized (size) {
-        size.notifyAll();
+        size.notify();
       }
     }
   }
@@ -147,7 +140,7 @@ class FileBasedResultCache {
     }
     if (size.getAndDecrement() == buffer.length) {
       synchronized (size) {
-        size.notifyAll();
+        size.notify();
       }
     }
     return row;
