@@ -44,6 +44,13 @@ public class HiveKey extends BytesWritable {
     hashCodeValid = true;
   }
 
+  public HiveKey(byte[] bytes, int length, int hashCode, int distKeyLength) {
+    super(bytes, length);
+    this.hashCode = hashCode;
+    hashCodeValid = true;
+    this.distKeyLength = distKeyLength;
+  }
+
   public void setHashCode(int myHashCode) {
     hashCodeValid = true;
     hashCode = myHashCode;
