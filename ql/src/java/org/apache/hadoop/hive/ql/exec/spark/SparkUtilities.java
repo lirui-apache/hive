@@ -52,11 +52,14 @@ import scala.collection.JavaConversions;
 public class SparkUtilities {
 
   public static HiveKey copyHiveKey(HiveKey key) {
-    return new HiveKey(key.getBytes(), key.getLength(), key.hashCode(), key.getDistKeyLength());
+    HiveKey copy = new HiveKey(key.getBytes(), key.hashCode());
+    copy.setDistKeyLength(key.getDistKeyLength());
+    return copy;
   }
 
   public static BytesWritable copyBytesWritable(BytesWritable bw) {
-    return new BytesWritable(bw.getBytes(), bw.getLength());
+    BytesWritable copy = new BytesWritable(bw.getBytes());
+    return copy;
   }
 
   public static URI getURI(String path) throws URISyntaxException {
