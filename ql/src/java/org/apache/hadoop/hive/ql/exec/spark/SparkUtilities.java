@@ -52,13 +52,16 @@ import scala.collection.JavaConversions;
 public class SparkUtilities {
 
   public static HiveKey copyHiveKey(HiveKey key) {
-    HiveKey copy = new HiveKey(key.getBytes(), key.hashCode());
+    HiveKey copy = new HiveKey();
     copy.setDistKeyLength(key.getDistKeyLength());
+    copy.setHashCode(key.hashCode());
+    copy.set(key);
     return copy;
   }
 
   public static BytesWritable copyBytesWritable(BytesWritable bw) {
-    BytesWritable copy = new BytesWritable(bw.getBytes());
+    BytesWritable copy = new BytesWritable();
+    copy.set(bw);
     return copy;
   }
 
