@@ -657,8 +657,7 @@ public class BinarySortableSerDe extends AbstractSerDe {
     return r;
   }
 
-  BytesWritable serializeBytesWritable = new BytesWritable();
-  ByteStream.Output output = new ByteStream.Output();
+  final ByteStream.Output output = new ByteStream.Output();
 
   @Override
   public Writable serialize(Object obj, ObjectInspector objInspector) throws SerDeException {
@@ -672,8 +671,7 @@ public class BinarySortableSerDe extends AbstractSerDe {
           columnNullMarker[i], columnNotNullMarker[i]);
     }
 
-    serializeBytesWritable.set(output.getData(), 0, output.getLength());
-    return serializeBytesWritable;
+    return new BytesWritable(output.getData(), output.getLength());
   }
 
   public static void writeByte(RandomAccessOutput buffer, byte b, boolean invert) {

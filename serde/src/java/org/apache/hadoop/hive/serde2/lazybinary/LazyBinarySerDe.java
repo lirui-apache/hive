@@ -179,8 +179,7 @@ public class LazyBinarySerDe extends AbstractSerDe {
   /**
    * The reusable output buffer and serialize byte buffer.
    */
-  BytesWritable serializeBytesWritable = new BytesWritable();
-  ByteStream.Output serializeByteStream = new ByteStream.Output();
+  private final ByteStream.Output serializeByteStream = new ByteStream.Output();
   BooleanRef nullMapKey = new BooleanRef(false);
 
   /**
@@ -199,13 +198,11 @@ public class LazyBinarySerDe extends AbstractSerDe {
     serializeByteStream.reset();
     // serialize the row as a struct
     serializeStruct(serializeByteStream, obj, (StructObjectInspector) objInspector, nullMapKey);
-    // return the serialized bytes
-    serializeBytesWritable.set(serializeByteStream.getData(), 0, serializeByteStream.getLength());
 
     serializedSize = serializeByteStream.getLength();
     lastOperationSerialize = true;
     lastOperationDeserialize = false;
-    return serializeBytesWritable;
+    return new BytesWritable(serializeByteStream.getData(), serializeByteStream.getLength());
   }
 
   public static class StringWrapper {
