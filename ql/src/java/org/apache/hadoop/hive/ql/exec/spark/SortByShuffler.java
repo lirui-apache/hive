@@ -74,7 +74,7 @@ public class SortByShuffler implements SparkShuffler {
       final Iterator<Tuple2<HiveKey, Iterable<BytesWritable>>> resultIt =
           new Iterator<Tuple2<HiveKey, Iterable<BytesWritable>>>() {
             HiveKey curKey = null;
-            List<BytesWritable> curValues = new ArrayList<BytesWritable>(256);
+            List<BytesWritable> curValues = new ArrayList<BytesWritable>();
 
             @Override
             public boolean hasNext() {
@@ -92,7 +92,7 @@ public class SortByShuffler implements SparkShuffler {
                   HiveKey key = curKey;
                   List<BytesWritable> values = curValues;
                   curKey = pair._1();
-                  curValues = new ArrayList<BytesWritable>(256);
+                  curValues = new ArrayList<BytesWritable>();
                   curValues.add(pair._2());
                   return new Tuple2<HiveKey, Iterable<BytesWritable>>(key, values);
                 }

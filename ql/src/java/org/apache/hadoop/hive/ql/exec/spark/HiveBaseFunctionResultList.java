@@ -184,10 +184,7 @@ public abstract class HiveBaseFunctionResultList<T> implements
 
     @Override
     public Tuple2<HiveKey, BytesWritable> next() {
-      if (hasNext()) {
-        return lastRecordOutput.next();
-      }
-      throw new NoSuchElementException("There are no more elements");
+      return lastRecordOutput.next();
     }
 
     @Override
