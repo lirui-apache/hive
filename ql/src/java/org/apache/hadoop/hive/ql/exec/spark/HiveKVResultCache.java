@@ -184,9 +184,6 @@ class HiveKVResultCache {
     writeCursor = readCursor = rowsInReadBuffer = 0;
     readBufferUsed = false;
 
-    Arrays.fill(writeBuffer, null);
-    Arrays.fill(readBuffer, null);
-
     if (parentFile != null) {
       if (input != null) {
         try {

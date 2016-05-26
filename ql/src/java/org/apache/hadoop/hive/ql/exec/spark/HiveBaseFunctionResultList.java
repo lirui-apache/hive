@@ -48,13 +48,20 @@ public abstract class HiveBaseFunctionResultList<T> implements
   private final boolean newResultCache;
 
   // Contains results from last processed input record.
+  private static final ThreadLocal<HiveKVResultCache> threadLocalCache =
+      new ThreadLocal<HiveKVResultCache>() {
+        @Override
+        protected HiveKVResultCache initialValue() {
+          return new HiveKVResultCache();
+        }
+      };
   private final HiveKVResultCache lastRecordOutput;
   private SingleProducerConsumerCache resultCache;
   private boolean iteratorAlreadyCreated = false;
 
   public HiveBaseFunctionResultList(Iterator<T> inputIterator, Configuration conf) {
     this.inputIterator = inputIterator;
-    this.lastRecordOutput = new HiveKVResultCache();
+    this.lastRecordOutput = threadLocalCache.get();
     newResultCache = HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVE_SPARK_NEW_RESULTCACHE);
   }
 
@@ -68,8 +75,7 @@ public abstract class HiveBaseFunctionResultList<T> implements
   @Override
   public void collect(HiveKey key, BytesWritable value) throws IOException {
     if (newResultCache) {
-      resultCache.add(SparkUtilities.copyHiveKey(key),
-          SparkUtilities.copyBytesWritable(value));
+      resultCache.add(key, value);
     } else {
       lastRecordOutput.add(key, value);
     }
