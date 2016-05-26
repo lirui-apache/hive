@@ -60,7 +60,10 @@ class SingleProducerConsumerCache {
   public SingleProducerConsumerCache() {
     buffer = new ObjectPair[IN_MEMORY_NUM_ROWS];
     for (int i = 0; i < buffer.length; i++) {
-      buffer[i] = new ObjectPair<HiveKey, BytesWritable>();
+      ObjectPair<HiveKey, BytesWritable> pair = new ObjectPair<>();
+      pair.setFirst(new HiveKey());
+      pair.setSecond(new BytesWritable());
+      buffer[i] = pair;
     }
     done = false;
     error = null;
@@ -85,8 +88,12 @@ class SingleProducerConsumerCache {
       }
     }
     ObjectPair<HiveKey, BytesWritable> pair = buffer[writeCursor++];
-    pair.setFirst(key);
-    pair.setSecond(value);
+    HiveKey reusedKey = pair.getFirst();
+    reusedKey.setHashCode(key.hashCode());
+    reusedKey.setDistKeyLength(key.getDistKeyLength());
+    reusedKey.set(key);
+    BytesWritable reusedValue = pair.getSecond();
+    reusedValue.set(value);
     if (writeCursor == buffer.length) {
       writeCursor = 0;
     }
@@ -119,9 +126,8 @@ class SingleProducerConsumerCache {
   public Tuple2<HiveKey, BytesWritable> next() {
     ObjectPair<HiveKey, BytesWritable> pair = buffer[readCursor++];
     Tuple2<HiveKey, BytesWritable> row = new Tuple2<HiveKey, BytesWritable>(
-        pair.getFirst(), pair.getSecond());
-    pair.setFirst(null);
-    pair.setSecond(null);
+        SparkUtilities.copyHiveKey(pair.getFirst()),
+        SparkUtilities.copyBytesWritable(pair.getSecond()));
     if (readCursor == buffer.length) {
       readCursor = 0;
     }
