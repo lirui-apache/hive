@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +72,11 @@ class HiveKVResultCache {
     readBuffer = new ObjectPair[IN_MEMORY_NUM_ROWS];
     for (int i = 0; i < IN_MEMORY_NUM_ROWS; i++) {
       writeBuffer[i] = new ObjectPair<HiveKey, BytesWritable>();
+      writeBuffer[i].setFirst(new HiveKey());
+      writeBuffer[i].setSecond(new BytesWritable());
       readBuffer[i] = new ObjectPair<HiveKey, BytesWritable>();
+      readBuffer[i].setFirst(new HiveKey());
+      readBuffer[i].setSecond(new BytesWritable());
     }
   }
 
@@ -116,8 +121,9 @@ class HiveKVResultCache {
     }
   }
 
-  private BytesWritable readValue(Input input) {
-    return new BytesWritable(input.readBytes(input.readInt()));
+  private void readValue(Input input, BytesWritable value) {
+    byte[] bytes = input.readBytes(input.readInt());
+    value.set(bytes, 0, bytes.length);
   }
 
   private void writeValue(Output output, BytesWritable bytesWritable) {
@@ -126,11 +132,13 @@ class HiveKVResultCache {
     output.writeBytes(bytesWritable.getBytes(), 0, size);
   }
 
-  private HiveKey readHiveKey(Input input) {
-    HiveKey hiveKey = new HiveKey(
-      input.readBytes(input.readInt()), input.readInt());
-    hiveKey.setDistKeyLength(input.readInt());
-    return hiveKey;
+  private void readHiveKey(Input input, HiveKey hiveKey) {
+    byte[] bytes = input.readBytes(input.readInt());
+    int hashCode = input.readInt();
+    int distKeyLen = input.readInt();
+    hiveKey.setHashCode(hashCode);
+    hiveKey.setDistKeyLength(distKeyLen);
+    hiveKey.set(bytes, 0, bytes.length);
   }
 
   private void writeHiveKey(Output output, HiveKey hiveKey) {
@@ -155,8 +163,6 @@ class HiveKVResultCache {
             ObjectPair<HiveKey, BytesWritable> pair = writeBuffer[i];
             writeHiveKey(output, pair.getFirst());
             writeValue(output, pair.getSecond());
-            pair.setFirst(null);
-            pair.setSecond(null);
           }
           writeCursor = 0;
         } catch (Exception e) {
@@ -166,13 +172,20 @@ class HiveKVResultCache {
       }
     }
     ObjectPair<HiveKey, BytesWritable> pair = writeBuffer[writeCursor++];
-    pair.setFirst(key);
-    pair.setSecond(value);
+    HiveKey reusedKey = pair.getFirst();
+    reusedKey.setHashCode(key.hashCode());
+    reusedKey.setDistKeyLength(key.getDistKeyLength());
+    reusedKey.set(key);
+    BytesWritable reusedValue = pair.getSecond();
+    reusedValue.set(value);
   }
 
   public synchronized void clear() {
     writeCursor = readCursor = rowsInReadBuffer = 0;
     readBufferUsed = false;
+
+    Arrays.fill(writeBuffer, null);
+    Arrays.fill(readBuffer, null);
 
     if (parentFile != null) {
       if (input != null) {
@@ -225,8 +238,8 @@ class HiveKVResultCache {
           // Load next batch from disk
           for (int i = 0; i < IN_MEMORY_NUM_ROWS; i++) {
             ObjectPair<HiveKey, BytesWritable> pair = readBuffer[i];
-            pair.setFirst(readHiveKey(input));
-            pair.setSecond(readValue(input));
+            readHiveKey(input, pair.getFirst());
+            readValue(input, pair.getSecond());
           }
           if (input.eof()) {
             input.close();
@@ -238,9 +251,8 @@ class HiveKVResultCache {
         } else if (writeCursor == 1) {
           ObjectPair<HiveKey, BytesWritable> pair = writeBuffer[0];
           Tuple2<HiveKey, BytesWritable> row = new Tuple2<HiveKey, BytesWritable>(
-            pair.getFirst(), pair.getSecond());
-          pair.setFirst(null);
-          pair.setSecond(null);
+              SparkUtilities.copyHiveKey(pair.getFirst()),
+              SparkUtilities.copyBytesWritable(pair.getSecond()));
           writeCursor = 0;
           return row;
         } else {
@@ -254,9 +266,8 @@ class HiveKVResultCache {
     }
     ObjectPair<HiveKey, BytesWritable> pair = readBuffer[readCursor];
     Tuple2<HiveKey, BytesWritable> row = new Tuple2<HiveKey, BytesWritable>(
-      pair.getFirst(), pair.getSecond());
-    pair.setFirst(null);
-    pair.setSecond(null);
+        SparkUtilities.copyHiveKey(pair.getFirst()),
+        SparkUtilities.copyBytesWritable(pair.getSecond()));
     if (++readCursor >= rowsInReadBuffer) {
       readBufferUsed = false;
       rowsInReadBuffer = 0;

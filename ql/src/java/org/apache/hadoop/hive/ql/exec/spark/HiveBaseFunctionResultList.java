@@ -71,8 +71,7 @@ public abstract class HiveBaseFunctionResultList<T> implements
       resultCache.add(SparkUtilities.copyHiveKey(key),
           SparkUtilities.copyBytesWritable(value));
     } else {
-      lastRecordOutput.add(SparkUtilities.copyHiveKey(key),
-          SparkUtilities.copyBytesWritable(value));
+      lastRecordOutput.add(key, value);
     }
   }
 
