@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,6 +78,8 @@ class HiveKVResultCache {
       readBuffer[i].setFirst(new HiveKey());
       readBuffer[i].setSecond(new BytesWritable());
     }
+    input = new Input(4096);
+    output = new Output(4096);
   }
 
   private void switchBufferAndResetCursor() {
@@ -104,7 +106,7 @@ class HiveKVResultCache {
       }
     }
 
-    if (tmpFile == null || input != null) {
+    if (tmpFile == null || input.getInputStream() != null) {
       tmpFile = File.createTempFile("ResultCache", ".tmp", parentFile);
       LOG.info("ResultCache created temp file " + tmpFile.getAbsolutePath());
       tmpFile.deleteOnExit();
@@ -113,9 +115,9 @@ class HiveKVResultCache {
     FileOutputStream fos = null;
     try {
       fos = new FileOutputStream(tmpFile);
-      output = new Output(fos);
+      output.setOutputStream(fos);
     } finally {
-      if (output == null && fos != null) {
+      if (output.getOutputStream() == null && fos != null) {
         fos.close();
       }
     }
@@ -156,7 +158,7 @@ class HiveKVResultCache {
       } else {
         // Need to spill from write buffer to disk
         try {
-          if (output == null) {
+          if (output.getOutputStream() == null) {
             setupOutput();
           }
           for (int i = 0; i < IN_MEMORY_NUM_ROWS; i++) {
@@ -185,26 +187,20 @@ class HiveKVResultCache {
     readBufferUsed = false;
 
     if (parentFile != null) {
-      if (input != null) {
-        try {
-          input.close();
-        } catch (Throwable ignored) {
-        }
-        input = null;
-      }
-      if (output != null) {
-        try {
-          output.close();
-        } catch (Throwable ignored) {
-        }
-        output = null;
-      }
       try {
         FileUtil.fullyDelete(parentFile);
       } catch (Throwable ignored) {
       }
       parentFile = null;
       tmpFile = null;
+    }
+
+    try {
+      input.close();
+      output.close();
+      input.setInputStream(null);
+      output.setOutputStream(null);
+    } catch (Throwable ignored) {
     }
   }
 
@@ -216,22 +212,22 @@ class HiveKVResultCache {
     Preconditions.checkState(hasNext());
     if (!readBufferUsed) {
       try {
-        if (input == null && output != null) {
+        if (input.getInputStream() == null && output.getOutputStream() != null) {
           // Close output stream if open
           output.close();
-          output = null;
+          output.setOutputStream(null);
 
           FileInputStream fis = null;
           try {
             fis = new FileInputStream(tmpFile);
-            input = new Input(fis);
+            input.setInputStream(fis);
           } finally {
-            if (input == null && fis != null) {
+            if (input.getInputStream() == null && fis != null) {
               fis.close();
             }
           }
         }
-        if (input != null) {
+        if (input.getInputStream() != null) {
           // Load next batch from disk
           for (int i = 0; i < IN_MEMORY_NUM_ROWS; i++) {
             ObjectPair<HiveKey, BytesWritable> pair = readBuffer[i];
@@ -240,7 +236,7 @@ class HiveKVResultCache {
           }
           if (input.eof()) {
             input.close();
-            input = null;
+            input.setInputStream(null);
           }
           rowsInReadBuffer = IN_MEMORY_NUM_ROWS;
           readBufferUsed = true;
