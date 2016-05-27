@@ -22,6 +22,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.NoSuchElementException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -209,7 +210,9 @@ class HiveKVResultCache {
   }
 
   public synchronized Tuple2<HiveKey, BytesWritable> next() {
-    Preconditions.checkState(hasNext());
+    if (!hasNext()) {
+      throw new NoSuchElementException("No more data to read.");
+    }
     if (!readBufferUsed) {
       try {
         if (input.getInputStream() == null && output.getOutputStream() != null) {
