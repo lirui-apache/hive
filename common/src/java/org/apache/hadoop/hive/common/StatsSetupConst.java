@@ -137,6 +137,10 @@ public class StatsSetupConst {
 
   public static final String FALSE = "false";
 
+  // The parameter keys for the table statistics. Those keys are excluded from 'show create table' command output.
+  public static final String[] TABLE_PARAMS_STATS_KEYS = new String[] {
+    COLUMN_STATS_ACCURATE, NUM_FILES, TOTAL_SIZE,ROW_COUNT, RAW_DATA_SIZE, NUM_PARTITIONS};
+
   public static boolean areBasicStatsUptoDate(Map<String, String> params) {
     String statsAcc = params.get(COLUMN_STATS_ACCURATE);
     if (statsAcc == null) {
@@ -222,16 +226,6 @@ public class StatsSetupConst {
           // old format of statsAcc, e.g., TRUE or FALSE
           LOG.debug("In StatsSetupConst, JsonParser can not parse statsAcc.");
           stats = new JSONObject(new LinkedHashMap());
-          try {
-            if (statsAcc.equals(TRUE)) {
-              stats.put(BASIC_STATS, TRUE);
-            } else {
-              stats.put(BASIC_STATS, FALSE);
-            }
-          } catch (JSONException e1) {
-            // impossible to throw any json exceptions.
-            LOG.trace(e1.getMessage());
-          }
         }
         if (!stats.has(BASIC_STATS)) {
           // duplicate key is not possible
@@ -331,5 +325,14 @@ public class StatsSetupConst {
       }
       params.put(COLUMN_STATS_ACCURATE, stats.toString());
     }
+  }
+
+  public static void setBasicStatsStateForCreateTable(Map<String, String> params, String setting) {
+    if (TRUE.equals(setting)) {
+      for (String stat : StatsSetupConst.supportedStats) {
+        params.put(stat, "0");
+      }
+    }
+    setBasicStatsState(params, setting);
   }
 }

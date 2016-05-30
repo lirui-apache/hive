@@ -122,6 +122,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ConstantObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
+import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
 import org.apache.hadoop.hive.serde2.typeinfo.BaseCharTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.DecimalTypeInfo;
@@ -477,8 +478,8 @@ public class VectorizationContext {
       ve = getColumnVectorExpression((ExprNodeColumnDesc) exprDesc, mode);
     } else if (exprDesc instanceof ExprNodeGenericFuncDesc) {
       ExprNodeGenericFuncDesc expr = (ExprNodeGenericFuncDesc) exprDesc;
-      if (isCustomUDF(expr) || isNonVectorizedPathUDF(expr, mode)) {
-        ve = getCustomUDFExpression(expr);
+      if (isCustomUDF(expr)) {
+        ve = getCustomUDFExpression(expr, mode);
       } else {
 
         // Add cast expression if needed. Child expressions of a udf may return different data types
@@ -489,13 +490,20 @@ public class VectorizationContext {
             exprDesc.getChildren(), exprDesc.getTypeInfo());
         ve = getGenericUdfVectorExpression(expr.getGenericUDF(),
             childExpressions, mode, exprDesc.getTypeInfo());
+        if (ve == null) {
+          /*
+           * Ok, no vectorized class available.  No problem -- try to use the VectorUDFAdaptor.
+           */
+          ve = getCustomUDFExpression(expr, mode);
+        }
       }
     } else if (exprDesc instanceof ExprNodeConstantDesc) {
       ve = getConstantVectorExpression(((ExprNodeConstantDesc) exprDesc).getValue(), exprDesc.getTypeInfo(),
           mode);
     }
     if (ve == null) {
-      throw new HiveException("Could not vectorize expression: "+exprDesc.getName());
+      throw new HiveException(
+          "Could not vectorize expression (mode = " + mode.name() + "): " + exprDesc.toString());
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("Input Expression = " + exprDesc.toString()
@@ -758,64 +766,6 @@ public class VectorizationContext {
     return genericUdf;
   }
 
-
-  /* Return true if this is one of a small set of functions for which
-   * it is significantly easier to use the old code path in vectorized
-   * mode instead of implementing a new, optimized VectorExpression.
-   *
-   * Depending on performance requirements and frequency of use, these
-   * may be implemented in the future with an optimized VectorExpression.
-   */
-  public static boolean isNonVectorizedPathUDF(ExprNodeGenericFuncDesc expr, Mode mode) {
-    GenericUDF gudf = expr.getGenericUDF();
-    if (gudf instanceof GenericUDFBridge) {
-      GenericUDFBridge bridge = (GenericUDFBridge) gudf;
-      Class<? extends UDF> udfClass = bridge.getUdfClass();
-      if (udfClass.equals(UDFHex.class)
-          || udfClass.equals(UDFRegExpExtract.class)
-          || udfClass.equals(UDFRegExpReplace.class)
-          || udfClass.equals(UDFConv.class)
-          || udfClass.equals(UDFFromUnixTime.class) && isIntFamily(arg0Type(expr))
-          || isCastToIntFamily(udfClass) && isStringFamily(arg0Type(expr))
-          || isCastToFloatFamily(udfClass) && isStringFamily(arg0Type(expr))
-          || udfClass.equals(UDFToString.class) &&
-               (arg0Type(expr).equals("timestamp")
-                   || arg0Type(expr).equals("double")
-                   || arg0Type(expr).equals("float"))) {
-        return true;
-      }
-    } else if ((gudf instanceof GenericUDFTimestamp && isStringFamily(arg0Type(expr)))
-
-            /* GenericUDFCase and GenericUDFWhen are implemented with the UDF Adaptor because
-             * of their complexity and generality. In the future, variations of these
-             * can be optimized to run faster for the vectorized code path. For example,
-             * CASE col WHEN 1 then "one" WHEN 2 THEN "two" ELSE "other" END
-             * is an example of a GenericUDFCase that has all constant arguments
-             * except for the first argument. This is probably a common case and a
-             * good candidate for a fast, special-purpose VectorExpression. Then
-             * the UDF Adaptor code path could be used as a catch-all for
-             * non-optimized general cases.
-             */
-            || gudf instanceof GenericUDFCase
-            || gudf instanceof GenericUDFWhen) {
-      return true;
-    } else if (gudf instanceof GenericUDFToChar &&
-               (arg0Type(expr).equals("timestamp")
-                   || arg0Type(expr).equals("double")
-                   || arg0Type(expr).equals("float"))) {
-      return true;
-    } else if (gudf instanceof GenericUDFToVarchar &&
-            (arg0Type(expr).equals("timestamp")
-                || arg0Type(expr).equals("double")
-                || arg0Type(expr).equals("float"))) {
-      return true;
-    } else if (gudf instanceof GenericUDFBetween && (mode == Mode.PROJECTION)) {
-      // between has 4 args here, but can be vectorized like this
-      return true;
-    }
-    return false;
-  }
-
   public static boolean isCastToIntFamily(Class<? extends UDF> udfClass) {
     return udfClass.equals(UDFToByte.class)
         || udfClass.equals(UDFToShort.class)
@@ -1016,36 +966,33 @@ public class VectorizationContext {
 
     int numChildren = (childExpr == null) ? 0 : childExpr.size();
 
-    if (numChildren > 2 && genericeUdf != null && mode == Mode.FILTER &&
+    if (genericeUdf != null &&
         ((genericeUdf instanceof GenericUDFOPOr) || (genericeUdf instanceof GenericUDFOPAnd))) {
 
-      // Special case handling for Multi-OR and Multi-AND.
+      // Special case handling for Multi-OR and Multi-AND FILTER and PROJECTION.
 
-      for (int i = 0; i < numChildren; i++) {
-        ExprNodeDesc child = childExpr.get(i);
-        String childTypeString = child.getTypeString();
-        if (childTypeString == null) {
-          throw new HiveException("Null child type name string");
-        }
-        TypeInfo typeInfo = TypeInfoUtils.getTypeInfoFromTypeString(childTypeString);
-        Type columnVectorType = VectorizationContext.getColumnVectorTypeFromTypeInfo(typeInfo);
-        if (columnVectorType != ColumnVector.Type.LONG){
-          return null;
-        }
-        if (!(child instanceof ExprNodeGenericFuncDesc) && !(child instanceof ExprNodeColumnDesc)) {
-          return null;
-        }
-      }
       Class<?> vclass;
       if (genericeUdf instanceof GenericUDFOPOr) {
-        vclass = FilterExprOrExpr.class;
+        if (mode == Mode.PROJECTION) {
+          vclass = ColOrCol.class;
+        } else {
+          vclass = FilterExprOrExpr.class;
+        }
       } else if (genericeUdf instanceof GenericUDFOPAnd) {
-        vclass = FilterExprAndExpr.class;
+        if (mode == Mode.PROJECTION) {
+          vclass = ColAndCol.class;
+        } else {
+          vclass = FilterExprAndExpr.class;
+        }
       } else {
         throw new RuntimeException("Unexpected multi-child UDF");
       }
       Mode childrenMode = getChildrenMode(mode, udfClass);
-      return createVectorExpression(vclass, childExpr, childrenMode, returnType);
+      if (mode == Mode.PROJECTION) {
+        return createVectorMultiAndOrProjectionExpr(vclass, childExpr, childrenMode, returnType);
+      } else {
+        return createVectorExpression(vclass, childExpr, childrenMode, returnType);
+      }
     }
     if (numChildren > VectorExpressionDescriptor.MAX_NUM_ARGUMENTS) {
       return null;
@@ -1084,6 +1031,37 @@ public class VectorizationContext {
     return createVectorExpression(vclass, childExpr, childrenMode, returnType);
   }
 
+  private void determineChildrenVectorExprAndArguments(Class<?> vectorClass,
+      List<ExprNodeDesc> childExpr, int numChildren, Mode childrenMode,
+      VectorExpression.Type [] inputTypes, List<VectorExpression> children, Object[] arguments)
+          throws HiveException {
+    for (int i = 0; i < numChildren; i++) {
+      ExprNodeDesc child = childExpr.get(i);
+      String undecoratedName = getUndecoratedName(child.getTypeInfo().getTypeName());
+      inputTypes[i] = VectorExpression.Type.getValue(undecoratedName);
+      if (inputTypes[i] == VectorExpression.Type.OTHER){
+        throw new HiveException("No vector type for " + vectorClass.getSimpleName() + " argument #" + i + " type name " + undecoratedName);
+      }
+      if (child instanceof ExprNodeGenericFuncDesc) {
+        VectorExpression vChild = getVectorExpression(child, childrenMode);
+          children.add(vChild);
+          arguments[i] = vChild.getOutputColumn();
+      } else if (child instanceof ExprNodeColumnDesc) {
+        int colIndex = getInputColumnIndex((ExprNodeColumnDesc) child);
+          if (childrenMode == Mode.FILTER) {
+            // In filter mode, the column must be a boolean
+            children.add(new SelectColumnIsTrue(colIndex));
+          }
+          arguments[i] = colIndex;
+      } else if (child instanceof ExprNodeConstantDesc) {
+        Object scalarValue = getVectorTypeScalarValue((ExprNodeConstantDesc) child);
+        arguments[i] = (null == scalarValue) ? getConstantVectorExpression(null, child.getTypeInfo(), childrenMode) : scalarValue;
+      } else {
+        throw new HiveException("Cannot handle expression type: " + child.getClass().getSimpleName());
+      }
+    }
+  }
+
   private VectorExpression createVectorExpression(Class<?> vectorClass,
       List<ExprNodeDesc> childExpr, Mode childrenMode, TypeInfo returnType) throws HiveException {
     int numChildren = childExpr == null ? 0: childExpr.size();
@@ -1091,31 +1069,41 @@ public class VectorizationContext {
     List<VectorExpression> children = new ArrayList<VectorExpression>();
     Object[] arguments = new Object[numChildren];
     try {
-      for (int i = 0; i < numChildren; i++) {
-        ExprNodeDesc child = childExpr.get(i);
-        String undecoratedName = getUndecoratedName(child.getTypeInfo().getTypeName());
-        inputTypes[i] = VectorExpression.Type.getValue(undecoratedName);
-        if (inputTypes[i] == VectorExpression.Type.OTHER){
-          throw new HiveException("No vector type for " + vectorClass.getSimpleName() + " argument #" + i + " type name " + undecoratedName);
-        }
-        if (child instanceof ExprNodeGenericFuncDesc) {
-          VectorExpression vChild = getVectorExpression(child, childrenMode);
-            children.add(vChild);
-            arguments[i] = vChild.getOutputColumn();
-        } else if (child instanceof ExprNodeColumnDesc) {
-          int colIndex = getInputColumnIndex((ExprNodeColumnDesc) child);
-            if (childrenMode == Mode.FILTER) {
-              // In filter mode, the column must be a boolean
-              children.add(new SelectColumnIsTrue(colIndex));
-            }
-            arguments[i] = colIndex;
-        } else if (child instanceof ExprNodeConstantDesc) {
-          Object scalarValue = getVectorTypeScalarValue((ExprNodeConstantDesc) child);
-          arguments[i] = (null == scalarValue) ? getConstantVectorExpression(null, child.getTypeInfo(), childrenMode) : scalarValue;
-        } else {
-          throw new HiveException("Cannot handle expression type: " + child.getClass().getSimpleName());
-        }
+      determineChildrenVectorExprAndArguments(vectorClass, childExpr, numChildren, childrenMode,
+          inputTypes, children, arguments);
+      VectorExpression  vectorExpression = instantiateExpression(vectorClass, returnType, arguments);
+      vectorExpression.setInputTypes(inputTypes);
+      if ((vectorExpression != null) && !children.isEmpty()) {
+        vectorExpression.setChildExpressions(children.toArray(new VectorExpression[0]));
       }
+      return vectorExpression;
+    } catch (Exception ex) {
+      throw new HiveException(ex);
+    } finally {
+      for (VectorExpression ve : children) {
+        ocm.freeOutputColumn(ve.getOutputColumn());
+      }
+    }
+  }
+
+  private VectorExpression createVectorMultiAndOrProjectionExpr(Class<?> vectorClass,
+      List<ExprNodeDesc> childExpr, Mode childrenMode, TypeInfo returnType) throws HiveException {
+    int numChildren = childExpr == null ? 0: childExpr.size();
+    VectorExpression.Type [] inputTypes = new VectorExpression.Type[numChildren];
+    List<VectorExpression> children = new ArrayList<VectorExpression>();
+    Object[] arguments = new Object[numChildren];
+    try {
+      determineChildrenVectorExprAndArguments(vectorClass, childExpr, numChildren, childrenMode,
+          inputTypes, children, arguments);
+
+      // For Multi-AND/OR, transform the arguments -- column indices into an array of int.
+      int[] colNums = new int[numChildren];
+      for (int i = 0; i < numChildren; i++) {
+        colNums[i] = (Integer) arguments[i];
+      }
+      arguments = new Object[1];
+      arguments[0] = colNums;
+
       VectorExpression  vectorExpression = instantiateExpression(vectorClass, returnType, arguments);
       vectorExpression.setInputTypes(inputTypes);
       if ((vectorExpression != null) && !children.isEmpty()) {
@@ -1213,36 +1201,38 @@ public class VectorizationContext {
     List<ExprNodeDesc> castedChildren = evaluateCastOnConstants(childExpr);
     childExpr = castedChildren;
 
-    //First handle special cases
+    //First handle special cases.  If one of the special case methods cannot handle it,
+    // it returns null.
+    VectorExpression ve = null;
     if (udf instanceof GenericUDFBetween && mode == Mode.FILTER) {
-      return getBetweenFilterExpression(childExpr, mode, returnType);
+      ve = getBetweenFilterExpression(childExpr, mode, returnType);
     } else if (udf instanceof GenericUDFIn) {
-      return getInExpression(childExpr, mode, returnType);
+      ve = getInExpression(childExpr, mode, returnType);
     } else if (udf instanceof GenericUDFOPPositive) {
-      return getIdentityExpression(childExpr);
+      ve = getIdentityExpression(childExpr);
     } else if (udf instanceof GenericUDFCoalesce || udf instanceof GenericUDFNvl) {
 
       // Coalesce is a special case because it can take variable number of arguments.
       // Nvl is a specialization of the Coalesce.
-      return getCoalesceExpression(childExpr, returnType);
+      ve = getCoalesceExpression(childExpr, returnType);
     } else if (udf instanceof GenericUDFElt) {
 
       // Elt is a special case because it can take variable number of arguments.
-      return getEltExpression(childExpr, returnType);
+      ve = getEltExpression(childExpr, returnType);
     } else if (udf instanceof GenericUDFBridge) {
-      VectorExpression v = getGenericUDFBridgeVectorExpression((GenericUDFBridge) udf, childExpr, mode,
+      ve = getGenericUDFBridgeVectorExpression((GenericUDFBridge) udf, childExpr, mode,
           returnType);
-      if (v != null) {
-        return v;
-      }
     } else if (udf instanceof GenericUDFToDecimal) {
-      return getCastToDecimal(childExpr, returnType);
+      ve = getCastToDecimal(childExpr, returnType);
     } else if (udf instanceof GenericUDFToChar) {
-      return getCastToChar(childExpr, returnType);
+      ve = getCastToChar(childExpr, returnType);
     } else if (udf instanceof GenericUDFToVarchar) {
-      return getCastToVarChar(childExpr, returnType);
+      ve = getCastToVarChar(childExpr, returnType);
     } else if (udf instanceof GenericUDFTimestamp) {
-      return getCastToTimestamp((GenericUDFTimestamp)udf, childExpr, mode, returnType);
+      ve = getCastToTimestamp((GenericUDFTimestamp)udf, childExpr, mode, returnType);
+    }
+    if (ve != null) {
+      return ve;
     }
     // Now do a general lookup
     Class<?> udfClass = udf.getClass();
@@ -1252,12 +1242,8 @@ public class VectorizationContext {
       isSubstituted = true;
     }
 
-    VectorExpression ve = getVectorExpressionForUdf((!isSubstituted ? udf : null),
+    ve = getVectorExpressionForUdf((!isSubstituted ? udf : null),
         udfClass, castedChildren, mode, returnType);
-
-    if (ve == null) {
-      throw new HiveException("Udf: "+udf.getClass().getSimpleName()+", is not supported");
-    }
 
     return ve;
   }
@@ -1623,16 +1609,20 @@ public class VectorizationContext {
   private VectorExpression getGenericUDFBridgeVectorExpression(GenericUDFBridge udf,
       List<ExprNodeDesc> childExpr, Mode mode, TypeInfo returnType) throws HiveException {
     Class<? extends UDF> cl = udf.getUdfClass();
+    VectorExpression ve = null;
     if (isCastToIntFamily(cl)) {
-      return getCastToLongExpression(childExpr);
+      ve = getCastToLongExpression(childExpr);
     } else if (cl.equals(UDFToBoolean.class)) {
-      return getCastToBoolean(childExpr);
+      ve = getCastToBoolean(childExpr);
     } else if (isCastToFloatFamily(cl)) {
-      return getCastToDoubleExpression(cl, childExpr, returnType);
+      ve = getCastToDoubleExpression(cl, childExpr, returnType);
     } else if (cl.equals(UDFToString.class)) {
-      return getCastToString(childExpr, returnType);
+      ve = getCastToString(childExpr, returnType);
     }
-    return null;
+    if (ve == null && childExpr instanceof ExprNodeGenericFuncDesc) {
+      ve = getCustomUDFExpression((ExprNodeGenericFuncDesc) childExpr, mode);
+    }
+    return ve;
   }
 
   private HiveDecimal castConstantToDecimal(Object scalar, TypeInfo type) throws HiveException {
@@ -1762,10 +1752,10 @@ public class VectorizationContext {
           returnType);
     } else if (isStringFamily(inputType)) {
       return createVectorExpression(CastStringToDecimal.class, childExpr, Mode.PROJECTION, returnType);
-    } else if (isDatetimeFamily(inputType)) {
+    } else if (inputType.equals("timestamp")) {
       return createVectorExpression(CastTimestampToDecimal.class, childExpr, Mode.PROJECTION, returnType);
     }
-    throw new HiveException("Unhandled cast input type: " + inputType);
+    throw null;
   }
 
   private VectorExpression getCastToString(List<ExprNodeDesc> childExpr, TypeInfo returnType)
@@ -1790,11 +1780,7 @@ public class VectorizationContext {
     } else if (isStringFamily(inputType)) {
       return createVectorExpression(CastStringGroupToString.class, childExpr, Mode.PROJECTION, returnType);
     }
-    /* The string type is deliberately omitted -- the planner removes string to string casts.
-     * Timestamp, float, and double types are handled by the legacy code path. See isLegacyPathUDF.
-     */
-
-    throw new HiveException("Unhandled cast input type: " + inputType);
+    return null;
   }
 
   private VectorExpression getCastToChar(List<ExprNodeDesc> childExpr, TypeInfo returnType)
@@ -1818,12 +1804,7 @@ public class VectorizationContext {
     } else if (isStringFamily(inputType)) {
       return createVectorExpression(CastStringGroupToChar.class, childExpr, Mode.PROJECTION, returnType);
     }
-
-    /*
-     * Timestamp, float, and double types are handled by the legacy code path. See isLegacyPathUDF.
-     */
-
-    throw new HiveException("Unhandled cast input type: " + inputType);
+    return null;
   }
 
   private VectorExpression getCastToVarChar(List<ExprNodeDesc> childExpr, TypeInfo returnType)
@@ -1847,12 +1828,7 @@ public class VectorizationContext {
     } else if (isStringFamily(inputType)) {
       return createVectorExpression(CastStringGroupToVarChar.class, childExpr, Mode.PROJECTION, returnType);
     }
-
-    /*
-     * Timestamp, float, and double types are handled by the legacy code path. See isLegacyPathUDF.
-     */
-
-    throw new HiveException("Unhandled cast input type: " + inputType);
+    return null;
   }
 
   private VectorExpression getCastToDoubleExpression(Class<?> udf, List<ExprNodeDesc> childExpr,
@@ -1866,7 +1842,12 @@ public class VectorizationContext {
         return getConstantVectorExpression(doubleValue, returnType, Mode.PROJECTION);
     }
     if (isIntFamily(inputType)) {
-      return createVectorExpression(CastLongToDouble.class, childExpr, Mode.PROJECTION, returnType);
+      if (udf.equals(UDFToFloat.class)) {
+        // In order to convert from integer to float correctly, we need to apply the float cast not the double cast (HIVE-13338).
+        return createVectorExpression(CastLongToFloatViaLongToDouble.class, childExpr, Mode.PROJECTION, returnType);
+      } else {
+        return createVectorExpression(CastLongToDouble.class, childExpr, Mode.PROJECTION, returnType);
+      }
     } else if (inputType.equals("timestamp")) {
       return createVectorExpression(CastTimestampToDouble.class, childExpr, Mode.PROJECTION,
           returnType);
@@ -1875,8 +1856,6 @@ public class VectorizationContext {
       // float types require no conversion, so use a no-op
       return getIdentityExpression(childExpr);
     }
-    // The string type is deliberately omitted -- it's handled elsewhere. See isLegacyPathUDF.
-
     return null;
   }
 
@@ -1905,8 +1884,6 @@ public class VectorizationContext {
       ocm.freeOutputColumn(lenExpr.getOutputColumn());
       return lenToBoolExpr;
     }
-    // cast(booleanExpr as boolean) case is omitted because planner removes it as a no-op
-
     return null;
   }
 
@@ -1926,8 +1903,6 @@ public class VectorizationContext {
       // integer and boolean types require no conversion, so use a no-op
       return getIdentityExpression(childExpr);
     }
-    // string type is deliberately omitted -- it's handled elsewhere. See isLegacyPathUDF.
-
     return null;
   }
 
@@ -2031,8 +2006,21 @@ public class VectorizationContext {
   /*
    * Return vector expression for a custom (i.e. not built-in) UDF.
    */
-  private VectorExpression getCustomUDFExpression(ExprNodeGenericFuncDesc expr)
+  private VectorExpression getCustomUDFExpression(ExprNodeGenericFuncDesc expr,  Mode mode)
       throws HiveException {
+
+    boolean isFilter = false;    // Assume.
+    if (mode == Mode.FILTER) {
+
+      // Is output type a BOOLEAN?
+      TypeInfo resultTypeInfo = expr.getTypeInfo();
+      if (resultTypeInfo.getCategory() == Category.PRIMITIVE &&
+          ((PrimitiveTypeInfo) resultTypeInfo).getPrimitiveCategory() == PrimitiveCategory.BOOLEAN) {
+        isFilter = true;
+      } else {
+        return null;
+      }
+    }
 
     //GenericUDFBridge udfBridge = (GenericUDFBridge) expr.getGenericUDF();
     List<ExprNodeDesc> childExprList = expr.getChildren();
@@ -2097,7 +2085,14 @@ public class VectorizationContext {
     for (Integer i : exprResultColumnNums) {
       ocm.freeOutputColumn(i);
     }
-    return ve;
+
+    if (isFilter) {
+      SelectColumnIsTrue filterVectorExpr = new SelectColumnIsTrue(outputCol);
+      filterVectorExpr.setChildExpressions(new VectorExpression[] {ve});
+      return filterVectorExpr;
+    } else {
+      return ve;
+    }
   }
 
   public static boolean isStringFamily(String resultType) {

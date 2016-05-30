@@ -92,8 +92,15 @@ public class HiveSortLimitPullUpConstantsRule extends RelOptRule {
       return;
     }
 
-    Map<RexNode, RexNode> constants = HiveReduceExpressionsRule.predicateConstants(
+    Map<RexNode, RexNode> conditionsExtracted = HiveReduceExpressionsRule.predicateConstants(
             RexNode.class, rexBuilder, predicates);
+    Map<RexNode, RexNode> constants = new HashMap<>();
+    for (int i = 0; i < count ; i++) {
+      RexNode expr = rexBuilder.makeInputRef(sort.getInput(), i);
+      if (conditionsExtracted.containsKey(expr)) {
+        constants.put(expr, conditionsExtracted.get(expr));
+      }
+    }
 
     // None of the expressions are constant. Nothing to do.
     if (constants.isEmpty()) {
@@ -102,9 +109,7 @@ public class HiveSortLimitPullUpConstantsRule extends RelOptRule {
 
     if (count == constants.size()) {
       // At least a single item in project is required.
-      final Map<RexNode, RexNode> map = new HashMap<>(constants);
-      map.remove(map.keySet().iterator().next());
-      constants = map;
+      constants.remove(constants.keySet().iterator().next());
     }
 
     // Create expressions for Project operators before and after the Sort

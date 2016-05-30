@@ -83,6 +83,7 @@ public class LlapDaemon extends CompositeService implements ContainerRunner, Lla
   private static final Logger LOG = LoggerFactory.getLogger(LlapDaemon.class);
 
   public static final String LOG4j2_PROPERTIES_FILE = "llap-daemon-log4j2.properties";
+  public static final String LLAP_HADOOP_METRICS2_PROPERTIES_FILE = "hadoop-metrics2-llapdaemon.properties";
   public static final String HADOOP_METRICS2_PROPERTIES_FILE = "hadoop-metrics2.properties";
   private final Configuration shuffleHandlerConf;
   private final LlapProtocolServerImpl server;
@@ -104,12 +105,6 @@ public class LlapDaemon extends CompositeService implements ContainerRunner, Lla
   private final long maxJvmMemory;
   private final String[] localDirs;
   private final DaemonId daemonId;
-
-  private final static Pattern hostsRe = Pattern.compile("[^A-Za-z0-9_-]");
-  private static String generateClusterName(Configuration conf) {
-    String hosts = HiveConf.getTrimmedVar(conf, ConfVars.LLAP_DAEMON_SERVICE_HOSTS);
-    return hostsRe.matcher(hosts.startsWith("@") ? hosts.substring(1) : hosts).replaceAll("_");
-  }
 
   // TODO Not the best way to share the address
   private final AtomicReference<InetSocketAddress> srvAddress = new AtomicReference<>(),
@@ -148,8 +143,8 @@ public class LlapDaemon extends CompositeService implements ContainerRunner, Lla
     }
     String hostName = MetricsUtils.getHostName();
     try {
-      daemonId = new DaemonId(UserGroupInformation.getCurrentUser().getUserName(),
-          generateClusterName(daemonConf), hostName, appName, System.currentTimeMillis());
+      daemonId = new DaemonId(UserGroupInformation.getCurrentUser().getShortUserName(),
+          LlapUtil.generateClusterName(daemonConf), hostName, appName, System.currentTimeMillis());
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }

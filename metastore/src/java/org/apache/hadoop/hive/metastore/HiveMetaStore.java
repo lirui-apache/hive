@@ -1512,6 +1512,59 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         endFunction("drop_constraint", success, ex, constraintName);
       }
     }
+
+    @Override
+    public void add_primary_key(AddPrimaryKeyRequest req)
+      throws MetaException, InvalidObjectException {
+      List<SQLPrimaryKey> primaryKeyCols = req.getPrimaryKeyCols();
+      String constraintName = (primaryKeyCols != null && primaryKeyCols.size() > 0) ?
+        primaryKeyCols.get(0).getPk_name() : "null";
+      startFunction("add_primary_key", ": " + constraintName);
+      boolean success = false;
+      Exception ex = null;
+      try {
+        getMS().addPrimaryKeys(primaryKeyCols);
+        success = true;
+      } catch (Exception e) {
+        ex = e;
+        if (e instanceof MetaException) {
+          throw (MetaException) e;
+        } else if (e instanceof InvalidObjectException) {
+          throw (InvalidObjectException) e;
+        } else {
+          throw newMetaException(e);
+        }
+      } finally {
+        endFunction("add_primary_key", success, ex, constraintName);
+      }
+    }
+
+    @Override
+    public void add_foreign_key(AddForeignKeyRequest req)
+      throws MetaException, InvalidObjectException {
+      List<SQLForeignKey> foreignKeyCols = req.getForeignKeyCols();
+      String constraintName = (foreignKeyCols != null && foreignKeyCols.size() > 0) ?
+        foreignKeyCols.get(0).getFk_name() : "null";
+      startFunction("add_foreign_key", ": " + constraintName);
+      boolean success = false;
+      Exception ex = null;
+      try {
+        getMS().addForeignKeys(foreignKeyCols);
+        success = true;
+      } catch (Exception e) {
+        ex = e;
+        if (e instanceof MetaException) {
+          throw (MetaException) e;
+        } else if (e instanceof InvalidObjectException) {
+          throw (InvalidObjectException) e;
+        } else {
+          throw newMetaException(e);
+        }
+      } finally {
+        endFunction("add_foreign_key", success, ex, constraintName);
+      }
+    }
+
     private boolean is_table_exists(RawStore ms, String dbname, String name)
         throws MetaException {
       return (ms.getTable(dbname, name) != null);
@@ -4368,7 +4421,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       try {
         statsObj = getMS().getTableColumnStatistics(
             dbName, tableName, Lists.newArrayList(colName));
-        assert statsObj.getStatsObjSize() <= 1;
+        if (statsObj != null) {
+          assert statsObj.getStatsObjSize() <= 1;
+        }
         return statsObj;
       } finally {
         endFunction("get_column_statistics_by_table: ", statsObj != null, null, tableName);
@@ -5799,6 +5854,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     @Override
+    public void abort_txns(AbortTxnsRequest rqst) throws NoSuchTxnException, TException {
+      getTxnHandler().abortTxns(rqst);
+    }
+
+    @Override
     public void commit_txn(CommitTxnRequest rqst)
         throws NoSuchTxnException, TxnAbortedException, TException {
       getTxnHandler().commitTxn(rqst);
@@ -5951,8 +6011,62 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         throws NoSuchObjectException, InvalidObjectException, MetaException, InvalidInputException,
         TException {
       boolean ret = true;
-      for (ColumnStatistics colStats : request.getColStats()) {
-        ret = ret && update_partition_column_statistics(colStats);
+      List<ColumnStatistics> csNews = request.getColStats();
+      if (csNews == null || csNews.isEmpty()) {
+        return ret;
+      }
+      // figure out if it is table level or partition level
+      ColumnStatistics firstColStats = csNews.get(0);
+      ColumnStatisticsDesc statsDesc = firstColStats.getStatsDesc();
+      String dbName = statsDesc.getDbName();
+      String tableName = statsDesc.getTableName();
+      List<String> colNames = new ArrayList<>();
+      for (ColumnStatisticsObj obj : firstColStats.getStatsObj()) {
+        colNames.add(obj.getColName());
+      }
+      if (statsDesc.isIsTblLevel()) {
+        // there should be only one ColumnStatistics
+        if (request.getColStatsSize() != 1) {
+          throw new MetaException(
+              "Expecting only 1 ColumnStatistics for table's column stats, but find "
+                  + request.getColStatsSize());
+        } else {
+          if (request.isSetNeedMerge() && request.isNeedMerge()) {
+            // one single call to get all column stats
+            ColumnStatistics csOld = getMS().getTableColumnStatistics(dbName, tableName, colNames);
+            if (csOld != null && csOld.getStatsObjSize() != 0) {
+              MetaStoreUtils.mergeColStats(firstColStats, csOld);
+            }
+          }
+          return update_table_column_statistics(firstColStats);
+        }
+      } else {
+        // partition level column stats merging
+        List<String> partitionNames = new ArrayList<>();
+        for (ColumnStatistics csNew : csNews) {
+          partitionNames.add(csNew.getStatsDesc().getPartName());
+        }
+        Map<String, ColumnStatistics> map = new HashMap<>();
+        if (request.isSetNeedMerge() && request.isNeedMerge()) {
+          // a single call to get all column stats for all partitions
+          List<ColumnStatistics> csOlds = getMS().getPartitionColumnStatistics(dbName, tableName,
+              partitionNames, colNames);
+          if (csNews.size() != csOlds.size()) {
+            // some of the partitions miss stats.
+            LOG.debug("Some of the partitions miss stats.");
+          }
+          for (ColumnStatistics csOld : csOlds) {
+            map.put(csOld.getStatsDesc().getPartName(), csOld);
+          }
+        }
+        for (int index = 0; index < csNews.size(); index++) {
+          ColumnStatistics csNew = csNews.get(index);
+          ColumnStatistics csOld = map.get(csNew.getStatsDesc().getPartName());
+          if (csOld != null && csOld.getStatsObjSize() != 0) {
+            MetaStoreUtils.mergeColStats(csNew, csOld);
+          }
+          ret = ret && update_partition_column_statistics(csNew);
+        }
       }
       return ret;
     }
@@ -6190,13 +6304,6 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     @Override
-    public GetChangeVersionResult get_change_version(GetChangeVersionRequest req)
-        throws TException {
-      return new GetChangeVersionResult(getMS().getChangeVersion(req.getTopic()));
-    }
-
-
-    @Override
     public PrimaryKeysResponse get_primary_keys(PrimaryKeysRequest request)
       throws MetaException, NoSuchObjectException, TException {
       String db_name = request.getDb_name();
@@ -6250,7 +6357,6 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       }
       return new ForeignKeysResponse(ret);
     }
-
   }
 
 

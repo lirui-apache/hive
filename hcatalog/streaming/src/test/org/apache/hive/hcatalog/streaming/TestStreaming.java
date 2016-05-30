@@ -51,21 +51,21 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.GetOpenTxnsInfoResponse;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.ShowLocksRequest;
 import org.apache.hadoop.hive.metastore.api.ShowLocksResponse;
 import org.apache.hadoop.hive.metastore.api.ShowLocksResponseElement;
 import org.apache.hadoop.hive.metastore.api.TxnAbortedException;
 import org.apache.hadoop.hive.metastore.api.TxnInfo;
 import org.apache.hadoop.hive.metastore.api.TxnState;
-import org.apache.hadoop.hive.metastore.api.hive_metastoreConstants;
 import org.apache.hadoop.hive.metastore.txn.TxnDbUtil;
 import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.io.AcidUtils;
 import org.apache.hadoop.hive.ql.io.IOConstants;
-import org.apache.hadoop.hive.ql.io.orc.FileDump;
+import org.apache.orc.impl.OrcAcidUtils;
+import org.apache.orc.tools.FileDump;
 import org.apache.hadoop.hive.ql.io.orc.OrcFile;
 import org.apache.hadoop.hive.ql.io.orc.OrcInputFormat;
-import org.apache.hadoop.hive.ql.io.orc.OrcRecordUpdater;
 import org.apache.hadoop.hive.ql.io.orc.OrcStruct;
 import org.apache.hadoop.hive.ql.io.orc.Reader;
 import org.apache.hadoop.hive.ql.io.orc.RecordReader;
@@ -647,13 +647,16 @@ public class TestStreaming {
     //todo: this should ideally check Transaction heartbeat as well, but heartbeat
     //timestamp is not reported yet
     //GetOpenTxnsInfoResponse txnresp = msClient.showTxns();
-    ShowLocksResponse response = msClient.showLocks();
+    ShowLocksRequest request = new ShowLocksRequest();
+    request.setDbname(dbName2);
+    request.setTablename(tblName2);
+    ShowLocksResponse response = msClient.showLocks(request);
     Assert.assertEquals("Wrong nubmer of locks: " + response, 1, response.getLocks().size());
     ShowLocksResponseElement lock = response.getLocks().get(0);
     long acquiredAt = lock.getAcquiredat();
     long heartbeatAt = lock.getLastheartbeat();
     txnBatch.heartbeat();
-    response = msClient.showLocks();
+    response = msClient.showLocks(request);
     Assert.assertEquals("Wrong number of locks2: " + response, 1, response.getLocks().size());
     lock = response.getLocks().get(0);
     Assert.assertEquals("Acquired timestamp didn't match", acquiredAt, lock.getAcquiredat());
@@ -1085,7 +1088,7 @@ public class TestStreaming {
     Reader reader = OrcFile.createReader(orcFile,
             OrcFile.readerOptions(conf).filesystem(fs));
 
-    RecordReader rows = reader.rows(null);
+    RecordReader rows = reader.rows();
     StructObjectInspector inspector = (StructObjectInspector) reader
             .getObjectInspector();
 
@@ -1557,7 +1560,7 @@ public class TestStreaming {
       final Map<String, List<Long>> offsetMap, final String key, final int numEntries)
       throws IOException {
     Path dataPath = new Path(file);
-    Path sideFilePath = OrcRecordUpdater.getSideFile(dataPath);
+    Path sideFilePath = OrcAcidUtils.getSideFile(dataPath);
     Path cPath = new Path(sideFilePath.getParent(), sideFilePath.getName() + ".corrupt");
     FileSystem fs = sideFilePath.getFileSystem(conf);
     List<Long> offsets = offsetMap.get(key);

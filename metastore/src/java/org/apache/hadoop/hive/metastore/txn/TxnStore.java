@@ -77,6 +77,12 @@ public interface TxnStore {
   public GetOpenTxnsResponse getOpenTxns() throws MetaException;
 
   /**
+   * Get the count for open transactions.
+   * @throws MetaException
+   */
+  public void countOpenTxns() throws MetaException;
+
+  /**
    * Open a set of transactions
    * @param rqst request to open transactions
    * @return information on opened transactions
@@ -91,6 +97,14 @@ public interface TxnStore {
    * @throws MetaException
    */
   public void abortTxn(AbortTxnRequest rqst) throws NoSuchTxnException, MetaException;
+
+  /**
+   * Abort (rollback) a list of transactions in one request.
+   * @param rqst info on transactions to abort
+   * @throws NoSuchTxnException
+   * @throws MetaException
+   */
+  public void abortTxns(AbortTxnsRequest rqst) throws NoSuchTxnException, MetaException;
 
   /**
    * Commit a transaction

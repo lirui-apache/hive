@@ -30,7 +30,6 @@ import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.FileMetadataHandler;
 import org.apache.hadoop.hive.metastore.HiveMetaStore;
-import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.PartFilterExprUtil;
 import org.apache.hadoop.hive.metastore.PartitionExpressionProxy;
 import org.apache.hadoop.hive.metastore.RawStore;
@@ -2252,9 +2251,7 @@ public class HBaseStore implements RawStore {
     boolean commit = false;
     openTransaction();
     try {
-      HBaseReadWrite hbase = getHBase();
-      hbase.putFunction(func);
-      hbase.incrementChangeVersion(IMetaStoreClient.PERMANENT_FUNCTION_CV);
+      getHBase().putFunction(func);
       commit = true;
     } catch (IOException e) {
       LOG.error("Unable to create function", e);
@@ -2270,9 +2267,7 @@ public class HBaseStore implements RawStore {
     boolean commit = false;
     openTransaction();
     try {
-      HBaseReadWrite hbase = getHBase();
-      hbase.putFunction(newFunction);
-      hbase.incrementChangeVersion(IMetaStoreClient.PERMANENT_FUNCTION_CV);
+      getHBase().putFunction(newFunction);
       commit = true;
     } catch (IOException e) {
       LOG.error("Unable to alter function ", e);
@@ -2288,9 +2283,7 @@ public class HBaseStore implements RawStore {
     boolean commit = false;
     openTransaction();
     try {
-      HBaseReadWrite hbase = getHBase();
-      hbase.deleteFunction(dbName, funcName);
-      hbase.incrementChangeVersion(IMetaStoreClient.PERMANENT_FUNCTION_CV);
+      getHBase().deleteFunction(dbName, funcName);
       commit = true;
     } catch (IOException e) {
       LOG.error("Unable to delete function" + e);
@@ -2580,21 +2573,6 @@ public class HBaseStore implements RawStore {
   }
 
   @Override
-  public long getChangeVersion(String topic) throws MetaException {
-    openTransaction();
-    boolean commit = true;
-    try {
-      return getHBase().getChangeVersion(topic);
-    } catch (IOException e) {
-      commit = false;
-      LOG.error("Unable to get change version", e);
-      throw new MetaException("Unable to get change version " + e.getMessage());
-    } finally {
-      commitOrRoleBack(commit);
-    }
-  }
-
-  @Override
   public List<SQLPrimaryKey> getPrimaryKeys(String db_name, String tbl_name)
     throws MetaException {
     // TODO Auto-generated method stub
@@ -2620,5 +2598,17 @@ public class HBaseStore implements RawStore {
   public void dropConstraint(String dbName, String tableName,
     String constraintName) throws NoSuchObjectException {
     // TODO Auto-generated method stub 
+  }
+
+  @Override
+  public void addPrimaryKeys(List<SQLPrimaryKey> pks)
+    throws InvalidObjectException, MetaException {
+    // TODO Auto-generated method stub
+  }
+
+  @Override
+  public void addForeignKeys(List<SQLForeignKey> fks)
+    throws InvalidObjectException, MetaException {
+    // TODO Auto-generated method stub
   }
 }

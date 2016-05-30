@@ -200,16 +200,23 @@ public class LlapServiceDriver {
 
     if (options.getSize() != -1) {
       if (options.getCache() != -1) {
-        Preconditions.checkArgument(options.getCache() < options.getSize(),
-            "Cache has to be smaller than the container sizing");
+        if (HiveConf.getBoolVar(conf, HiveConf.ConfVars.LLAP_ALLOCATOR_MAPPED) == false) {
+          // direct heap allocations need to be safer
+          Preconditions.checkArgument(options.getCache() < options.getSize(),
+              "Cache has to be smaller than the container sizing");
+        } else if (options.getCache() < options.getSize()) {
+          LOG.warn("Note that this might need YARN physical memory monitoring to be turned off (yarn.nodemanager.pmem-check-enabled=false)");
+        }
       }
       if (options.getXmx() != -1) {
         Preconditions.checkArgument(options.getXmx() < options.getSize(),
             "Working memory has to be smaller than the container sizing");
       }
-      if (HiveConf.getBoolVar(conf, HiveConf.ConfVars.LLAP_ALLOCATOR_DIRECT)) {
+      if (HiveConf.getBoolVar(conf, HiveConf.ConfVars.LLAP_ALLOCATOR_DIRECT)
+          && false == HiveConf.getBoolVar(conf, HiveConf.ConfVars.LLAP_ALLOCATOR_MAPPED)) {
+        // direct and not memory mapped
         Preconditions.checkArgument(options.getXmx() + options.getCache() < options.getSize(),
-            "Working memory + cache has to be smaller than the containing sizing ");
+            "Working memory + cache has to be smaller than the container sizing ");
       }
     }
 
@@ -248,10 +255,11 @@ public class LlapServiceDriver {
       // Needs more explanation here
       // Xmx is not the max heap value in JDK8. You need to subtract 50% of the survivor fraction
       // from this, to get actual usable  memory before it goes into GC
-      xmx = (long) (options.getXmx() / (1024 * 1024));
-      conf.setLong(ConfVars.LLAP_DAEMON_MEMORY_PER_INSTANCE_MB.varname, xmx);
+      xmx = options.getXmx();
+      long xmxMb = (long)(xmx / (1024 * 1024));
+      conf.setLong(ConfVars.LLAP_DAEMON_MEMORY_PER_INSTANCE_MB.varname, xmxMb);
       propsDirectOptions.setProperty(ConfVars.LLAP_DAEMON_MEMORY_PER_INSTANCE_MB.varname,
-          String.valueOf(xmx));
+          String.valueOf(xmxMb));
     }
 
     if (options.getLlapQueueName() != null && !options.getLlapQueueName().isEmpty()) {
@@ -401,12 +409,22 @@ public class LlapServiceDriver {
     IOUtils.copyBytes(loggerContent,
         lfs.create(new Path(confPath, "llap-daemon-log4j2.properties"), true), conf, true);
 
-    URL metrics2 = conf.getResource(LlapDaemon.HADOOP_METRICS2_PROPERTIES_FILE);
+    String metricsFile = LlapDaemon.LLAP_HADOOP_METRICS2_PROPERTIES_FILE;
+    URL metrics2 = conf.getResource(metricsFile);
+    if (metrics2 == null) {
+      LOG.warn(LlapDaemon.LLAP_HADOOP_METRICS2_PROPERTIES_FILE + " cannot be found." +
+          " Looking for " + LlapDaemon.HADOOP_METRICS2_PROPERTIES_FILE);
+      metricsFile = LlapDaemon.HADOOP_METRICS2_PROPERTIES_FILE;
+      metrics2 = conf.getResource(metricsFile);
+    }
     if (metrics2 != null) {
       InputStream metrics2FileStream = metrics2.openStream();
-      IOUtils.copyBytes(metrics2FileStream,
-          lfs.create(new Path(confPath, LlapDaemon.HADOOP_METRICS2_PROPERTIES_FILE), true),
+      IOUtils.copyBytes(metrics2FileStream, lfs.create(new Path(confPath, metricsFile), true),
           conf, true);
+      LOG.info("Copied hadoop metrics2 properties file from " + metrics2);
+    } else {
+      LOG.warn("Cannot find " + LlapDaemon.LLAP_HADOOP_METRICS2_PROPERTIES_FILE + " or " +
+          LlapDaemon.HADOOP_METRICS2_PROPERTIES_FILE + " in classpath.");
     }
 
     PrintWriter udfStream =
