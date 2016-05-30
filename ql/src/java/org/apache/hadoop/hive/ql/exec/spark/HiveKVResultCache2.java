@@ -83,8 +83,8 @@ public class HiveKVResultCache2 {
       pair.setSecond(new BytesWritable());
       buffer[i] = pair;
     }
-    input = new Input();
-    output = new Output();
+    input = new Input(4096);
+    output = new Output(4096);
     spillLock = new Object();
   }
 
@@ -171,7 +171,8 @@ public class HiveKVResultCache2 {
       // read from file
       synchronized (spillLock) {
         try {
-          if (input.getInputStream() == null && output.getOutputStream() != null) {
+          Preconditions.checkState(input.getInputStream() != null || output.getOutputStream() != null);
+          if (input.getInputStream() == null) {
             output.close();
             output.setOutputStream(null);
 
@@ -185,7 +186,6 @@ public class HiveKVResultCache2 {
               }
             }
           }
-          Preconditions.checkState(input.getInputStream() != null);
           HiveKey key = new HiveKey();
           BytesWritable value = new BytesWritable();
           readHiveKey(input, key);
