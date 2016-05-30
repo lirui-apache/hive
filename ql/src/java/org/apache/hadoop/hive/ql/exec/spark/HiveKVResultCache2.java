@@ -44,7 +44,8 @@ public class HiveKVResultCache2 {
 
   private volatile int readCursor = 0;
   private volatile int writeCursor = 0;
-  private volatile long numRowsInFile = 0;
+  private volatile long numRowsInInput = 0;
+  private volatile long numRowsInOutput = 0;
 
   private final Object spillLock;
 
@@ -59,10 +60,8 @@ public class HiveKVResultCache2 {
       }
     }
 
-    if (tmpFile == null || input.getInputStream() != null) {
-      tmpFile = File.createTempFile("ResultCache", ".tmp", parentFile);
-      tmpFile.deleteOnExit();
-    }
+    tmpFile = File.createTempFile("ResultCache", ".tmp", parentFile);
+    tmpFile.deleteOnExit();
 
     FileOutputStream fos = null;
     try {
@@ -139,10 +138,11 @@ public class HiveKVResultCache2 {
         try {
           if (output.getOutputStream() == null) {
             setupOutput();
+            numRowsInOutput = 0;
           }
           writeHiveKey(output, key);
           writeValue(output, value);
-          numRowsInFile++;
+          numRowsInOutput++;
         } catch (IOException e) {
           throw new RuntimeException("Failed to spill rows to disk", e);
         }
@@ -160,7 +160,7 @@ public class HiveKVResultCache2 {
   }
 
   public boolean hasNext() {
-    return !isEmpty() || numRowsInFile > 0;
+    return !isEmpty() || numRowsInOutput > 0 || numRowsInInput > 0;
   }
 
   public Tuple2<HiveKey, BytesWritable> next() {
@@ -171,10 +171,12 @@ public class HiveKVResultCache2 {
       // read from file
       synchronized (spillLock) {
         try {
-          Preconditions.checkState(input.getInputStream() != null || output.getOutputStream() != null);
           if (input.getInputStream() == null) {
             output.close();
             output.setOutputStream(null);
+
+            numRowsInInput = numRowsInOutput;
+            numRowsInOutput = 0;
 
             FileInputStream fis = null;
             try {
@@ -190,8 +192,8 @@ public class HiveKVResultCache2 {
           BytesWritable value = new BytesWritable();
           readHiveKey(input, key);
           readValue(input, value);
-          numRowsInFile--;
-          if (input.eof()) {
+          numRowsInInput--;
+          if (numRowsInInput == 0) {
             input.close();
             input.setInputStream(null);
           }
