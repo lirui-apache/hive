@@ -106,35 +106,35 @@ public class HiveKVResultCache2 {
 
   private static void writeHiveKey(Output output, HiveKey hiveKey) {
     int size = hiveKey.getLength();
-    output.writeInt(size);
+    output.writeVarInt(size, true);
     output.writeBytes(hiveKey.getBytes(), 0, size);
-    output.writeInt(hiveKey.hashCode());
-    output.writeInt(hiveKey.getDistKeyLength());
+    output.writeVarInt(hiveKey.hashCode(), false);
+    output.writeVarInt(hiveKey.getDistKeyLength(), false);
   }
 
   private static void readHiveKey(Input input, HiveKey hiveKey) {
-    byte[] bytes = input.readBytes(input.readInt());
-    int hashCode = input.readInt();
-    int distKeyLen = input.readInt();
+    byte[] bytes = input.readBytes(input.readVarInt(true));
+    int hashCode = input.readVarInt(false);
+    int distKeyLen = input.readVarInt(false);
     hiveKey.setHashCode(hashCode);
     hiveKey.setDistKeyLength(distKeyLen);
     hiveKey.set(bytes, 0, bytes.length);
   }
 
   private static void readValue(Input input, BytesWritable value) {
-    byte[] bytes = input.readBytes(input.readInt());
+    byte[] bytes = input.readBytes(input.readVarInt(true));
     value.set(bytes, 0, bytes.length);
   }
 
   private static void writeValue(Output output, BytesWritable bytesWritable) {
     int size = bytesWritable.getLength();
-    output.writeInt(size);
+    output.writeVarInt(size, true);
     output.writeBytes(bytesWritable.getBytes(), 0, size);
   }
 
   public void add(HiveKey key, BytesWritable value) {
     if (isFull()) {
-      // spill
+      // spill to file
       synchronized (spillLock) {
         try {
           if (output.getOutputStream() == null) {
