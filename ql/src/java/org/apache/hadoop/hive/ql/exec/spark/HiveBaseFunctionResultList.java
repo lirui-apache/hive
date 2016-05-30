@@ -55,14 +55,13 @@ public abstract class HiveBaseFunctionResultList<T> implements
           return new HiveKVResultCache();
         }
       };
-  private final HiveKVResultCache lastRecordOutput;
+  private final HiveKVResultCache2 lastRecordOutput;
   private SingleProducerConsumerCache resultCache;
   private boolean iteratorAlreadyCreated = false;
 
   public HiveBaseFunctionResultList(Iterator<T> inputIterator, Configuration conf) {
     this.inputIterator = inputIterator;
-    this.lastRecordOutput = new HiveKVResultCache();
-    lastRecordOutput.clear();
+    this.lastRecordOutput = new HiveKVResultCache2();
     newResultCache = HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVE_SPARK_NEW_RESULTCACHE);
   }
 
@@ -190,9 +189,6 @@ public abstract class HiveBaseFunctionResultList<T> implements
 
     @Override
     public Tuple2<HiveKey, BytesWritable> next() {
-      if (!hasNext()) {
-        throw new NoSuchElementException();
-      }
       return lastRecordOutput.next();
     }
 
