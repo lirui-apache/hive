@@ -64,6 +64,7 @@ public class HiveSparkClientFactory {
       // With local spark context, all user sessions share the same spark context.
       return LocalHiveSparkClient.getInstance(generateSparkConf(sparkConf));
     } else {
+      hiveconf.get("yarn.nodemanager.local-dirs");
       return new RemoteHiveSparkClient(hiveconf, sparkConf);
     }
   }
