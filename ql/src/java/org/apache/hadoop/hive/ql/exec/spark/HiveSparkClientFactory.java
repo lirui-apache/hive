@@ -64,7 +64,6 @@ public class HiveSparkClientFactory {
       // With local spark context, all user sessions share the same spark context.
       return LocalHiveSparkClient.getInstance(generateSparkConf(sparkConf));
     } else {
-      hiveconf.get("yarn.nodemanager.local-dirs");
       return new RemoteHiveSparkClient(hiveconf, sparkConf);
     }
   }
@@ -195,6 +194,11 @@ public class HiveSparkClientFactory {
     if (sparkMaster.startsWith("yarn") && sparkYarnReportInterval == null) {
       //the new version of spark also takes time-units, but old versions do not.
       sparkConf.put(SPARK_YARN_REPORT_INTERVAL, "60000");
+    }
+
+    // for test
+    if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVE_IN_TEST)) {
+      sparkConf.put("test.tmp.dir", System.getProperty("test.tmp.dir"));
     }
 
     return sparkConf;
