@@ -432,6 +432,9 @@ class SparkClientImpl implements SparkClient {
         argv.add(String.format("%s=%s", hiveSparkConfKey, value));
       }
 
+      argv.add("--conf");
+      argv.add(String.format("%s=%s", "test.tmp.dir", conf.get("test.tmp.dir")));
+
       String cmd = Joiner.on(" ").join(argv);
       LOG.info("Running client driver with argv: {}", cmd);
       ProcessBuilder pb = new ProcessBuilder("sh", "-c", cmd);
