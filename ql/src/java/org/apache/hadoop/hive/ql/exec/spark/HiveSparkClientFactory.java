@@ -198,7 +198,7 @@ public class HiveSparkClientFactory {
 
     // for test
     if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVE_IN_TEST)) {
-      sparkConf.put("test.tmp.dir", System.getProperty("test.tmp.dir"));
+      hiveConf.set("test.tmp.dir", System.getProperty("test.tmp.dir"));
     }
 
     return sparkConf;
