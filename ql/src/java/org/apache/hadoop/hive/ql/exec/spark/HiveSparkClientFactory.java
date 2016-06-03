@@ -196,11 +196,6 @@ public class HiveSparkClientFactory {
       sparkConf.put(SPARK_YARN_REPORT_INTERVAL, "60000");
     }
 
-    // for test
-    if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVE_IN_TEST)) {
-      hiveConf.set("test.tmp.dir", System.getProperty("test.tmp.dir"));
-    }
-
     return sparkConf;
   }
 
