@@ -191,10 +191,10 @@ public class RemoteHiveSparkClient implements HiveSparkClient {
     refreshLocalResources(sparkWork, hiveConf);
     final JobConf jobConf = new JobConf(hiveConf);
 
-    // for test
-    if (HiveConf.getBoolVar(jobConf, HiveConf.ConfVars.HIVE_IN_TEST)) {
-      jobConf.set("test.tmp.dir", System.getProperty("test.tmp.dir"));
-    }
+//    // for test
+//    if (HiveConf.getBoolVar(jobConf, HiveConf.ConfVars.HIVE_IN_TEST)) {
+//      jobConf.set("test.tmp.dir", System.getProperty("test.tmp.dir"));
+//    }
 
     // Create temporary scratch dir
     final Path emptyScratchDir = ctx.getMRTmpPath();
