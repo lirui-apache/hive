@@ -2789,7 +2789,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
   //from mv command if the destf is a directory, it replaces the destf instead of moving under
   //the destf. in this case, the replaced destf still preserves the original destf's permission
   public static boolean moveFile(final HiveConf conf, Path srcf, final Path destf,
-      boolean replace, boolean isSrcLocal) throws HiveException {
+      final boolean replace, boolean isSrcLocal) throws HiveException {
     final FileSystem srcFs, destFs;
     try {
       destFs = destf.getFileSystem(conf);
@@ -2874,6 +2874,9 @@ private void constructOneLBLocationMap(FileStatus fSta,
                   Path destPath = new Path(destf, status.getPath().getName());
                   String group = status.getGroup();
                   try {
+                    if (replace && destFs.exists(destPath)) {
+                      destFs.delete(destPath, false);
+                    }
                     if(destFs.rename(status.getPath(), destf)) {
                       if (inheritPerms) {
                         HdfsUtils.setFullFileStatus(conf, desiredStatus, group, destFs, destPath, false);
