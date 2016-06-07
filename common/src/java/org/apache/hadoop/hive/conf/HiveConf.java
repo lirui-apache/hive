@@ -1537,8 +1537,6 @@ public class HiveConf extends Configuration {
         "The Java class (implementing the StatsAggregator interface) that is used by default if hive.stats.dbclass is custom type."),
     HIVE_STATS_ATOMIC("hive.stats.atomic", false,
         "whether to update metastore stats only if all stats are available"),
-    HIVE_STATS_COLLECT_RAWDATASIZE("hive.stats.collect.rawdatasize", true,
-        "should the raw data size be collected when analyzing tables"),
     CLIENT_STATS_COUNTERS("hive.client.stats.counters", "",
         "Subset of counters that should be of interest for hive.client.stats.publishers (when one wants to limit their publishing). \n" +
         "Non-display names should be used"),
@@ -2082,7 +2080,7 @@ public class HiveConf extends Configuration {
     HIVE_SERVER2_THRIFT_BIND_HOST("hive.server2.thrift.bind.host", "",
         "Bind host on which to run the HiveServer2 Thrift service."),
     HIVE_SERVER2_PARALLEL_COMPILATION("hive.driver.parallel.compilation", false, "Whether to\n" +
-        "enable parallel compilation between sessions on HiveServer2. The default is false."),
+        "enable parallel compilation of the queries between sessions and within the same session on HiveServer2. The default is false."),
     HIVE_SERVER2_COMPILE_LOCK_TIMEOUT("hive.server2.compile.lock.timeout", "0s",
         new TimeValidator(TimeUnit.SECONDS),
         "Number of seconds a request will wait to acquire the compile lock before giving up. " +
@@ -2395,11 +2393,14 @@ public class HiveConf extends Configuration {
     HIVE_SERVER2_THRIFT_RESULTSET_MAX_FETCH_SIZE("hive.server2.thrift.resultset.max.fetch.size", 1000,
       "Max number of rows sent in one Fetch RPC call by the server to the client."),
 
+    HIVE_SERVER2_XSRF_FILTER_ENABLED("hive.server2.xsrf.filter.enabled",false,
+        "If enabled, HiveServer2 will block any requests made to it over http " +
+        "if an X-XSRF-HEADER header is not present"),
     HIVE_SECURITY_COMMAND_WHITELIST("hive.security.command.whitelist", "set,reset,dfs,add,list,delete,reload,compile",
         "Comma separated list of non-SQL Hive commands users are authorized to execute"),
 
-     HIVE_MOVE_FILES_THREAD_COUNT("hive.mv.files.thread", 25, new  SizeValidator(1L, true, 1024L, true), "Number of threads"
-         + " used to move files in move task"),
+     HIVE_MOVE_FILES_THREAD_COUNT("hive.mv.files.thread", 25, new  SizeValidator(0L, true, 1024L, true), "Number of threads"
+         + " used to move files in move task. Set it to 0 to disable multi-threaded file moves."),
     // If this is set all move tasks at the end of a multi-insert query will only begin once all
     // outputs are ready
     HIVE_MULTI_INSERT_MOVE_TASKS_SHARE_DEPENDENCIES(
@@ -2663,7 +2664,7 @@ public class HiveConf extends Configuration {
         "cases of file overwrites. This is supported on HDFS."),
     LLAP_ORC_ENABLE_TIME_COUNTERS("hive.llap.io.orc.time.counters", true,
         "Whether to enable time counters for LLAP IO layer (time spent in HDFS, etc.)"),
-    LLAP_AUTO_ALLOW_UBER("hive.llap.auto.allow.uber", true,
+    LLAP_AUTO_ALLOW_UBER("hive.llap.auto.allow.uber", false,
         "Whether or not to allow the planner to run vertices in the AM."),
     LLAP_AUTO_ENFORCE_TREE("hive.llap.auto.enforce.tree", true,
         "Enforce that all parents are in llap, before considering vertex"),
@@ -2716,6 +2717,12 @@ public class HiveConf extends Configuration {
     LLAP_MANAGEMENT_ACL("hive.llap.management.acl", "*", "The ACL for LLAP daemon management."),
     LLAP_MANAGEMENT_ACL_DENY("hive.llap.management.acl.blocked", "",
         "The deny ACL for LLAP daemon management."),
+    LLAP_REMOTE_TOKEN_REQUIRES_SIGNING("hive.llap.remote.token.requires.signing", "true",
+        new StringSet("false", "except_llap_owner", "true"),
+        "Whether the token returned from LLAP management API should require fragment signing.\n" +
+        "True by default; can be disabled to allow CLI to get tokens from LLAP in a secure\n" +
+        "cluster by setting it to true or 'except_llap_owner' (the latter returns such tokens\n" +
+        "to everyone except the user LLAP cluster is authenticating under)."),
 
     // Hadoop DelegationTokenManager default is 1 week.
     LLAP_DELEGATION_TOKEN_LIFETIME("hive.llap.daemon.delegation.token.lifetime", "14d",
@@ -2725,11 +2732,6 @@ public class HiveConf extends Configuration {
         "RPC port for LLAP daemon management service."),
     LLAP_WEB_AUTO_AUTH("hive.llap.auto.auth", false,
         "Whether or not to set Hadoop configs to enable auth in LLAP web app."),
-    LLAP_CREATE_TOKEN_LOCALLY("hive.llap.create.token.locally", "hs2",
-        new StringSet("true", "hs2", "false"),
-        "Whether to create LLAP tokens locally, saving directly to ZooKeeper SecretManager.\n" +
-        "Requires one to have access to ZK paths; in other words, this should only be used in\n" +
-        "HiveServer2. By default, the value is 'hs2', which means exactly that."),
 
     LLAP_DAEMON_RPC_NUM_HANDLERS("hive.llap.daemon.rpc.num.handlers", 5,
       "Number of RPC handlers for LLAP daemon.", "llap.daemon.rpc.num.handlers"),
@@ -2873,6 +2875,8 @@ public class HiveConf extends Configuration {
         "protocol or ZK paths), similar to how ssh refuses a key with bad access permissions."),
     LLAP_DAEMON_OUTPUT_SERVICE_PORT("hive.llap.daemon.output.service.port", 15003,
         "LLAP daemon output service port"),
+    LLAP_DAEMON_OUTPUT_SERVICE_SEND_BUFFER_SIZE("hive.llap.daemon.output.service.send.buffer.size",
+        128 * 1024, "Send buffer size to be used by LLAP daemon output service"),
     LLAP_ENABLE_GRACE_JOIN_IN_LLAP("hive.llap.enable.grace.join.in.llap", false,
         "Override if grace join should be allowed to run in llap."),
 
@@ -2932,7 +2936,8 @@ public class HiveConf extends Configuration {
 
 
     HIVE_CONF_RESTRICTED_LIST("hive.conf.restricted.list",
-        "hive.security.authenticator.manager,hive.security.authorization.manager,hive.users.in.admin.role",
+        "hive.security.authenticator.manager,hive.security.authorization.manager,hive.users.in.admin.role," +
+        "hive.server2.xsrf.filter.enabled",
         "Comma separated list of configuration options which are immutable at runtime"),
     HIVE_CONF_HIDDEN_LIST("hive.conf.hidden.list",
         METASTOREPWD.varname + "," + HIVE_SERVER2_SSL_KEYSTORE_PASSWORD.varname,

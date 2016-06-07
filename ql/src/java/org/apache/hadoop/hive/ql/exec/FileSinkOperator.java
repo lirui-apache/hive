@@ -39,7 +39,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.ql.CompilationOpContext;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.io.AcidUtils;
@@ -79,6 +78,7 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.hive.common.util.HiveStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,7 +111,6 @@ public class FileSinkOperator extends TerminalOperator<FileSinkDesc> implements
   protected transient int maxPartitions;
   protected transient ListBucketingCtx lbCtx;
   protected transient boolean isSkewedStoredAsSubDirectories;
-  protected transient boolean statsCollectRawDataSize;
   protected transient boolean[] statsFromRecordWriter;
   protected transient boolean isCollectRWStats;
   private transient FSPaths prevFsp;
@@ -360,7 +359,6 @@ public class FileSinkOperator extends TerminalOperator<FileSinkDesc> implements
       }
       isCompressed = conf.getCompressed();
       parent = Utilities.toTempPath(conf.getDirName());
-      statsCollectRawDataSize = conf.isStatsCollectRawDataSize();
       statsFromRecordWriter = new boolean[numFiles];
       serializer = (Serializer) conf.getTableInfo().getDeserializerClass().newInstance();
       serializer.initialize(hconf, conf.getTableInfo().getProperties());
@@ -702,7 +700,7 @@ public class FileSinkOperator extends TerminalOperator<FileSinkDesc> implements
         }
 
         String invalidPartitionVal;
-        if((invalidPartitionVal = MetaStoreUtils.getPartitionValWithInvalidCharacter(dpVals, dpCtx.getWhiteListPattern()))!=null) {
+        if((invalidPartitionVal = HiveStringUtils.getPartitionValWithInvalidCharacter(dpVals, dpCtx.getWhiteListPattern()))!=null) {
           throw new HiveFatalException("Partition value '" + invalidPartitionVal +
               "' contains a character not matched by whitelist pattern '" +
               dpCtx.getWhiteListPattern().toString() + "'.  " + "(configure with " +
@@ -732,11 +730,9 @@ public class FileSinkOperator extends TerminalOperator<FileSinkDesc> implements
       // of gathering stats
       isCollectRWStats = areAllTrue(statsFromRecordWriter);
       if (conf.isGatherStats() && !isCollectRWStats) {
-        if (statsCollectRawDataSize) {
-          SerDeStats stats = serializer.getSerDeStats();
-          if (stats != null) {
-            fpaths.stat.addToStat(StatsSetupConst.RAW_DATA_SIZE, stats.getRawDataSize());
-          }
+        SerDeStats stats = serializer.getSerDeStats();
+        if (stats != null) {
+          fpaths.stat.addToStat(StatsSetupConst.RAW_DATA_SIZE, stats.getRawDataSize());
         }
         fpaths.stat.addToStat(StatsSetupConst.ROW_COUNT, 1);
       }
