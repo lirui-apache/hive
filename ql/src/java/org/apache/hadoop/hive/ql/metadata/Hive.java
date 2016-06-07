@@ -2897,6 +2897,11 @@ private void constructOneLBLocationMap(FileStatus fSta,
             /* Move files one by one because source is a subdirectory of destination */
             for (final FileStatus srcStatus : srcs) {
 
+              final Path destPath = new Path(destf, srcStatus.getPath().getName());
+              if (replace && destFs.exists(destPath)) {
+                destFs.delete(destPath, false);
+              }
+
               if (null == pool) {
                 if(!destFs.rename(srcStatus.getPath(), destf)) {
                   throw new IOException("rename for src path: " + srcStatus.getPath() + " to dest:"
@@ -2907,7 +2912,6 @@ private void constructOneLBLocationMap(FileStatus fSta,
                   @Override
                   public Void call() throws Exception {
                     SessionState.setCurrentSessionState(parentSession);
-                    final Path destPath = new Path(destf, srcStatus.getPath().getName());
                     final String group = srcStatus.getGroup();
                     if(destFs.rename(srcStatus.getPath(), destf)) {
                       if (inheritPerms) {
