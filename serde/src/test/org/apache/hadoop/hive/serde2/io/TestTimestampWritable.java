@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.TimeZone;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.util.TimestampUtils;
 import org.junit.*;
 import static org.junit.Assert.*;
@@ -450,6 +451,16 @@ public class TestTimestampWritable {
     assertEquals(1, TimestampUtils .millisToSeconds(1500));
     assertEquals(19, TimestampUtils .millisToSeconds(19999));
     assertEquals(20, TimestampUtils .millisToSeconds(20000));
+  }
+
+  @Test
+  public void rawTest(){
+    TimestampWritable writable=new TimestampWritable(new Timestamp(0));
+    byte[] bytes=new byte[50];
+    Timestamp ts=new HiveTimestamp((1L<<32),"Asia/Shanghai");
+    TimestampWritable.convertTimestampToBytes(ts,bytes,0);
+    writable.set(bytes,0);
+    writable.toString();
   }
 
   private static int compareEqualLengthByteArrays(byte[] a, byte[] b) {

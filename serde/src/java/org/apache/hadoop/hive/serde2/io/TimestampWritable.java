@@ -20,17 +20,16 @@ package org.apache.hadoop.hive.serde2.io;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.util.TimestampUtils;
 import org.apache.hadoop.hive.serde2.ByteStream.RandomAccessOutput;
 import org.apache.hadoop.hive.serde2.lazybinary.LazyBinaryUtils;
 import org.apache.hadoop.hive.serde2.lazybinary.LazyBinaryUtils.VInt;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.WritableUtils;
 
@@ -61,21 +60,15 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
 
   private static final long SEVEN_BYTE_LONG_SIGN_FLIP = 0xff80L << 48;
 
+  private static final int TIMEZONE_MASK = 1 << 30;
+
 
   /** The maximum number of bytes required for a TimestampWritable */
   public static final int MAX_BYTES = 13;
 
   public static final int BINARY_SORTABLE_LENGTH = 11;
 
-  private static final ThreadLocal<DateFormat> threadLocalDateFormat =
-      new ThreadLocal<DateFormat>() {
-        @Override
-        protected DateFormat initialValue() {
-          return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        }
-      };
-
-  private Timestamp timestamp = new Timestamp(0);
+  private HiveTimestamp timestamp = new HiveTimestamp(0);
 
   /**
    * true if data is stored in timestamp field rather than byte arrays.
@@ -133,7 +126,11 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
       timestamp.setNanos(0);
       return;
     }
-    this.timestamp = t;
+    if (t instanceof HiveTimestamp) {
+      timestamp = (HiveTimestamp) t;
+    } else {
+      timestamp.setTime(t.getTime());
+    }
     bytesEmpty = true;
     timestampEmpty = false;
   }
@@ -201,6 +198,39 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
     } else {
       throw new IllegalStateException("Both timestamp and bytes are empty");
     }
+  }
+
+  public String getTimezone() {
+    if (!timestampEmpty) {
+      return timestamp.getTimezone();
+    } else if (!bytesEmpty) {
+      if (hasDecimalOrSecondVInt()) {
+        return getTimezone(currentBytes, offset + 4);
+      }
+      return null;
+    } else {
+      throw new IllegalStateException("Both timestamp and bytes are empty");
+    }
+  }
+
+  // offset should point to the start of decimal field
+  private static String getTimezone(byte[] bytes, int offset) {
+    int val = readVInt(bytes, offset);
+    boolean hasTimezone = (val >= 0 && (val & TIMEZONE_MASK) != 0) ||
+        (val < 0 && (val & TIMEZONE_MASK) == 0);
+    if (hasTimezone) {
+      int pos = offset + WritableUtils.decodeVIntSize(bytes[offset]);
+      // skip the 2nd VInt
+      if (hasSecondVInt(bytes[offset])) {
+        pos += WritableUtils.decodeVIntSize(bytes[pos]);
+      }
+      final int len = readVInt(bytes, pos);
+      pos += WritableUtils.decodeVIntSize(bytes[pos]);
+      Text tsText = new Text();
+      tsText.set(bytes, pos, len);
+      return tsText.toString();
+    }
+    return null;
   }
 
   /**
@@ -279,7 +309,8 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
     }
 
     intToBytes(firstInt, internalBytes, 0);
-    setNanosBytes(nanos, internalBytes, 4, hasSecondVInt);
+    // TODO: temp code
+    setNanosBytes(nanos, internalBytes, 4, hasSecondVInt,false);
     if (hasSecondVInt) {
       LazyBinaryUtils.writeVLongToByteArray(internalBytes,
           4 + WritableUtils.decodeVIntSize(internalBytes[4]),
@@ -393,13 +424,12 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
     if (timestampString.length() > 19) {
       if (timestampString.length() == 21) {
         if (timestampString.substring(19).compareTo(".0") == 0) {
-          return threadLocalDateFormat.get().format(timestamp);
+          timestampString = timestampString.substring(0, 19);
         }
       }
-      return threadLocalDateFormat.get().format(timestamp) + timestampString.substring(19);
     }
 
-    return threadLocalDateFormat.get().format(timestamp);
+    return timestampString;
   }
 
   @Override
@@ -413,8 +443,10 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
   private void populateTimestamp() {
     long seconds = getSeconds();
     int nanos = getNanos();
+    String timezone = getTimezone();
     timestamp.setTime(seconds * 1000);
     timestamp.setNanos(nanos);
+    timestamp.setTimezone(timezone);
   }
 
   /** Static methods **/
@@ -441,13 +473,14 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
   }
 
   public static int getNanos(byte[] bytes, int offset) {
-    VInt vInt = LazyBinaryUtils.threadLocalVInt.get();
-    LazyBinaryUtils.readVInt(bytes, offset, vInt);
-    int val = vInt.value;
+    int val = readVInt(bytes, offset);
     if (val < 0) {
+      val |= TIMEZONE_MASK;
       // This means there is a second VInt present that specifies additional bits of the timestamp.
       // The reversed nanoseconds value is still encoded in this VInt.
       val = -val - 1;
+    } else {
+      val &= ~TIMEZONE_MASK;
     }
     int len = (int) Math.floor(Math.log10(val)) + 1;
 
@@ -466,6 +499,12 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
     return val;
   }
 
+  private static int readVInt(byte[] bytes, int offset) {
+    VInt vInt = LazyBinaryUtils.threadLocalVInt.get();
+    LazyBinaryUtils.readVInt(bytes, offset, vInt);
+    return vInt.value;
+  }
+
   /**
    * Writes a Timestamp's serialized value to byte array b at the given offset
    * @param t to convert to bytes
@@ -477,22 +516,33 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
     long millis = t.getTime();
     int nanos = t.getNanos();
 
+    boolean hasTimezone = (t instanceof HiveTimestamp) && ((HiveTimestamp) t).hasTimezone();
     long seconds = TimestampUtils.millisToSeconds(millis);
     boolean hasSecondVInt = seconds < 0 || seconds > Integer.MAX_VALUE;
-    boolean hasDecimal = setNanosBytes(nanos, b, offset+4, hasSecondVInt);
+    int position = offset + 4;
+    boolean hasDecimal = setNanosBytes(nanos, b, position, hasSecondVInt, hasTimezone);
 
     int firstInt = (int) seconds;
-    if (hasDecimal || hasSecondVInt) {
+    if (hasDecimal || hasSecondVInt || hasTimezone) {
       firstInt |= DECIMAL_OR_SECOND_VINT_FLAG;
     } else {
       firstInt &= LOWEST_31_BITS_OF_SEC_MASK;
     }
     intToBytes(firstInt, b, offset);
 
+    position += WritableUtils.decodeVIntSize(b[position]);
+
     if (hasSecondVInt) {
-      LazyBinaryUtils.writeVLongToByteArray(b,
-          offset + 4 + WritableUtils.decodeVIntSize(b[offset + 4]),
-          seconds >> 31);
+      LazyBinaryUtils.writeVLongToByteArray(b, position, seconds >> 31);
+      position += WritableUtils.decodeVIntSize(b[position]);
+    }
+
+    if (hasTimezone) {
+      Text timezone = new Text(((HiveTimestamp) t).getTimezone());
+      int len = timezone.getLength();
+      LazyBinaryUtils.writeVLongToByteArray(b, position, len);
+      position += WritableUtils.decodeVIntSize(b[position]);
+      System.arraycopy(timezone.getBytes(), 0, b, position, len);
     }
   }
 
@@ -505,7 +555,8 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
    * @param offset
    * @return
    */
-  private static boolean setNanosBytes(int nanos, byte[] b, int offset, boolean hasSecondVInt) {
+  private static boolean setNanosBytes(int nanos, byte[] b, int offset,
+      boolean hasSecondVInt, boolean hasTimezone) {
     int decimal = 0;
     if (nanos != 0) {
       int counter = 0;
@@ -517,10 +568,23 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
       }
     }
 
-    if (hasSecondVInt || decimal != 0) {
+    if (hasSecondVInt || decimal != 0 || hasTimezone) {
       // We use the sign of the reversed-nanoseconds field to indicate that there is a second VInt
       // present.
-      LazyBinaryUtils.writeVLongToByteArray(b, offset, hasSecondVInt ? (-decimal - 1) : decimal);
+      int toWrite = decimal;
+      if (hasSecondVInt) {
+        toWrite = -toWrite - 1;
+      }
+      // use the second MSB to indicate if timezone is present
+      // if toWrite >= 0, second MSB is always 0, otherwise it's always 1
+      if (hasTimezone) {
+        if (toWrite >= 0) {
+          toWrite |= TIMEZONE_MASK;
+        } else {
+          toWrite &= ~TIMEZONE_MASK;
+        }
+      }
+      LazyBinaryUtils.writeVLongToByteArray(b, offset, toWrite);
     }
     return decimal != 0;
   }
@@ -565,6 +629,10 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
     t.setTime(seconds * 1000);
     if (nanos != 0) {
       t.setNanos(nanos);
+    }
+    if (t instanceof HiveTimestamp) {
+      String timezone = getTimezone(bytes, offset + 4);
+      ((HiveTimestamp) t).setTimezone(timezone);
     }
   }
 
