@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.serde2.io;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.sql.Timestamp;
 import java.util.Date;
 
@@ -29,7 +30,6 @@ import org.apache.hadoop.hive.ql.util.TimestampUtils;
 import org.apache.hadoop.hive.serde2.ByteStream.RandomAccessOutput;
 import org.apache.hadoop.hive.serde2.lazybinary.LazyBinaryUtils;
 import org.apache.hadoop.hive.serde2.lazybinary.LazyBinaryUtils.VInt;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.WritableUtils;
 
@@ -61,6 +61,7 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
   private static final long SEVEN_BYTE_LONG_SIGN_FLIP = 0xff80L << 48;
 
   private static final int TIMEZONE_MASK = 1 << 30;
+  private static final Charset UTF8 = Charset.forName("UTF-8");
 
 
   /** The maximum number of bytes required for a TimestampWritable */
@@ -226,9 +227,7 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
       }
       final int len = readVInt(bytes, pos);
       pos += WritableUtils.decodeVIntSize(bytes[pos]);
-      Text tsText = new Text();
-      tsText.set(bytes, pos, len);
-      return tsText.toString();
+      return new String(bytes, pos, len, UTF8);
     }
     return null;
   }
@@ -422,10 +421,8 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
 
     String timestampString = timestamp.toString();
     if (timestampString.length() > 19) {
-      if (timestampString.length() == 21) {
-        if (timestampString.substring(19).compareTo(".0") == 0) {
-          timestampString = timestampString.substring(0, 19);
-        }
+      if (timestampString.substring(19, 21).compareTo(".0") == 0) {
+        timestampString = timestampString.substring(0, 19) + timestampString.substring(21);
       }
     }
 
@@ -538,11 +535,11 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
     }
 
     if (hasTimezone) {
-      Text timezone = new Text(((HiveTimestamp) t).getTimezone());
-      int len = timezone.getLength();
+      byte[] tzBytes = ((HiveTimestamp) t).getTimezone().getBytes(UTF8);
+      int len = tzBytes.length;
       LazyBinaryUtils.writeVLongToByteArray(b, position, len);
       position += WritableUtils.decodeVIntSize(b[position]);
-      System.arraycopy(timezone.getBytes(), 0, b, position, len);
+      System.arraycopy(tzBytes, 0, b, position, len);
     }
   }
 

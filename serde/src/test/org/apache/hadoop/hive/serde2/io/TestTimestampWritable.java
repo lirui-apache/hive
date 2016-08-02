@@ -457,7 +457,7 @@ public class TestTimestampWritable {
   public void rawTest(){
     TimestampWritable writable=new TimestampWritable(new Timestamp(0));
     byte[] bytes=new byte[50];
-    Timestamp ts=new HiveTimestamp((1L<<32),"Asia/Shanghai");
+    Timestamp ts=new HiveTimestamp(Long.MIN_VALUE,"UTC");
     TimestampWritable.convertTimestampToBytes(ts,bytes,0);
     writable.set(bytes,0);
     writable.toString();

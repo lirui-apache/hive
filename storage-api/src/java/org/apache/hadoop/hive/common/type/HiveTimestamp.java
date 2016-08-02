@@ -83,7 +83,9 @@ public class HiveTimestamp extends Timestamp {
     TimeZone defaultTZ = dateFormat.getTimeZone();
     try {
       dateFormat.setTimeZone(TimeZone.getTimeZone(timezone));
-      return dateFormat.format(this) + ts.substring(19);
+      String r = dateFormat.format(this) + ts.substring(19);
+      r += " " + timezone;
+      return r;
     } finally {
       dateFormat.setTimeZone(defaultTZ);
     }
