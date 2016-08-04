@@ -454,20 +454,6 @@ public class TestTimestampWritable {
     assertEquals(20, TimestampUtils .millisToSeconds(20000));
   }
 
-  @Test
-  public void rawTest(){
-    TimestampWritable writable=new TimestampWritable(new Timestamp(0));
-    Timestamp ts=new HiveTimestamp((1000),"Asia/Shanghai");
-    writable.set(ts);
-    TimestampWritable writable1=new TimestampWritable(writable.getBytes(),0);
-    writable1.toString();
-
-    Timestamp t=new Timestamp((1L<<32)*1000);
-    writable.set(t);
-    Timestamp x=new Timestamp(0);
-    TimestampWritable.setTimestamp(x,writable.getBytes(),0);
-  }
-
   private static int compareEqualLengthByteArrays(byte[] a, byte[] b) {
     assertEquals(a.length, b.length);
     for (int i = 0; i < a.length; ++i) {
