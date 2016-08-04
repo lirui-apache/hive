@@ -495,4 +495,30 @@ public class TestTimestampWritable {
     }
   }
 
+  @Test
+  public void test2ndMSBOfDecimal() {
+    // The current decimal part ranges in [-1000000000, 999999999]. We should be able to use its
+    // second MSB to indicate if a timezone offset exists
+    int decimal = -1000000000;
+    final int mask = 1 << 30;
+    while (decimal < 0) {
+      assertTrue((decimal & mask) != 0);
+      decimal++;
+    }
+    while (decimal <= 999999999) {
+      assertTrue((decimal & mask) == 0);
+      decimal++;
+    }
+  }
+
+  @Test
+  public void testSetTimestamp() {
+    Timestamp t1 = new Timestamp((1L << 32));
+    TimestampWritable writable = new TimestampWritable(t1);
+    byte[] bytes = writable.getBytes();
+    Timestamp t2 = new Timestamp(0);
+    TimestampWritable.setTimestamp(t2, bytes, 0);
+    assertEquals(t1, t2);
+  }
+
 }

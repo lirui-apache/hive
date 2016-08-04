@@ -42,6 +42,9 @@ public class HiveTimestamp extends Timestamp {
 
   // We store the offset from UTC in minutes . Ranges from [-12:00, 14:00].
   private Integer offsetInMin = null;
+
+  private String internalID = null;
+
   private static final int MAX_OFFSET = 840;
   private static final int MIN_OFFSET = -720;
 
@@ -80,6 +83,7 @@ public class HiveTimestamp extends Timestamp {
   public void setOffsetInMin(Integer offsetInMin) {
     validateOffset(offsetInMin);
     this.offsetInMin = offsetInMin;
+    internalID = null;
   }
 
   public boolean hasTimezone() {
@@ -90,20 +94,23 @@ public class HiveTimestamp extends Timestamp {
     if (!hasTimezone()) {
       throw new NoSuchElementException("No timezone specified.");
     }
-    StringBuilder builder = new StringBuilder("GMT");
-    if (offsetInMin != 0) {
-      if (offsetInMin > 0) {
-        builder.append("+");
-      } else {
-        builder.append("-");
+    if (internalID == null) {
+      StringBuilder builder = new StringBuilder("GMT");
+      if (offsetInMin != 0) {
+        if (offsetInMin > 0) {
+          builder.append("+");
+        } else {
+          builder.append("-");
+        }
+        int tmp = offsetInMin > 0 ? offsetInMin : -offsetInMin;
+        int offsetHour = tmp / 60;
+        int offsetMin = tmp % 60;
+        builder.append(String.format("%02d", offsetHour)).append(":").
+            append(String.format("%02d", offsetMin));
       }
-      int tmp = offsetInMin > 0 ? offsetInMin : -offsetInMin;
-      int offsetHour = tmp / 60;
-      int offsetMin = tmp % 60;
-      builder.append(String.format("%02d", offsetHour)).append(":").
-          append(String.format("%02d", offsetMin));
+      internalID = builder.toString();
     }
-    return builder.toString();
+    return internalID;
   }
 
   private static String validateTimezoneID(String timezoneID) {
