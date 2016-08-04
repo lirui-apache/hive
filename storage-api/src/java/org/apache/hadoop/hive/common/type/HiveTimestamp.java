@@ -43,7 +43,7 @@ public class HiveTimestamp extends Timestamp {
   // We store the offset from UTC in minutes . Ranges from [-12:00, 14:00].
   private Integer offsetInMin = null;
 
-  private String internalID = null;
+  private transient String internalID = null;
 
   private static final int MAX_OFFSET = 840;
   private static final int MIN_OFFSET = -720;
@@ -142,6 +142,46 @@ public class HiveTimestamp extends Timestamp {
     } finally {
       dateFormat.setTimeZone(defaultTZ);
     }
+  }
+
+  @Override
+  public int compareTo(Timestamp ts) {
+    int result = super.compareTo(ts);
+    if (result == 0) {
+      if (ts instanceof HiveTimestamp) {
+        HiveTimestamp hts = (HiveTimestamp) ts;
+        if (!hasTimezone() || !hts.hasTimezone()) {
+          if (hasTimezone()) {
+            result = 1;
+          }
+          if (hts.hasTimezone()) {
+            result = -1;
+          }
+        } else {
+          result = getOffsetInMin() - hts.getOffsetInMin();
+        }
+      } else if (hasTimezone()) {
+        result = 1;
+      }
+    }
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o instanceof Timestamp) {
+      return compareTo((Timestamp) o) == 0;
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    int hash = super.hashCode();
+    if (hasTimezone()) {
+      hash ^= getOffsetInMin();
+    }
+    return hash;
   }
 
   public static HiveTimestamp valueOf(String timestamp) {
