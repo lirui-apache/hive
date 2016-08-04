@@ -450,7 +450,9 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
     String timestampString = timestamp.toString();
     if (timestampString.length() > 19) {
       if (timestampString.substring(19, 21).compareTo(".0") == 0) {
-        timestampString = timestampString.substring(0, 19) + timestampString.substring(21);
+        if (timestampString.length() == 21 || !Character.isDigit(timestampString.charAt(21))) {
+          timestampString = timestampString.substring(0, 19) + timestampString.substring(21);
+        }
       }
     }
 
