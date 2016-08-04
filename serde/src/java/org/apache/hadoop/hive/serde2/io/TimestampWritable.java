@@ -20,7 +20,6 @@ package org.apache.hadoop.hive.serde2.io;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.sql.Timestamp;
 import java.util.Date;
 
@@ -83,7 +82,7 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
 
   /* Allow use of external byte[] for efficiency */
   private byte[] currentBytes;
-  private byte[] internalBytes = new byte[MAX_BYTES];
+  private final byte[] internalBytes = new byte[MAX_BYTES];
   private byte[] externalBytes;
   private int offset;
 

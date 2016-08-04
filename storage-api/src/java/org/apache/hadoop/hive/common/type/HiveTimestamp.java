@@ -118,7 +118,7 @@ public class HiveTimestamp extends Timestamp {
       return null;
     }
     TimeZone tz = TimeZone.getTimeZone(timezoneID);
-    // We may end up with GMT in case of invalid timezoneID ID
+    // We may end up with GMT in case of invalid timezoneID
     if (tz.getID().equals("GMT") && !tz.getID().equals(timezoneID)) {
       throw new IllegalArgumentException("Unknown timezoneID: " + timezoneID);
     }

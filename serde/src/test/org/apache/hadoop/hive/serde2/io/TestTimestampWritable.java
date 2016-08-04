@@ -35,9 +35,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.TimeZone;
 
-import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.util.TimestampUtils;
-import org.apache.hadoop.hive.serde2.lazybinary.LazyBinaryUtils;
 import org.junit.*;
 import static org.junit.Assert.*;
 
