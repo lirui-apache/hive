@@ -229,6 +229,7 @@ public class HiveConf extends Configuration {
       HiveConf.ConfVars.METASTORE_CACHE_PINOBJTYPES,
       HiveConf.ConfVars.METASTORE_CONNECTION_POOLING_TYPE,
       HiveConf.ConfVars.METASTORE_VALIDATE_TABLES,
+      HiveConf.ConfVars.METASTORE_DATANUCLEUS_INIT_COL_INFO,
       HiveConf.ConfVars.METASTORE_VALIDATE_COLUMNS,
       HiveConf.ConfVars.METASTORE_VALIDATE_CONSTRAINTS,
       HiveConf.ConfVars.METASTORE_STORE_MANAGER_TYPE,
@@ -705,6 +706,10 @@ public class HiveConf extends Configuration {
         "List of comma separated metastore object types that should be pinned in the cache"),
     METASTORE_CONNECTION_POOLING_TYPE("datanucleus.connectionPoolingType", "BONECP",
         "Specify connection pool library for datanucleus"),
+    // Workaround for DN bug on Postgres:
+    // http://www.datanucleus.org/servlet/forum/viewthread_thread,7985_offset
+    METASTORE_DATANUCLEUS_INIT_COL_INFO("datanucleus.rdbms.initializeColumnInfo", "NONE",
+        "initializeColumnInfo setting for DataNucleus; set to NONE at least on Postgres."),
     METASTORE_VALIDATE_TABLES("datanucleus.schema.validateTables", false,
         "validates existing schema against code. turn this on if you want to verify existing schema"),
     METASTORE_VALIDATE_COLUMNS("datanucleus.schema.validateColumns", false,
@@ -985,7 +990,7 @@ public class HiveConf extends Configuration {
         "Enabling strict large query checks disallows the following:\n" +
         "  Cartesian product (cross join)."),
     @Deprecated
-    HIVEMAPREDMODE("hive.mapred.mode", "nonstrict",
+    HIVEMAPREDMODE("hive.mapred.mode", null,
         "Deprecated; use hive.strict.checks.* settings instead."),
     HIVEALIAS("hive.alias", "", ""),
     HIVEMAPSIDEAGGREGATE("hive.map.aggr", true, "Whether to use map-side aggregation in Hive Group By queries"),
@@ -2108,7 +2113,9 @@ public class HiveConf extends Configuration {
         "hive.exec.temporary.table.storage", "default", new StringSet("memory",
          "ssd", "default"), "Define the storage policy for temporary tables." +
          "Choices between memory, ssd and default"),
-
+    HIVE_QUERY_LIFETIME_HOOKS("hive.query.lifetime.hooks", "",
+        "A comma separated list of hooks which implement QueryLifeTimeHook. These will be triggered" +
+            " before/after query compilation and before/after query execution, in the order specified"),
     HIVE_DRIVER_RUN_HOOKS("hive.exec.driver.run.hooks", "",
         "A comma separated list of hooks which implement HiveDriverRunHook. Will be run at the beginning " +
         "and end of Driver.run, these will be run in the order specified."),
@@ -2838,9 +2845,10 @@ public class HiveConf extends Configuration {
     LLAP_DAEMON_RPC_NUM_HANDLERS("hive.llap.daemon.rpc.num.handlers", 5,
       "Number of RPC handlers for LLAP daemon.", "llap.daemon.rpc.num.handlers"),
     LLAP_DAEMON_WORK_DIRS("hive.llap.daemon.work.dirs", "",
-      "Working directories for the daemon. Needs to be set for a secure cluster, since LLAP may\n" +
-      "not have access to the default YARN working directories. yarn.nodemanager.local-dirs is\n" +
-      "used if this is not set", "llap.daemon.work.dirs"),
+        "Working directories for the daemon. This should not be set if running as a YARN\n" +
+        "application via Slider. It must be set when not running via Slider on YARN. If the value\n" +
+        "is set when running as a Slider YARN application, the specified value will be used.",
+        "llap.daemon.work.dirs"),
     LLAP_DAEMON_YARN_SHUFFLE_PORT("hive.llap.daemon.yarn.shuffle.port", 15551,
       "YARN shuffle port for LLAP-daemon-hosted shuffle.", "llap.daemon.yarn.shuffle.port"),
     LLAP_DAEMON_YARN_CONTAINER_MB("hive.llap.daemon.yarn.container.mb", -1,
@@ -3043,6 +3051,11 @@ public class HiveConf extends Configuration {
        "directories that are partition-like but contain unsupported characters. 'throw' (an " +
        "exception) is the default; 'skip' will skip the invalid directories and still repair the" +
        " others; 'ignore' will skip the validation (legacy behavior, causes bugs in many cases)"),
+    HIVE_MSCK_REPAIR_BATCH_SIZE(
+        "hive.msck.repair.batch.size", 0,
+        "Batch size for the msck repair command. If the value is greater than zero, "
+            + "it will execute batch wise with the configured batch size. "
+            + "The default value is zero. Zero means it will execute directly (Not batch wise)"),
     HIVE_SERVER2_LLAP_CONCURRENT_QUERIES("hive.server2.llap.concurrent.queries", -1,
         "The number of queries allowed in parallel via llap. Negative number implies 'infinite'."),
     HIVE_TEZ_ENABLE_MEMORY_MANAGER("hive.tez.enable.memory.manager", true,

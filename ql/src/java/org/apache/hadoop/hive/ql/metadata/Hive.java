@@ -1584,14 +1584,24 @@ public class Hive {
               StatsSetupConst.TRUE);
         }
         MetaStoreUtils.populateQuickStats(HiveStatsUtils.getFileStatusRecurse(newPartPath, -1, newPartPath.getFileSystem(conf)), newTPart.getParameters());
-        getMSC().add_partition(newTPart.getTPartition());
-      } else {
-        EnvironmentContext environmentContext = null;
-        if (hasFollowingStatsTask) {
-          environmentContext = new EnvironmentContext();
-          environmentContext.putToProperties(StatsSetupConst.DO_NOT_UPDATE_STATS, StatsSetupConst.TRUE);
+        try {
+          getMSC().add_partition(newTPart.getTPartition());
+        } catch (AlreadyExistsException aee) {
+          // With multiple users concurrently issuing insert statements on the same partition has
+          // a side effect that some queries may not see a partition at the time when they're issued,
+          // but will realize the partition is actually there when it is trying to add such partition
+          // to the metastore and thus get AlreadyExistsException, because some earlier query just created it (race condition).
+          // For example, imagine such a table is created:
+          //  create table T (name char(50)) partitioned by (ds string);
+          // and the following two queries are launched at the same time, from different sessions:
+          //  insert into table T partition (ds) values ('Bob', 'today'); -- creates the partition 'today'
+          //  insert into table T partition (ds) values ('Joe', 'today'); -- will fail with AlreadyExistsException
+          // In that case, we want to retry with alterPartition.
+          LOG.debug("Caught AlreadyExistsException, trying to alter partition instead");
+          setStatsPropAndAlterPartition(hasFollowingStatsTask, tbl, newTPart);
         }
-        alterPartition(tbl.getDbName(), tbl.getTableName(), new Partition(tbl, newTPart.getTPartition()), environmentContext);
+      } else {
+        setStatsPropAndAlterPartition(hasFollowingStatsTask, tbl, newTPart);
       }
       return newTPart;
     } catch (IOException e) {
@@ -1607,6 +1617,17 @@ public class Hive {
       LOG.error(StringUtils.stringifyException(e));
       throw new HiveException(e);
     }
+  }
+
+  private void setStatsPropAndAlterPartition(boolean hasFollowingStatsTask, Table tbl,
+      Partition newTPart) throws HiveException, InvalidOperationException {
+    EnvironmentContext environmentContext = null;
+    if (hasFollowingStatsTask) {
+      environmentContext = new EnvironmentContext();
+      environmentContext.putToProperties(StatsSetupConst.DO_NOT_UPDATE_STATS, StatsSetupConst.TRUE);
+    }
+    alterPartition(tbl.getDbName(), tbl.getTableName(), new Partition(tbl, newTPart.getTPartition()),
+        environmentContext);
   }
 
   /**
@@ -2775,8 +2796,8 @@ private void constructOneLBLocationMap(FileStatus fSta,
       return false;
     }
 
-    String fullF1 = getQualifiedPathWithoutSchemeAndAuthority(srcf, srcFs) + Path.SEPARATOR;
-    String fullF2 = getQualifiedPathWithoutSchemeAndAuthority(destf, destFs) + Path.SEPARATOR;
+    String fullF1 = getQualifiedPathWithoutSchemeAndAuthority(srcf, srcFs).toString() + Path.SEPARATOR;
+    String fullF2 = getQualifiedPathWithoutSchemeAndAuthority(destf, destFs).toString() + Path.SEPARATOR;
 
     boolean isInTest = HiveConf.getBoolVar(srcFs.getConf(), ConfVars.HIVE_IN_TEST);
     // In the automation, the data warehouse is the local file system based.
@@ -2806,10 +2827,10 @@ private void constructOneLBLocationMap(FileStatus fSta,
     return fullF1.startsWith(fullF2);
   }
 
-  private static String getQualifiedPathWithoutSchemeAndAuthority(Path srcf, FileSystem fs) {
+  private static Path getQualifiedPathWithoutSchemeAndAuthority(Path srcf, FileSystem fs) {
     Path currentWorkingDir = fs.getWorkingDirectory();
     Path path = srcf.makeQualified(srcf.toUri(), currentWorkingDir);
-    return ShimLoader.getHadoopShims().getPathWithoutSchemeAndAuthority(path).toString();
+    return ShimLoader.getHadoopShims().getPathWithoutSchemeAndAuthority(path);
   }
 
   private static Path mvFile(HiveConf conf, Path srcf, Path destf, boolean isSrcLocal,
@@ -2838,10 +2859,8 @@ private void constructOneLBLocationMap(FileStatus fSta,
     FileSystem destFS = dest.getFileSystem(conf);
     FileSystem srcFS = src.getFileSystem(conf);
     if (isSubDir(src, dest, srcFS, destFS, isSrcLocal)) {
-      final Path fullSrcPath = new Path(
-          getQualifiedPathWithoutSchemeAndAuthority(src, srcFS));
-      final Path fullDestPath = new Path(
-          getQualifiedPathWithoutSchemeAndAuthority(dest, destFS));
+      final Path fullSrcPath = getQualifiedPathWithoutSchemeAndAuthority(src, srcFS);
+      final Path fullDestPath = getQualifiedPathWithoutSchemeAndAuthority(dest, destFS);
       if (fullSrcPath.equals(fullDestPath)) {
         return;
       }
@@ -3013,10 +3032,13 @@ private void constructOneLBLocationMap(FileStatus fSta,
     }
 
     //Check if different encryption zones
-    HadoopShims.HdfsEncryptionShim hdfsEncryptionShim = SessionState.get().getHdfsEncryptionShim();
+    HadoopShims.HdfsEncryptionShim srcHdfsEncryptionShim = SessionState.get().getHdfsEncryptionShim(srcFs);
+    HadoopShims.HdfsEncryptionShim destHdfsEncryptionShim = SessionState.get().getHdfsEncryptionShim(destFs);
     try {
-      return hdfsEncryptionShim != null && (hdfsEncryptionShim.isPathEncrypted(srcf) || hdfsEncryptionShim.isPathEncrypted(destf))
-        && !hdfsEncryptionShim.arePathsOnSameEncryptionZone(srcf, destf);
+      return srcHdfsEncryptionShim != null
+          && destHdfsEncryptionShim != null
+          && (srcHdfsEncryptionShim.isPathEncrypted(srcf) || destHdfsEncryptionShim.isPathEncrypted(destf))
+          && !srcHdfsEncryptionShim.arePathsOnSameEncryptionZone(srcf, destf, destHdfsEncryptionShim);
     } catch (IOException e) {
       throw new HiveException(e);
     }
@@ -3191,20 +3213,19 @@ private void constructOneLBLocationMap(FileStatus fSta,
       if (oldPath != null) {
         boolean oldPathDeleted = false;
         boolean isOldPathUnderDestf = false;
+        FileStatus[] statuses = null;
         try {
-          FileSystem fs2 = oldPath.getFileSystem(conf);
-          if (fs2.exists(oldPath)) {
-            // Do not delete oldPath if:
-            //  - destf is subdir of oldPath
-            //if ( !(fs2.equals(destf.getFileSystem(conf)) && FileUtils.isSubDir(oldPath, destf, fs2)))
-            isOldPathUnderDestf = FileUtils.isSubDir(oldPath, destf, fs2);
-            if (isOldPathUnderDestf) {
-              // if oldPath is destf or its subdir, its should definitely be deleted, otherwise its
-              // existing content might result in incorrect (extra) data.
-              // But not sure why we changed not to delete the oldPath in HIVE-8750 if it is
-              // not the destf or its subdir?
-              oldPathDeleted = trashFilesUnderDir(fs2, oldPath, conf);
-            }
+          FileSystem oldFs = oldPath.getFileSystem(conf);
+          statuses = oldFs.listStatus(oldPath, FileUtils.HIDDEN_FILES_PATH_FILTER);
+          // Do not delete oldPath if:
+          //  - destf is subdir of oldPath
+          isOldPathUnderDestf = isSubDir(oldPath, destf, oldFs, destFs, false);
+          if (isOldPathUnderDestf) {
+            // if oldPath is destf or its subdir, its should definitely be deleted, otherwise its
+            // existing content might result in incorrect (extra) data.
+            // But not sure why we changed not to delete the oldPath in HIVE-8750 if it is
+            // not the destf or its subdir?
+            oldPathDeleted = trashFiles(oldFs, statuses, conf);
           }
         } catch (IOException e) {
           if (isOldPathUnderDestf) {
@@ -3216,14 +3237,18 @@ private void constructOneLBLocationMap(FileStatus fSta,
             LOG.warn("Directory " + oldPath.toString() + " cannot be cleaned: " + e, e);
           }
         }
-        if (isOldPathUnderDestf && !oldPathDeleted) {
-          throw new HiveException("Destination directory " + destf + " has not be cleaned up.");
+        if (statuses != null && statuses.length > 0) {
+          if (isOldPathUnderDestf && !oldPathDeleted) {
+            throw new HiveException("Destination directory " + destf + " has not be cleaned up.");
+          }
         }
       }
 
       // first call FileUtils.mkdir to make sure that destf directory exists, if not, it creates
       // destf with inherited permissions
-      boolean destfExist = FileUtils.mkdir(destFs, destf, true, conf);
+      boolean inheritPerms = HiveConf.getBoolVar(conf, HiveConf.ConfVars
+          .HIVE_WAREHOUSE_SUBDIR_INHERIT_PERMS);
+      boolean destfExist = FileUtils.mkdir(destFs, destf, inheritPerms, conf);
       if(!destfExist) {
         throw new IOException("Directory " + destf.toString()
             + " does not exist and could not be created.");
@@ -3255,16 +3280,18 @@ private void constructOneLBLocationMap(FileStatus fSta,
   /**
    * Trashes or deletes all files under a directory. Leaves the directory as is.
    * @param fs FileSystem to use
-   * @param f path of directory
+   * @param statuses fileStatuses of files to be deleted
    * @param conf hive configuration
-   * @param forceDelete whether to force delete files if trashing does not succeed
    * @return true if deletion successful
    * @throws IOException
    */
-  private boolean trashFilesUnderDir(final FileSystem fs, Path f, final Configuration conf)
+  private boolean trashFiles(final FileSystem fs, final FileStatus[] statuses, final Configuration conf)
       throws IOException {
-    FileStatus[] statuses = fs.listStatus(f, FileUtils.HIDDEN_FILES_PATH_FILTER);
     boolean result = true;
+
+    if (statuses == null || statuses.length == 0) {
+      return false;
+    }
     final List<Future<Boolean>> futures = new LinkedList<>();
     final ExecutorService pool = conf.getInt(ConfVars.HIVE_MOVE_FILES_THREAD_COUNT.varname, 25) > 0 ?
         Executors.newFixedThreadPool(conf.getInt(ConfVars.HIVE_MOVE_FILES_THREAD_COUNT.varname, 25),
