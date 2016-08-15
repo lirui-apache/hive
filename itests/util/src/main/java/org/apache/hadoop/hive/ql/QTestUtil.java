@@ -77,6 +77,7 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
 import org.apache.hadoop.hive.cli.CliDriver;
 import org.apache.hadoop.hive.cli.CliSessionState;
+import org.apache.hadoop.hive.cli.control.AbstractCliConfig;
 import org.apache.hadoop.hive.common.io.CachingPrintStream;
 import org.apache.hadoop.hive.common.io.DigestPrintStream;
 import org.apache.hadoop.hive.common.io.SortAndDigestPrintStream;
@@ -159,7 +160,7 @@ public class QTestUtil {
   private final Set<String> qNoSessionReuseQuerySet;
   private final Set<String> qJavaVersionSpecificOutput;
   private static final String SORT_SUFFIX = ".sorted";
-  public static final HashSet<String> srcTables = new HashSet<String>();
+  private final HashSet<String> srcTables;
   private static MiniClusterType clusterType = MiniClusterType.none;
   private ParseDriver pd;
   protected Hive db;
@@ -189,16 +190,21 @@ public class QTestUtil {
   }
   private HBaseTestingUtility utility;
 
-  static {
-    for (String srcTable : System.getProperty("test.src.tables", "").trim().split(",")) {
+  HashSet<String> getSrcTables() {
+    HashSet<String> srcTables = new HashSet<String>();
+    // FIXME: moved default value to here...for now
+    // i think this features is never really used from the command line
+    String defaultTestSrcTables = "src,src1,srcbucket,srcbucket2,src_json,src_thrift,src_sequencefile,srcpart,alltypesorc,src_hbase,cbo_t1,cbo_t2,cbo_t3,src_cbo,part,lineitem";
+    for (String srcTable : System.getProperty("test.src.tables", defaultTestSrcTables).trim().split(",")) {
       srcTable = srcTable.trim();
       if (!srcTable.isEmpty()) {
         srcTables.add(srcTable);
       }
     }
     if (srcTables.isEmpty()) {
-      throw new AssertionError("Source tables cannot be empty");
+      throw new RuntimeException("Source tables cannot be empty");
     }
+    return srcTables;
   }
 
   public HiveConf getConf() {
@@ -355,7 +361,7 @@ public class QTestUtil {
 
   private String getKeyProviderURI() {
     // Use the target directory if it is not specified
-    String HIVE_ROOT = QTestUtil.ensurePathEndsInSlash(System.getProperty("hive.root"));
+    String HIVE_ROOT = AbstractCliConfig.HIVE_ROOT;
     String keyDir = HIVE_ROOT + "ql/target/";
 
     // put the jks file in the current test path only for test purpose
@@ -385,7 +391,9 @@ public class QTestUtil {
     this.outDir = outDir;
     this.logDir = logDir;
     this.useHBaseMetastore = useHBaseMetastore;
+    this.srcTables=getSrcTables();
 
+    // HIVE-14443 move this fall-back logic to CliConfigs
     if (confDir != null && !confDir.isEmpty()) {
       HiveConf.setHiveSiteLocation(new URL("file://"+ new File(confDir).toURI().getPath() + "/hive-site.xml"));
       System.out.println("Setting hive-site: "+HiveConf.getHiveSiteLocation());
@@ -1008,7 +1016,7 @@ public class QTestUtil {
     cliDriver = new CliDriver();
 
     if (tname.equals("init_file.q")) {
-      ss.initFiles.add("../../data/scripts/test_init_file.sql");
+      ss.initFiles.add(AbstractCliConfig.HIVE_ROOT + "/data/scripts/test_init_file.sql");
     }
     cliDriver.processInitFiles(ss);
 
@@ -2040,10 +2048,10 @@ public class QTestUtil {
         LOG.debug("Connected to metastore database ");
       }
 
-      String mdbPath =   "../../data/files/tpcds-perf/metastore_export/";
+      String mdbPath =   AbstractCliConfig.HIVE_ROOT + "/data/files/tpcds-perf/metastore_export/";
 
       // Setup the table column stats
-      BufferedReader br = new BufferedReader(new FileReader(new File("../../metastore/scripts/upgrade/derby/022-HIVE-11107.derby.sql")));
+      BufferedReader br = new BufferedReader(new FileReader(new File(AbstractCliConfig.HIVE_ROOT + "/metastore/scripts/upgrade/derby/022-HIVE-11107.derby.sql")));
       String command;
 
       s.execute("DROP TABLE APP.TABLE_PARAMS");
@@ -2104,8 +2112,8 @@ public class QTestUtil {
       for (Map.Entry<String, Integer> entry : tableNameToID.entrySet()) {
         String toReplace1 = ",_" + entry.getKey() + "_" ;
         String replacementString1 = ","+entry.getValue();
-        String toReplace2 = "_" + entry.getKey() + "_," ;
-        String replacementString2 = ""+entry.getValue()+",";
+        String toReplace2 = "_" + entry.getKey() + "_@" ;
+        String replacementString2 = ""+entry.getValue()+"@";
         try {
           String content1 = FileUtils.readFileToString(tmpFileLoc1, "UTF-8");
           content1 = content1.replaceAll(toReplace1, replacementString1);
@@ -2124,7 +2132,7 @@ public class QTestUtil {
         "', ',', null, 'UTF-8', 1)";
       String importStatement2 =  "CALL SYSCS_UTIL.SYSCS_IMPORT_TABLE_LOBS_FROM_EXTFILE(null, '" + "TABLE_PARAMS" +
         "', '" + tmpFileLoc2.getAbsolutePath() +
-        "', ',', null, 'UTF-8', 1)";
+        "', '@', null, 'UTF-8', 1)";
       try {
         PreparedStatement psImport1 = conn.prepareStatement(importStatement1);
         if (LOG.isDebugEnabled()) {
