@@ -81,8 +81,7 @@ public class HiveTimestamp extends Timestamp {
   }
 
   public void setOffsetInMin(Integer offsetInMin) {
-    validateOffset(offsetInMin);
-    this.offsetInMin = offsetInMin;
+    this.offsetInMin = validateOffset(offsetInMin);
     internalID = null;
   }
 
@@ -228,9 +227,13 @@ public class HiveTimestamp extends Timestamp {
     return offsetInMin >= MIN_OFFSET && offsetInMin <= MAX_OFFSET;
   }
 
-  private static void validateOffset(Integer offsetInMin) {
+  private static Integer validateOffset(Integer offsetInMin) {
     if (offsetInMin != null && !isValidOffset(offsetInMin)) {
+      if (offsetInMin == NULL_OFFSET) {
+        offsetInMin = null;
+      }
       throw new IllegalArgumentException("Timezone offset out of range: " + offsetInMin);
     }
+    return offsetInMin;
   }
 }
