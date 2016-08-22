@@ -1892,8 +1892,6 @@ public class HiveConf extends Configuration {
     HIVEOPTGBYUSINGINDEX("hive.optimize.index.groupby", false,
         "Whether to enable optimization of group-by queries using Aggregate indexes."),
 
-    HIVEOUTERJOINSUPPORTSFILTERS("hive.outerjoin.supports.filters", true, ""),
-
     HIVEFETCHTASKCONVERSION("hive.fetch.task.conversion", "more", new StringSet("none", "minimal", "more"),
         "Some select queries can be converted to single FETCH task minimizing latency.\n" +
         "Currently the query should be single sourced not having any subquery and should not have\n" +
@@ -1912,7 +1910,7 @@ public class HiveConf extends Configuration {
         "final aggregations in single reduce task. If this is set true, Hive delegates final aggregation\n" +
         "stage to fetch task, possibly decreasing the query time."),
 
-    HIVEOPTIMIZEMETADATAQUERIES("hive.compute.query.using.stats", false,
+    HIVEOPTIMIZEMETADATAQUERIES("hive.compute.query.using.stats", true,
         "When set to true Hive will answer a few queries like count(1) purely using stats\n" +
         "stored in metastore. For basic stats collection turn on the config hive.stats.autogather to true.\n" +
         "For more advanced stats collection need to run analyze table queries."),
