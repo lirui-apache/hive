@@ -29,9 +29,14 @@ import java.util.TimeZone;
 
 /**
  * A thin wrapper of java.sql.Timestamp, with timezoneID offset.
- * Any timestamp that requires a specific timezone should use this type.
  */
-public class HiveTimestamp extends Timestamp {
+public class HiveTimestamp implements Comparable<HiveTimestamp> {
+
+  private static final int MAX_OFFSET = 840;
+  private static final int MIN_OFFSET = -720;
+
+  // Used to indicate no offset is present
+  public static final int NULL_OFFSET = -800;
   private static final ThreadLocal<DateFormat> threadLocalDateFormat =
       new ThreadLocal<DateFormat>() {
         @Override
@@ -40,19 +45,15 @@ public class HiveTimestamp extends Timestamp {
         }
       };
 
+  private Timestamp ts;
+
   // We store the offset from UTC in minutes . Ranges from [-12:00, 14:00].
   private Integer offsetInMin = null;
 
   private transient String internalID = null;
 
-  private static final int MAX_OFFSET = 840;
-  private static final int MIN_OFFSET = -720;
-
-  // Used to indicate no offset is present
-  public static final int NULL_OFFSET = -800;
-
   public HiveTimestamp(long time, String timezoneID) {
-    super(time);
+    ts = new Timestamp(time);
     computeOffset(timezoneID);
   }
 
@@ -60,12 +61,29 @@ public class HiveTimestamp extends Timestamp {
     this(time, null);
   }
 
-  public HiveTimestamp(Timestamp other) {
+  public HiveTimestamp(Timestamp ts) {
+    this(ts.getTime());
+  }
+
+  public HiveTimestamp(HiveTimestamp other) {
     this(other.getTime());
-    setNanos(other.getNanos());
-    if (other instanceof HiveTimestamp) {
-      this.offsetInMin = ((HiveTimestamp) other).offsetInMin;
-    }
+    setOffsetInMin(other.offsetInMin);
+  }
+
+  public long getTime() {
+    return ts.getTime();
+  }
+
+  public int getNanos() {
+    return ts.getNanos();
+  }
+
+  public void setTime(long time) {
+    ts.setTime(time);
+  }
+
+  public void setNanos(int nanos) {
+    ts.setNanos(nanos);
   }
 
   private void computeOffset(String timezoneID) {
@@ -112,6 +130,7 @@ public class HiveTimestamp extends Timestamp {
     return internalID;
   }
 
+  // Checks if the TZ ID is available on this machine
   private static String validateTimezoneID(String timezoneID) {
     if (timezoneID == null) {
       return null;
@@ -126,16 +145,16 @@ public class HiveTimestamp extends Timestamp {
 
   @Override
   public String toString() {
-    String ts = super.toString();
+    String tsStr = ts.toString();
     if (!hasTimezone()) {
-      return ts;
+      return tsStr;
     }
     DateFormat dateFormat = threadLocalDateFormat.get();
     TimeZone defaultTZ = dateFormat.getTimeZone();
     try {
       String timezoneID = getTimezoneID();
       dateFormat.setTimeZone(TimeZone.getTimeZone(timezoneID));
-      String r = dateFormat.format(this) + ts.substring(19);
+      String r = dateFormat.format(ts) + tsStr.substring(19);
       r += " " + timezoneID;
       return r;
     } finally {
@@ -144,23 +163,18 @@ public class HiveTimestamp extends Timestamp {
   }
 
   @Override
-  public int compareTo(Timestamp ts) {
-    int result = super.compareTo(ts);
+  public int compareTo(HiveTimestamp other) {
+    int result = this.ts.compareTo(other.ts);
     if (result == 0) {
-      if (ts instanceof HiveTimestamp) {
-        HiveTimestamp hts = (HiveTimestamp) ts;
-        if (!hasTimezone() || !hts.hasTimezone()) {
-          if (hasTimezone()) {
-            result = 1;
-          }
-          if (hts.hasTimezone()) {
-            result = -1;
-          }
-        } else {
-          result = getOffsetInMin() - hts.getOffsetInMin();
+      if (!hasTimezone() || !other.hasTimezone()) {
+        if (hasTimezone()) {
+          result = 1;
         }
-      } else if (hasTimezone()) {
-        result = 1;
+        if (other.hasTimezone()) {
+          result = -1;
+        }
+      } else {
+        result = getOffsetInMin() - other.getOffsetInMin();
       }
     }
     return result;
@@ -168,15 +182,15 @@ public class HiveTimestamp extends Timestamp {
 
   @Override
   public boolean equals(Object o) {
-    if (o instanceof Timestamp) {
-      return compareTo((Timestamp) o) == 0;
+    if (o instanceof HiveTimestamp) {
+      return compareTo((HiveTimestamp) o) == 0;
     }
     return false;
   }
 
   @Override
   public int hashCode() {
-    int hash = super.hashCode();
+    int hash = ts.hashCode();
     if (hasTimezone()) {
       hash ^= getOffsetInMin();
     }

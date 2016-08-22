@@ -120,12 +120,10 @@ public class TimestampColumnVector extends ColumnVector {
    * @param timestamp
    * @param elementNum
    */
-  public void timestampUpdate(Timestamp timestamp, int elementNum) {
+  public void timestampUpdate(HiveTimestamp timestamp, int elementNum) {
     timestamp.setTime(time[elementNum]);
     timestamp.setNanos(nanos[elementNum]);
-    if (timestamp instanceof HiveTimestamp) {
-      ((HiveTimestamp) timestamp).setOffsetInMin(tzOffset[elementNum]);
-    }
+    timestamp.setOffsetInMin(tzOffset[elementNum]);
   }
 
   /**
@@ -134,7 +132,7 @@ public class TimestampColumnVector extends ColumnVector {
    * @param elementNum
    * @return
    */
-  public Timestamp asScratchTimestamp(int elementNum) {
+  public HiveTimestamp asScratchTimestamp(int elementNum) {
     scratchTimestamp.setTime(time[elementNum]);
     scratchTimestamp.setNanos(nanos[elementNum]);
     scratchTimestamp.setOffsetInMin(tzOffset[elementNum]);
@@ -145,7 +143,7 @@ public class TimestampColumnVector extends ColumnVector {
    * Return the scratch timestamp (contents undefined).
    * @return
    */
-  public Timestamp getScratchTimestamp() {
+  public HiveTimestamp getScratchTimestamp() {
     return scratchTimestamp;
   }
 
@@ -165,7 +163,7 @@ public class TimestampColumnVector extends ColumnVector {
    * @param timestamp
    * @return
    */
-  public static long getTimestampAsLong(Timestamp timestamp) {
+  public static long getTimestampAsLong(HiveTimestamp timestamp) {
     return millisToSeconds(timestamp.getTime());
   }
 
@@ -197,7 +195,7 @@ public class TimestampColumnVector extends ColumnVector {
    * Return a double representation of a Timestamp.
    * @return
    */
-  public static double getDouble(Timestamp timestamp) {
+  public static double getDouble(HiveTimestamp timestamp) {
     // Same algorithm as TimestampWritable (not currently import-able here).
     double seconds, nanos;
     seconds = millisToSeconds(timestamp.getTime());
@@ -212,7 +210,7 @@ public class TimestampColumnVector extends ColumnVector {
    * @param timestamp
    * @return -1, 0, 1 standard compareTo values.
    */
-  public int compareTo(int elementNum, Timestamp timestamp) {
+  public int compareTo(int elementNum, HiveTimestamp timestamp) {
     return asScratchTimestamp(elementNum).compareTo(timestamp);
   }
 
@@ -223,7 +221,7 @@ public class TimestampColumnVector extends ColumnVector {
    * @param elementNum
    * @return -1, 0, 1 standard compareTo values.
    */
-  public int compareTo(Timestamp timestamp, int elementNum) {
+  public int compareTo(HiveTimestamp timestamp, int elementNum) {
     return timestamp.compareTo(asScratchTimestamp(elementNum));
   }
 
@@ -296,14 +294,14 @@ public class TimestampColumnVector extends ColumnVector {
    * @param elementNum
    * @param timestamp
    */
-  public void set(int elementNum, Timestamp timestamp) {
+  public void set(int elementNum, HiveTimestamp timestamp) {
     if (timestamp == null) {
       this.noNulls = false;
       this.isNull[elementNum] = true;
     } else {
       this.time[elementNum] = timestamp.getTime();
       this.nanos[elementNum] = timestamp.getNanos();
-      this.tzOffset[elementNum] = getTzoffsetFromTS(timestamp);
+      this.tzOffset[elementNum] = getTZoffsetFromTS(timestamp);
     }
   }
 
@@ -314,7 +312,7 @@ public class TimestampColumnVector extends ColumnVector {
   public void setFromScratchTimestamp(int elementNum) {
     this.time[elementNum] = scratchTimestamp.getTime();
     this.nanos[elementNum] = scratchTimestamp.getNanos();
-    this.tzOffset[elementNum] = getTzoffsetFromTS(scratchTimestamp);
+    this.tzOffset[elementNum] = getTZoffsetFromTS(scratchTimestamp);
   }
 
   /**
@@ -381,19 +379,16 @@ public class TimestampColumnVector extends ColumnVector {
    * Fill all the vector entries with a timestamp.
    * @param timestamp
    */
-  public void fill(Timestamp timestamp) {
+  public void fill(HiveTimestamp timestamp) {
     noNulls = true;
     isRepeating = true;
     time[0] = timestamp.getTime();
     nanos[0] = timestamp.getNanos();
-    tzOffset[0] = getTzoffsetFromTS(timestamp);
+    tzOffset[0] = getTZoffsetFromTS(timestamp);
   }
 
-  private static int getTzoffsetFromTS(Timestamp timestamp) {
-    if (timestamp instanceof HiveTimestamp && ((HiveTimestamp) timestamp).hasTimezone()) {
-      return ((HiveTimestamp) timestamp).getOffsetInMin();
-    }
-    return HiveTimestamp.NULL_OFFSET;
+  private static int getTZoffsetFromTS(HiveTimestamp timestamp) {
+    return timestamp.hasTimezone() ? timestamp.getOffsetInMin() : HiveTimestamp.NULL_OFFSET;
   }
 
   /**
