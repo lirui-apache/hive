@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.ql.exec.vector;
 import java.sql.Timestamp;
 import java.util.Arrays;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.io.Writable;
 
 /**
@@ -45,10 +46,12 @@ public class TimestampColumnVector extends ColumnVector {
   public int[] nanos;
       // The values from Timestamp.getNanos().
 
+  public int[] tzOffset;
+
   /*
    * Scratch objects.
    */
-  private final Timestamp scratchTimestamp;
+  private final HiveTimestamp scratchTimestamp;
 
   private Writable scratchWritable;
       // Supports keeping a TimestampWritable object without having to import that definition...
@@ -71,8 +74,10 @@ public class TimestampColumnVector extends ColumnVector {
 
     time = new long[len];
     nanos = new int[len];
+    tzOffset = new int[len];
+    Arrays.fill(tzOffset, HiveTimestamp.NULL_OFFSET);
 
-    scratchTimestamp = new Timestamp(0);
+    scratchTimestamp = new HiveTimestamp(0);
 
     scratchWritable = null;     // Allocated by caller.
   }
@@ -105,6 +110,10 @@ public class TimestampColumnVector extends ColumnVector {
     return nanos[elementNum];
   }
 
+  public int getTzOffset(int elementNum) {
+    return tzOffset[elementNum];
+  }
+
   /**
    * Set a Timestamp object from a row of the column.
    * We assume the entry has already been NULL checked and isRepeated adjusted.
@@ -114,6 +123,9 @@ public class TimestampColumnVector extends ColumnVector {
   public void timestampUpdate(Timestamp timestamp, int elementNum) {
     timestamp.setTime(time[elementNum]);
     timestamp.setNanos(nanos[elementNum]);
+    if (timestamp instanceof HiveTimestamp) {
+      ((HiveTimestamp) timestamp).setOffsetInMin(tzOffset[elementNum]);
+    }
   }
 
   /**
@@ -125,6 +137,7 @@ public class TimestampColumnVector extends ColumnVector {
   public Timestamp asScratchTimestamp(int elementNum) {
     scratchTimestamp.setTime(time[elementNum]);
     scratchTimestamp.setNanos(nanos[elementNum]);
+    scratchTimestamp.setOffsetInMin(tzOffset[elementNum]);
     return scratchTimestamp;
   }
 
@@ -182,7 +195,6 @@ public class TimestampColumnVector extends ColumnVector {
 
   /**
    * Return a double representation of a Timestamp.
-   * @param elementNum
    * @return
    */
   public static double getDouble(Timestamp timestamp) {
@@ -248,6 +260,7 @@ public class TimestampColumnVector extends ColumnVector {
 
     time[outElementNum] = timestampColVector.time[inputElementNum];
     nanos[outElementNum] = timestampColVector.nanos[inputElementNum];
+    tzOffset[outElementNum] = timestampColVector.tzOffset[inputElementNum];
   }
 
   // Simplify vector by brute-force flattening noNulls and isRepeating
@@ -259,15 +272,18 @@ public class TimestampColumnVector extends ColumnVector {
       isRepeating = false;
       long repeatFastTime = time[0];
       int repeatNanos = nanos[0];
+      int repeatOffset = tzOffset[0];
       if (selectedInUse) {
         for (int j = 0; j < size; j++) {
           int i = sel[j];
           time[i] = repeatFastTime;
           nanos[i] = repeatNanos;
+          tzOffset[i] = repeatOffset;
         }
       } else {
         Arrays.fill(time, 0, size, repeatFastTime);
         Arrays.fill(nanos, 0, size, repeatNanos);
+        Arrays.fill(tzOffset, 0, size, repeatOffset);
       }
       flattenRepeatingNulls(selectedInUse, sel, size);
     }
@@ -287,6 +303,7 @@ public class TimestampColumnVector extends ColumnVector {
     } else {
       this.time[elementNum] = timestamp.getTime();
       this.nanos[elementNum] = timestamp.getNanos();
+      this.tzOffset[elementNum] = getTzoffsetFromTS(timestamp);
     }
   }
 
@@ -297,6 +314,7 @@ public class TimestampColumnVector extends ColumnVector {
   public void setFromScratchTimestamp(int elementNum) {
     this.time[elementNum] = scratchTimestamp.getTime();
     this.nanos[elementNum] = scratchTimestamp.getNanos();
+    this.tzOffset[elementNum] = getTzoffsetFromTS(scratchTimestamp);
   }
 
   /**
@@ -307,6 +325,7 @@ public class TimestampColumnVector extends ColumnVector {
   public void setNullValue(int elementNum) {
     time[elementNum] = 0;
     nanos[elementNum] = 1;
+    tzOffset[elementNum] = 0;
   }
 
   // Copy the current object contents into the output. Only copy selected entries,
@@ -322,6 +341,7 @@ public class TimestampColumnVector extends ColumnVector {
     if (isRepeating) {
       output.time[0] = time[0];
       output.nanos[0] = nanos[0];
+      output.tzOffset[0] = tzOffset[0];
       output.isNull[0] = isNull[0];
       output.isRepeating = true;
       return;
@@ -335,11 +355,12 @@ public class TimestampColumnVector extends ColumnVector {
         int i = sel[j];
         output.time[i] = time[i];
         output.nanos[i] = nanos[i];
+        output.tzOffset[i] = tzOffset[i];
       }
-    }
-    else {
+    } else {
       System.arraycopy(time, 0, output.time, 0, size);
       System.arraycopy(nanos, 0, output.nanos, 0, size);
+      System.arraycopy(tzOffset, 0, output.tzOffset, 0, size);
     }
 
     // Copy nulls over if needed
@@ -365,6 +386,14 @@ public class TimestampColumnVector extends ColumnVector {
     isRepeating = true;
     time[0] = timestamp.getTime();
     nanos[0] = timestamp.getNanos();
+    tzOffset[0] = getTzoffsetFromTS(timestamp);
+  }
+
+  private static int getTzoffsetFromTS(Timestamp timestamp) {
+    if (timestamp instanceof HiveTimestamp && ((HiveTimestamp) timestamp).hasTimezone()) {
+      return ((HiveTimestamp) timestamp).getOffsetInMin();
+    }
+    return HiveTimestamp.NULL_OFFSET;
   }
 
   /**
@@ -392,6 +421,7 @@ public class TimestampColumnVector extends ColumnVector {
     if (noNulls || !isNull[row]) {
       scratchTimestamp.setTime(time[row]);
       scratchTimestamp.setNanos(nanos[row]);
+      scratchTimestamp.setOffsetInMin(tzOffset[row]);
       buffer.append(scratchTimestamp.toString());
     } else {
       buffer.append("null");
@@ -404,15 +434,19 @@ public class TimestampColumnVector extends ColumnVector {
     if (size <= time.length) return;
     long[] oldTime = time;
     int[] oldNanos = nanos;
+    int[] oldOffsets = tzOffset;
     time = new long[size];
     nanos = new int[size];
+    tzOffset = new int[size];
     if (preserveData) {
       if (isRepeating) {
         time[0] = oldTime[0];
         nanos[0] = oldNanos[0];
+        tzOffset[0] = oldOffsets[0];
       } else {
         System.arraycopy(oldTime, 0, time, 0, oldTime.length);
         System.arraycopy(oldNanos, 0, nanos, 0, oldNanos.length);
+        System.arraycopy(oldOffsets, 0, tzOffset, 0, oldOffsets.length);
       }
     }
   }
