@@ -647,9 +647,9 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
 
   public static void setTimestamp(Timestamp t, byte[] bytes, int offset) {
     long seconds = getSeconds(bytes, offset);
-    int nanos = getNanos(bytes, offset + 4);
     t.setTime(seconds * 1000);
-    t.setNanos(nanos);
+    t.setNanos(getNanos(bytes, offset + 4));
+
     Integer tzOffset = getTimezoneOffset(bytes, offset + 4);
     if (t instanceof HiveTimestamp) {
       ((HiveTimestamp) t).setOffsetInMin(tzOffset);

@@ -511,7 +511,8 @@ public class TestTimestampWritable {
 
   @Test
   public void testSetTimestamp() {
-    Timestamp t1 = new Timestamp((1L << 32));
+    // make sure we need a 2nd VInt
+    Timestamp t1 = new Timestamp((long) Integer.MAX_VALUE * 1000 + 1234);
     TimestampWritable writable = new TimestampWritable(t1);
     byte[] bytes = writable.getBytes();
     Timestamp t2 = new Timestamp(0);
