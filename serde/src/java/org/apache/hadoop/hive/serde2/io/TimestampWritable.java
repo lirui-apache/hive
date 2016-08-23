@@ -20,10 +20,7 @@ package org.apache.hadoop.hive.serde2.io;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.Date;
 
-import com.google.common.base.Preconditions;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.util.TimestampUtils;
@@ -360,7 +357,7 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
     return seconds + nanos / 1000000000;
   }
 
-  public static long getLong(Timestamp timestamp) {
+  public static long getLong(HiveTimestamp timestamp) {
     return timestamp.getTime() / 1000;
   }
 
@@ -614,7 +611,7 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
     return getHiveDecimal(timestamp);
   }
 
-  public static HiveDecimal getHiveDecimal(Timestamp timestamp) {
+  public static HiveDecimal getHiveDecimal(HiveTimestamp timestamp) {
     // The BigDecimal class recommends not converting directly from double to BigDecimal,
     // so we convert through a string...
     Double timestampDouble = TimestampUtils.getDouble(timestamp);
@@ -628,12 +625,12 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
    * @param time time in seconds or in milliseconds
    * @return the timestamp
    */
-  public static Timestamp longToTimestamp(long time, boolean intToTimestampInSeconds) {
+  public static HiveTimestamp longToTimestamp(long time, boolean intToTimestampInSeconds) {
       // If the time is in seconds, converts it to milliseconds first.
-      return new Timestamp(intToTimestampInSeconds ?  time * 1000 : time);
+      return new HiveTimestamp(intToTimestampInSeconds ?  time * 1000 : time);
   }
 
-  public static void setTimestamp(Timestamp t, byte[] bytes, int offset) {
+  public static void setTimestamp(HiveTimestamp t, byte[] bytes, int offset) {
     long seconds = getSeconds(bytes, offset);
     t.setTime(seconds * 1000);
     if (hasDecimalOrSecondVInt(bytes[offset])) {
@@ -642,16 +639,11 @@ public class TimestampWritable implements WritableComparable<TimestampWritable> 
       t.setNanos(0);
     }
 
-    Integer tzOffset = getTimezoneOffset(bytes, offset + 4);
-    if (t instanceof HiveTimestamp) {
-      ((HiveTimestamp) t).setOffsetInMin(tzOffset);
-    } else {
-      Preconditions.checkArgument(tzOffset == null);
-    }
+    t.setOffsetInMin(getTimezoneOffset(bytes, offset + 4));
   }
 
-  public static Timestamp createTimestamp(byte[] bytes, int offset) {
-    Timestamp t = new HiveTimestamp(0);
+  public static HiveTimestamp createTimestamp(byte[] bytes, int offset) {
+    HiveTimestamp t = new HiveTimestamp(0);
     TimestampWritable.setTimestamp(t, bytes, offset);
     return t;
   }

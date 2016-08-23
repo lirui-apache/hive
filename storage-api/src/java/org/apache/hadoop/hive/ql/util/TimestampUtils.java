@@ -19,9 +19,9 @@
 package org.apache.hadoop.hive.ql.util;
 
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 
 /**
  * Utitilities for Timestamps and the relevant conversions.
@@ -33,12 +33,12 @@ public class TimestampUtils {
    * Convert the timestamp to a double measured in seconds.
    * @return double representation of the timestamp, accurate to nanoseconds
    */
-  public static double getDouble(Timestamp ts) {
+  public static double getDouble(HiveTimestamp ts) {
     long seconds = millisToSeconds(ts.getTime());
     return seconds + ((double) ts.getNanos()) / 1000000000;
   }
 
-  public static Timestamp doubleToTimestamp(double f) {
+  public static HiveTimestamp doubleToTimestamp(double f) {
     try {
       long seconds = (long) f;
 
@@ -56,7 +56,7 @@ public class TimestampUtils {
         millis -= 1000;
         nanos += 1000000000;
       }
-      Timestamp t = new Timestamp(millis);
+      HiveTimestamp t = new HiveTimestamp(millis);
 
       // Set remaining fractional portion to nanos
       t.setNanos(nanos);
@@ -68,7 +68,7 @@ public class TimestampUtils {
     }
   }
 
-  public static Timestamp decimalToTimestamp(HiveDecimal d) {
+  public static HiveTimestamp decimalToTimestamp(HiveDecimal d) {
     try {
       BigDecimal nanoInstant = d.bigDecimalValue().multiply(BILLION_BIG_DECIMAL);
       int nanos = nanoInstant.remainder(BILLION_BIG_DECIMAL).intValue();
@@ -77,7 +77,7 @@ public class TimestampUtils {
       }
       long seconds =
           nanoInstant.subtract(new BigDecimal(nanos)).divide(BILLION_BIG_DECIMAL).longValue();
-      Timestamp t = new Timestamp(seconds * 1000);
+      HiveTimestamp t = new HiveTimestamp(seconds * 1000);
       t.setNanos(nanos);
 
       return t;
