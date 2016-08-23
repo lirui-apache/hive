@@ -18,7 +18,6 @@
 package org.apache.hadoop.hive.serde2.avro;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +31,7 @@ import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericData.Fixed;
 import org.apache.avro.generic.GenericEnumSymbol;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hive.common.type.HiveChar;
@@ -212,7 +212,7 @@ class AvroSerializer {
       Date date = ((DateObjectInspector)fieldOI).getPrimitiveJavaObject(structFieldData);
       return DateWritable.dateToDays(date);
     case TIMESTAMP:
-      Timestamp timestamp =
+      HiveTimestamp timestamp =
         ((TimestampObjectInspector) fieldOI).getPrimitiveJavaObject(structFieldData);
       return timestamp.getTime();
     case UNKNOWN:

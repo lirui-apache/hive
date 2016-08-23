@@ -18,14 +18,12 @@
 
 package org.apache.hive.common.util;
 
-import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.joda.time.DateTime;
 import org.joda.time.MutableDateTime;
 import org.joda.time.DateTimeFieldType;
@@ -88,7 +86,7 @@ public class TimestampParser {
    * @return
    * @throws IllegalArgumentException if input string cannot be parsed into timestamp
    */
-  public Timestamp parseTimestamp(String strValue) throws IllegalArgumentException {
+  public HiveTimestamp parseTimestamp(String strValue) throws IllegalArgumentException {
     if (fmt != null) {
       // reset value in case any date fields are missing from the date pattern
       MutableDateTime mdt = new MutableDateTime(startingDateValue);
@@ -98,12 +96,12 @@ public class TimestampParser {
       int ret = fmt.parseInto(mdt, strValue, 0);
       // Only accept parse results if we parsed the entire string
       if (ret == strValue.length()) {
-        return new Timestamp(mdt.getMillis());
+        return new HiveTimestamp(mdt.getMillis());
       }
     }
 
     // Otherwise try default timestamp parsing
-    return Timestamp.valueOf(strValue);
+    return HiveTimestamp.valueOf(strValue);
   }
 
   /**

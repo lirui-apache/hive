@@ -21,7 +21,6 @@ package org.apache.hive.hcatalog.data;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,6 +34,7 @@ import java.util.regex.Pattern;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.serde.serdeConstants;
@@ -402,7 +402,7 @@ public class JsonSerDe implements SerDe {
     case DATE:
       return Date.valueOf(s);
     case TIMESTAMP:
-      return Timestamp.valueOf(s);
+      return HiveTimestamp.valueOf(s);
     case DECIMAL:
       return HiveDecimal.create(s);
     case VARCHAR:
@@ -509,7 +509,7 @@ public class JsonSerDe implements SerDe {
           appendWithQuotes(sb, d.toString());
           break;
         case TIMESTAMP: {
-          Timestamp t = ((TimestampObjectInspector) poi).getPrimitiveJavaObject(o);
+          HiveTimestamp t = ((TimestampObjectInspector) poi).getPrimitiveJavaObject(o);
           appendWithQuotes(sb, t.toString());
           break;
         }

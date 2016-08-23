@@ -18,9 +18,9 @@
 package org.apache.hadoop.hive.ql.exec.vector.udf;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.vector.*;
@@ -298,9 +298,9 @@ public class VectorUDFAdaptor extends VectorExpression {
       }
     } else if (outputOI instanceof WritableTimestampObjectInspector) {
       TimestampColumnVector tv = (TimestampColumnVector) colVec;
-      Timestamp ts;
-      if (value instanceof Timestamp) {
-        ts = (Timestamp) value;
+      HiveTimestamp ts;
+      if (value instanceof HiveTimestamp) {
+        ts = (HiveTimestamp) value;
       } else {
         ts = ((WritableTimestampObjectInspector) outputOI).getPrimitiveJavaObject(value);
       }

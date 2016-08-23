@@ -18,8 +18,7 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions.gen;
 
-import java.sql.Timestamp;
-
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.*;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.*;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
@@ -34,7 +33,7 @@ public class <ClassName> extends <BaseClassName> {
 
   private static final long serialVersionUID = 1L;
 
-  public <ClassName>(Timestamp value, int colNum, int outputColumn) {
+  public <ClassName>(HiveTimestamp value, int colNum, int outputColumn) {
     super(TimestampColumnVector.<GetTimestampLongDoubleMethod>(value), colNum, outputColumn);
   }
 

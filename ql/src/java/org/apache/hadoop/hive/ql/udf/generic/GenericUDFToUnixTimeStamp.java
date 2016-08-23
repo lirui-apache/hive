@@ -18,11 +18,11 @@
 
 package org.apache.hadoop.hive.ql.udf.generic;
 
-import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
@@ -152,12 +152,12 @@ public class GenericUDFToUnixTimeStamp extends GenericUDF {
                    .getTimeInSeconds());
       return retValue;
     }
-    Timestamp timestamp = inputTimestampOI.getPrimitiveJavaObject(arguments[0].get());
+    HiveTimestamp timestamp = inputTimestampOI.getPrimitiveJavaObject(arguments[0].get());
     setValueFromTs(retValue, timestamp);
     return retValue;
   }
 
-  protected static void setValueFromTs(LongWritable value, Timestamp timestamp) {
+  protected static void setValueFromTs(LongWritable value, HiveTimestamp timestamp) {
     value.set(timestamp.getTime() / 1000);
   }
 

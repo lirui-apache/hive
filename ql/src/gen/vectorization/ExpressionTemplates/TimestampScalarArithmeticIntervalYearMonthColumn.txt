@@ -18,9 +18,8 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions.gen;
 
-import java.sql.Timestamp;
-
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.VectorExpression;
 import org.apache.hadoop.hive.ql.exec.vector.VectorExpressionDescriptor;
 import org.apache.hadoop.hive.ql.exec.vector.*;
@@ -46,12 +45,12 @@ public class <ClassName> extends VectorExpression {
   private static final long serialVersionUID = 1L;
 
   private int colNum;
-  private Timestamp value;
+  private HiveTimestamp value;
   private int outputColumn;
   private HiveIntervalYearMonth scratchIntervalYearMonth2;
   private DateTimeMath dtm = new DateTimeMath();
 
-  public <ClassName>(Timestamp value, int colNum, int outputColumn) {
+  public <ClassName>(HiveTimestamp value, int colNum, int outputColumn) {
     this.colNum = colNum;
     this.value = value;
     this.outputColumn = outputColumn;
@@ -76,7 +75,7 @@ public class <ClassName> extends VectorExpression {
     // Input #2 is type Interval_Year_Month (months).
     LongColumnVector inputColVector2 = (LongColumnVector) batch.cols[colNum];
 
-        // Output is type Timestamp.
+        // Output is type HiveTimestamp.
     TimestampColumnVector outputColVector = (TimestampColumnVector) batch.cols[outputColumn];
 
     int[] sel = batch.selected;

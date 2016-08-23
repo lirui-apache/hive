@@ -63,11 +63,13 @@ public class HiveTimestamp implements Comparable<HiveTimestamp> {
 
   public HiveTimestamp(Timestamp ts) {
     this(ts.getTime());
+    setNanos(ts.getNanos());
   }
 
   public HiveTimestamp(HiveTimestamp other) {
     this(other.getTime());
     setOffsetInMin(other.offsetInMin);
+    setNanos(other.getNanos());
   }
 
   public long getTime() {

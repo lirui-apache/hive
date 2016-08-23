@@ -19,11 +19,11 @@
 package org.apache.hadoop.hive.ql.io.orc;
 
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -187,7 +187,7 @@ public class WriterImpl extends org.apache.orc.impl.WriterImpl implements Writer
             }
             case TIMESTAMP: {
               TimestampColumnVector vector = (TimestampColumnVector) column;
-              Timestamp ts = ((TimestampObjectInspector) inspector)
+              HiveTimestamp ts = ((TimestampObjectInspector) inspector)
                   .getPrimitiveJavaObject(obj);
               vector.set(rowId, ts);
               break;

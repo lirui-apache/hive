@@ -18,8 +18,7 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions.gen;
 
-import java.sql.Timestamp;
-
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.VectorExpression;
 import org.apache.hadoop.hive.ql.exec.vector.*;
@@ -35,7 +34,7 @@ public class <ClassName> extends <BaseClassName> {
 
   private static final long serialVersionUID = 1L;
 
-  public <ClassName>(int colNum, Timestamp value) {
+  public <ClassName>(int colNum, HiveTimestamp value) {
     super(colNum, TimestampColumnVector.<GetTimestampLongDoubleMethod>(value));
   }
 

@@ -17,16 +17,15 @@
  */
 package org.apache.hadoop.hive.serde2.objectinspector.primitive;
 
-import java.sql.Timestamp;
-
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.serde2.io.TimestampWritable;
 import org.apache.hadoop.hive.serde2.objectinspector.ConstantObjectInspector;
 
 public class JavaConstantTimestampObjectInspector extends
     JavaTimestampObjectInspector implements ConstantObjectInspector {
-  private Timestamp value;
+  private HiveTimestamp value;
 
-  public JavaConstantTimestampObjectInspector(Timestamp value) {
+  public JavaConstantTimestampObjectInspector(HiveTimestamp value) {
     super();
     this.value = value;
   }

@@ -22,9 +22,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.sql.Timestamp;
-
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DecimalColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DoubleColumnVector;
@@ -593,14 +592,14 @@ public class TestVectorFilterExpressions {
     vrb.cols[0] = new TimestampColumnVector();
 
     TimestampColumnVector lcv0 = (TimestampColumnVector) vrb.cols[0];
-    Timestamp startTS = new Timestamp(0); // the epoch
-    Timestamp endTS = Timestamp.valueOf("2013-11-05 00:00:00.000000000");
+    HiveTimestamp startTS = new HiveTimestamp(0); // the epoch
+    HiveTimestamp endTS = HiveTimestamp.valueOf("2013-11-05 00:00:00.000000000");
 
-    Timestamp ts0 = Timestamp.valueOf("1963-11-06 00:00:00.000");
+    HiveTimestamp ts0 = HiveTimestamp.valueOf("1963-11-06 00:00:00.000");
     lcv0.set(0, ts0);
-    Timestamp ts1 = Timestamp.valueOf("1983-11-06 00:00:00.000");
+    HiveTimestamp ts1 = HiveTimestamp.valueOf("1983-11-06 00:00:00.000");
     lcv0.set(1, ts1);
-    Timestamp ts2 = Timestamp.valueOf("2099-11-06 00:00:00.000");
+    HiveTimestamp ts2 = HiveTimestamp.valueOf("2099-11-06 00:00:00.000");
     lcv0.set(2, ts2);
     vrb.size = 3;
 
@@ -617,14 +616,14 @@ public class TestVectorFilterExpressions {
     vrb.cols[0] = new TimestampColumnVector();
 
     TimestampColumnVector lcv0 = (TimestampColumnVector) vrb.cols[0];
-    Timestamp startTS = Timestamp.valueOf("2013-11-05 00:00:00.000000000");
-    Timestamp endTS = Timestamp.valueOf("2013-11-05 00:00:00.000000010");
+    HiveTimestamp startTS = HiveTimestamp.valueOf("2013-11-05 00:00:00.000000000");
+    HiveTimestamp endTS = HiveTimestamp.valueOf("2013-11-05 00:00:00.000000010");
 
-    Timestamp ts0 = Timestamp.valueOf("2013-11-04 00:00:00.000000000");
+    HiveTimestamp ts0 = HiveTimestamp.valueOf("2013-11-04 00:00:00.000000000");
     lcv0.set(0, ts0);
-    Timestamp ts1 = Timestamp.valueOf("2013-11-05 00:00:00.000000002");
+    HiveTimestamp ts1 = HiveTimestamp.valueOf("2013-11-05 00:00:00.000000002");
     lcv0.set(1, ts1);
-    Timestamp ts2 = Timestamp.valueOf("2099-11-06 00:00:00.000");
+    HiveTimestamp ts2 = HiveTimestamp.valueOf("2099-11-06 00:00:00.000");
     lcv0.set(2, ts2);
     vrb.size = 3;
 

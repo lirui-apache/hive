@@ -13,6 +13,7 @@
  */
 package org.apache.hadoop.hive.ql.io.parquet.write;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
@@ -48,7 +49,6 @@ import org.apache.parquet.schema.OriginalType;
 import org.apache.parquet.schema.Type;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 
@@ -495,7 +495,7 @@ public class DataWritableWriter {
 
     @Override
     public void write(Object value) {
-      Timestamp ts = inspector.getPrimitiveJavaObject(value);
+      HiveTimestamp ts = inspector.getPrimitiveJavaObject(value);
       recordConsumer.addBinary(NanoTimeUtils.getNanoTime(ts, false).toBinary());
     }
   }

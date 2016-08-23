@@ -18,8 +18,7 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions.gen;
 
-import java.sql.Timestamp;
-
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.VectorExpression;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
@@ -38,11 +37,11 @@ public class <ClassName> extends VectorExpression {
   private int colNum;
 
   // The comparison is of the form "column BETWEEN leftValue AND rightValue"
-  private Timestamp leftValue;
-  private Timestamp rightValue;
-  private Timestamp scratchValue;
+  private HiveTimestamp leftValue;
+  private HiveTimestamp rightValue;
+  private HiveTimestamp scratchValue;
 
-  public <ClassName>(int colNum, Timestamp leftValue, Timestamp rightValue) {
+  public <ClassName>(int colNum, HiveTimestamp leftValue, HiveTimestamp rightValue) {
     this.colNum = colNum;
     this.leftValue = leftValue;
     this.rightValue = rightValue;

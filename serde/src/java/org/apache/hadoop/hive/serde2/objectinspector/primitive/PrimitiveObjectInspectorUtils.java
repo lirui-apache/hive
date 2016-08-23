@@ -23,10 +23,10 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.charset.CharacterCodingException;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.util.TimestampUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -225,7 +225,7 @@ public final class PrimitiveObjectInspectorUtils {
       Date.class, DateWritable.class);
   public static final PrimitiveTypeEntry timestampTypeEntry = new PrimitiveTypeEntry(
       PrimitiveCategory.TIMESTAMP, serdeConstants.TIMESTAMP_TYPE_NAME, null,
-      Timestamp.class, TimestampWritable.class);
+      HiveTimestamp.class, TimestampWritable.class);
   public static final PrimitiveTypeEntry intervalYearMonthTypeEntry = new PrimitiveTypeEntry(
       PrimitiveCategory.INTERVAL_YEAR_MONTH, serdeConstants.INTERVAL_YEAR_MONTH_TYPE_NAME, null,
       HiveIntervalYearMonth.class, HiveIntervalYearMonthWritable.class);
@@ -1054,16 +1054,17 @@ public final class PrimitiveObjectInspectorUtils {
     return result;
   }
 
-  public static Timestamp getTimestamp(Object o, PrimitiveObjectInspector oi) {
+  public static HiveTimestamp getTimestamp(Object o, PrimitiveObjectInspector oi) {
     return getTimestamp(o, oi, false);
   }
 
-  public static Timestamp getTimestamp(Object o, PrimitiveObjectInspector inputOI, boolean intToTimestampInSeconds) {
+  public static HiveTimestamp getTimestamp(Object o, PrimitiveObjectInspector inputOI,
+      boolean intToTimestampInSeconds) {
     if (o == null) {
       return null;
     }
 
-    Timestamp result = null;
+    HiveTimestamp result = null;
     long longValue = 0;
     switch (inputOI.getPrimitiveCategory()) {
     case VOID:
@@ -1109,7 +1110,7 @@ public final class PrimitiveObjectInspectorUtils {
       result = getTimestampFromString(getString(o, inputOI));
       break;
     case DATE:
-      result = new Timestamp(
+      result = new HiveTimestamp(
           ((DateObjectInspector) inputOI).getPrimitiveWritableObject(o).get().getTime());
       break;
     case TIMESTAMP:
@@ -1122,8 +1123,8 @@ public final class PrimitiveObjectInspectorUtils {
     return result;
   }
 
-  static Timestamp getTimestampFromString(String s) {
-    Timestamp result;
+  static HiveTimestamp getTimestampFromString(String s) {
+    HiveTimestamp result;
     s = s.trim();
 
     // Throw away extra if more than 9 decimal places
@@ -1134,7 +1135,7 @@ public final class PrimitiveObjectInspectorUtils {
       }
     }
     try {
-      result = Timestamp.valueOf(s);
+      result = HiveTimestamp.valueOf(s);
     } catch (IllegalArgumentException e) {
       result = null;
     }

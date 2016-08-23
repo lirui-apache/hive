@@ -25,11 +25,9 @@ import static junit.framework.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,6 +42,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.llap.TypeDesc;
 import org.apache.hadoop.hive.ql.io.sarg.PredicateLeaf;
@@ -411,7 +410,7 @@ public class TestOrcFile {
     Map<?, ?> map = ma.getMap(readerInspector.getStructFieldData(row,
         fields.get(11)));
     assertEquals(0, map.size());
-    assertEquals(Timestamp.valueOf("2000-03-12 15:00:00"),
+    assertEquals(HiveTimestamp.valueOf("2000-03-12 15:00:00"),
         tso.getPrimitiveJavaObject(readerInspector.getStructFieldData(row,
             fields.get(12))));
     assertEquals(HiveDecimal.create("12345678.6547456"),
@@ -493,7 +492,7 @@ public class TestOrcFile {
     }
     assertEquals(true, found[0]);
     assertEquals(true, found[1]);
-    assertEquals(Timestamp.valueOf("2000-03-12 15:00:01"),
+    assertEquals(HiveTimestamp.valueOf("2000-03-12 15:00:01"),
         tso.getPrimitiveJavaObject(readerInspector.getStructFieldData(row,
             fields.get(12))));
     assertEquals(HiveDecimal.create("12345678.6547457"),
@@ -509,28 +508,28 @@ public class TestOrcFile {
   public void testTimestamp() throws Exception {
     ObjectInspector inspector;
     synchronized (TestOrcFile.class) {
-      inspector = ObjectInspectorFactory.getReflectionObjectInspector(Timestamp.class,
+      inspector = ObjectInspectorFactory.getReflectionObjectInspector(HiveTimestamp.class,
           ObjectInspectorFactory.ObjectInspectorOptions.JAVA);
     }
 
     Writer writer = OrcFile.createWriter(testFilePath,
         OrcFile.writerOptions(conf).inspector(inspector).stripeSize(100000).bufferSize(10000)
             .version(OrcFile.Version.V_0_11));
-    List<Timestamp> tslist = Lists.newArrayList();
-    tslist.add(Timestamp.valueOf("2037-01-01 00:00:00.000999"));
-    tslist.add(Timestamp.valueOf("2003-01-01 00:00:00.000000222"));
-    tslist.add(Timestamp.valueOf("1999-01-01 00:00:00.999999999"));
-    tslist.add(Timestamp.valueOf("1995-01-01 00:00:00.688888888"));
-    tslist.add(Timestamp.valueOf("2002-01-01 00:00:00.1"));
-    tslist.add(Timestamp.valueOf("2010-03-02 00:00:00.000009001"));
-    tslist.add(Timestamp.valueOf("2005-01-01 00:00:00.000002229"));
-    tslist.add(Timestamp.valueOf("2006-01-01 00:00:00.900203003"));
-    tslist.add(Timestamp.valueOf("2003-01-01 00:00:00.800000007"));
-    tslist.add(Timestamp.valueOf("1996-08-02 00:00:00.723100809"));
-    tslist.add(Timestamp.valueOf("1998-11-02 00:00:00.857340643"));
-    tslist.add(Timestamp.valueOf("2008-10-02 00:00:00"));
+    List<HiveTimestamp> tslist = Lists.newArrayList();
+    tslist.add(HiveTimestamp.valueOf("2037-01-01 00:00:00.000999"));
+    tslist.add(HiveTimestamp.valueOf("2003-01-01 00:00:00.000000222"));
+    tslist.add(HiveTimestamp.valueOf("1999-01-01 00:00:00.999999999"));
+    tslist.add(HiveTimestamp.valueOf("1995-01-01 00:00:00.688888888"));
+    tslist.add(HiveTimestamp.valueOf("2002-01-01 00:00:00.1"));
+    tslist.add(HiveTimestamp.valueOf("2010-03-02 00:00:00.000009001"));
+    tslist.add(HiveTimestamp.valueOf("2005-01-01 00:00:00.000002229"));
+    tslist.add(HiveTimestamp.valueOf("2006-01-01 00:00:00.900203003"));
+    tslist.add(HiveTimestamp.valueOf("2003-01-01 00:00:00.800000007"));
+    tslist.add(HiveTimestamp.valueOf("1996-08-02 00:00:00.723100809"));
+    tslist.add(HiveTimestamp.valueOf("1998-11-02 00:00:00.857340643"));
+    tslist.add(HiveTimestamp.valueOf("2008-10-02 00:00:00"));
 
-    for (Timestamp ts : tslist) {
+    for (HiveTimestamp ts : tslist) {
       writer.addRow(ts);
     }
 
@@ -542,7 +541,7 @@ public class TestOrcFile {
     int idx = 0;
     while (rows.hasNext()) {
       Object row = rows.next(null);
-      Timestamp tlistTimestamp = tslist.get(idx++);
+      HiveTimestamp tlistTimestamp = tslist.get(idx++);
       if (tlistTimestamp.getNanos() != ((TimestampWritable) row).getNanos()) {
         assertTrue(false);
       }
@@ -1313,7 +1312,7 @@ public class TestOrcFile {
     for (int year = minYear; year < maxYear; ++year) {
       for (int ms = 1000; ms < 2000; ++ms) {
         row.setFieldValue(0,
-            new TimestampWritable(Timestamp.valueOf(year + "-05-05 12:34:56."
+            new TimestampWritable(HiveTimestamp.valueOf(year + "-05-05 12:34:56."
                 + ms)));
         row.setFieldValue(1,
             new DateWritable(new Date(year - 1900, 11, 25)));
@@ -1328,7 +1327,7 @@ public class TestOrcFile {
       for(int ms = 1000; ms < 2000; ++ms) {
         row = (OrcStruct) rows.next(row);
         assertEquals(new TimestampWritable
-                (Timestamp.valueOf(year + "-05-05 12:34:56." + ms)),
+                (HiveTimestamp.valueOf(year + "-05-05 12:34:56." + ms)),
             row.getFieldValue(0));
         assertEquals(new DateWritable(new Date(year - 1900, 11, 25)),
             row.getFieldValue(1));
@@ -1384,12 +1383,13 @@ public class TestOrcFile {
     OrcStruct row = new OrcStruct(3);
     OrcUnion union = new OrcUnion();
     row.setFieldValue(1, union);
-    row.setFieldValue(0, new TimestampWritable(Timestamp.valueOf("2000-03-12 15:00:00")));
+    row.setFieldValue(0, new TimestampWritable(HiveTimestamp.valueOf("2000-03-12 15:00:00")));
     HiveDecimal value = HiveDecimal.create("12345678.6547456");
     row.setFieldValue(2, new HiveDecimalWritable(value));
     union.set((byte) 0, new IntWritable(42));
     writer.addRow(row);
-    row.setFieldValue(0, new TimestampWritable(Timestamp.valueOf("2000-03-20 12:00:00.123456789")));
+    row.setFieldValue(0, new TimestampWritable(HiveTimestamp.valueOf(
+        "2000-03-20 12:00:00.123456789")));
     union.set((byte) 1, new Text("hello"));
     value = HiveDecimal.create("-5643.234");
     row.setFieldValue(2, new HiveDecimalWritable(value));
@@ -1405,13 +1405,13 @@ public class TestOrcFile {
     writer.addRow(row);
     union.set((byte) 0, new IntWritable(200000));
     row.setFieldValue(0, new TimestampWritable
-        (Timestamp.valueOf("1970-01-01 00:00:00")));
+        (HiveTimestamp.valueOf("1970-01-01 00:00:00")));
     value = HiveDecimal.create("10000000000000000000");
     row.setFieldValue(2, new HiveDecimalWritable(value));
     writer.addRow(row);
     Random rand = new Random(42);
     for(int i=1970; i < 2038; ++i) {
-      row.setFieldValue(0, new TimestampWritable(Timestamp.valueOf(i +
+      row.setFieldValue(0, new TimestampWritable(HiveTimestamp.valueOf(i +
           "-05-05 12:34:56." + i)));
       if ((i & 1) == 0) {
         union.set((byte) 0, new IntWritable(i*i));
@@ -1491,7 +1491,7 @@ public class TestOrcFile {
     inspector = reader.getObjectInspector();
     assertEquals("struct<time:timestamp,union:uniontype<int,string>,decimal:decimal(38,18)>",
         inspector.getTypeName());
-    assertEquals(new TimestampWritable(Timestamp.valueOf("2000-03-12 15:00:00")),
+    assertEquals(new TimestampWritable(HiveTimestamp.valueOf("2000-03-12 15:00:00")),
         row.getFieldValue(0));
     union = (OrcUnion) row.getFieldValue(1);
     assertEquals(0, union.getTag());
@@ -1500,7 +1500,7 @@ public class TestOrcFile {
         row.getFieldValue(2));
     row = (OrcStruct) rows.next(row);
     assertEquals(2, rows.getRowNumber());
-    assertEquals(new TimestampWritable(Timestamp.valueOf("2000-03-20 12:00:00.123456789")),
+    assertEquals(new TimestampWritable(HiveTimestamp.valueOf("2000-03-20 12:00:00.123456789")),
         row.getFieldValue(0));
     assertEquals(1, union.getTag());
     assertEquals(new Text("hello"), union.getObject());
@@ -1522,7 +1522,7 @@ public class TestOrcFile {
     assertEquals(null, union.getObject());
     assertEquals(null, row.getFieldValue(2));
     row = (OrcStruct) rows.next(row);
-    assertEquals(new TimestampWritable(Timestamp.valueOf("1970-01-01 00:00:00")),
+    assertEquals(new TimestampWritable(HiveTimestamp.valueOf("1970-01-01 00:00:00")),
         row.getFieldValue(0));
     assertEquals(new IntWritable(200000), union.getObject());
     assertEquals(new HiveDecimalWritable(HiveDecimal.create("10000000000000000000")),
@@ -1530,7 +1530,7 @@ public class TestOrcFile {
     rand = new Random(42);
     for(int i=1970; i < 2038; ++i) {
       row = (OrcStruct) rows.next(row);
-      assertEquals(new TimestampWritable(Timestamp.valueOf(i + "-05-05 12:34:56." + i)),
+      assertEquals(new TimestampWritable(HiveTimestamp.valueOf(i + "-05-05 12:34:56." + i)),
           row.getFieldValue(0));
       if ((i & 1) == 0) {
         assertEquals(0, union.getTag());
@@ -1557,7 +1557,7 @@ public class TestOrcFile {
     assertEquals(reader.getNumberOfRows(), rows.getRowNumber());
     rows.seekToRow(1);
     row = (OrcStruct) rows.next(row);
-    assertEquals(new TimestampWritable(Timestamp.valueOf("2000-03-20 12:00:00.123456789")),
+    assertEquals(new TimestampWritable(HiveTimestamp.valueOf("2000-03-20 12:00:00.123456789")),
         row.getFieldValue(0));
     assertEquals(1, union.getTag());
     assertEquals(new Text("hello"), union.getObject());

@@ -20,8 +20,8 @@ package org.apache.hadoop.hive.serde2.lazy;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.sql.Timestamp;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hive.serde2.io.TimestampWritable;
@@ -70,7 +70,7 @@ public class LazyTimestamp extends LazyPrimitive<LazyTimestampObjectInspector, T
       s = "";
     }
 
-    Timestamp t = null;
+    HiveTimestamp t = null;
     if (s.compareTo("NULL") == 0) {
       isNull = true;
       logExceptionMessage(bytes, start, length, "TIMESTAMP");

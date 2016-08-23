@@ -13,13 +13,13 @@
  */
 package org.apache.hadoop.hive.ql.io.parquet.timestamp;
 
-import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import jodd.datetime.JDateTime;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 
 /**
  * Utilities for converting from java.sql.Timestamp to parquet timestamp.
@@ -55,10 +55,10 @@ public class NanoTimeUtils {
      return calendar;
    }
 
-   public static NanoTime getNanoTime(Timestamp ts, boolean skipConversion) {
+   public static NanoTime getNanoTime(HiveTimestamp ts, boolean skipConversion) {
 
      Calendar calendar = getCalendar(skipConversion);
-     calendar.setTime(ts);
+     calendar.setTimeInMillis(ts.getTime());
      int year = calendar.get(Calendar.YEAR);
      if (calendar.get(Calendar.ERA) == GregorianCalendar.BC) {
        year = 1 - year;
@@ -78,7 +78,7 @@ public class NanoTimeUtils {
      return new NanoTime(days, nanosOfDay);
    }
 
-   public static Timestamp getTimestamp(NanoTime nt, boolean skipConversion) {
+   public static HiveTimestamp getTimestamp(NanoTime nt, boolean skipConversion) {
      int julianDay = nt.getJulianDay();
      long nanosOfDay = nt.getTimeOfDayNanos();
 
@@ -106,7 +106,7 @@ public class NanoTimeUtils {
      calendar.set(Calendar.HOUR_OF_DAY, hour);
      calendar.set(Calendar.MINUTE, minutes);
      calendar.set(Calendar.SECOND, seconds);
-     Timestamp ts = new Timestamp(calendar.getTimeInMillis());
+     HiveTimestamp ts = new HiveTimestamp(calendar.getTimeInMillis());
      ts.setNanos((int) nanos);
      return ts;
    }

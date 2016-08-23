@@ -17,8 +17,7 @@
  */
 package org.apache.hadoop.hive.serde2.objectinspector.primitive;
 
-import java.sql.Timestamp;
-
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.serde2.io.TimestampWritable;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 
@@ -31,12 +30,12 @@ public class JavaTimestampObjectInspector
   }
 
   public TimestampWritable getPrimitiveWritableObject(Object o) {
-    return o == null ? null : new TimestampWritable((Timestamp) o);
+    return o == null ? null : new TimestampWritable((HiveTimestamp) o);
   }
 
   @Override
-  public Timestamp getPrimitiveJavaObject(Object o) {
-    return o == null ? null : (Timestamp) o;
+  public HiveTimestamp getPrimitiveJavaObject(Object o) {
+    return o == null ? null : (HiveTimestamp) o;
   }
 
   @Override
@@ -44,26 +43,26 @@ public class JavaTimestampObjectInspector
     if (o == null) {
       return null;
     }
-    Timestamp source = (Timestamp) o;
-    Timestamp copy = new Timestamp(source.getTime());
+    HiveTimestamp source = (HiveTimestamp) o;
+    HiveTimestamp copy = new HiveTimestamp(source.getTime());
     copy.setNanos(source.getNanos());
     return copy;
   }
 
-  public Timestamp get(Object o) {
-    return (Timestamp) o;
+  public HiveTimestamp get(Object o) {
+    return (HiveTimestamp) o;
   }
 
-  public Object set(Object o, Timestamp value) {
+  public Object set(Object o, HiveTimestamp value) {
     if (value == null) {
       return null;
     }
-    ((Timestamp) o).setTime(value.getTime());
+    ((HiveTimestamp) o).setTime(value.getTime());
     return o;
   }
 
   public Object set(Object o, byte[] bytes, int offset) {
-    TimestampWritable.setTimestamp((Timestamp) o, bytes, offset);
+    TimestampWritable.setTimestamp((HiveTimestamp) o, bytes, offset);
     return o;
   }
 
@@ -71,14 +70,14 @@ public class JavaTimestampObjectInspector
     if (tw == null) {
       return null;
     }
-    Timestamp t = (Timestamp) o;
+    HiveTimestamp t = (HiveTimestamp) o;
     t.setTime(tw.getTimestamp().getTime());
     t.setNanos(tw.getTimestamp().getNanos());
     return t;
   }
 
-  public Object create(Timestamp value) {
-    return new Timestamp(value.getTime());
+  public Object create(HiveTimestamp value) {
+    return new HiveTimestamp(value.getTime());
   }
 
   public Object create(byte[] bytes, int offset) {

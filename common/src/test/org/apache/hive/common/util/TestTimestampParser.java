@@ -18,19 +18,17 @@
 
 package org.apache.hive.common.util;
 
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.List;
-
 import static org.junit.Assert.*;
+
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.junit.Test;
 
 public class TestTimestampParser {
   public static class ValidTimestampCase {
     String strValue;
-    Timestamp expectedValue;
+    HiveTimestamp expectedValue;
 
-    public ValidTimestampCase(String strValue, Timestamp expectedValue) {
+    public ValidTimestampCase(String strValue, HiveTimestamp expectedValue) {
       this.strValue = strValue;
       this.expectedValue = expectedValue;
     }
@@ -38,7 +36,7 @@ public class TestTimestampParser {
 
   static void testValidCases(TimestampParser tp, ValidTimestampCase[] validCases) {
     for (ValidTimestampCase validCase : validCases) {
-      Timestamp ts = tp.parseTimestamp(validCase.strValue);
+      HiveTimestamp ts = tp.parseTimestamp(validCase.strValue);
       assertEquals("Parsing " + validCase.strValue, validCase.expectedValue, ts);
     }
   }
@@ -46,7 +44,7 @@ public class TestTimestampParser {
   static void testInvalidCases(TimestampParser tp, String[] invalidCases) {
     for (String invalidString : invalidCases) {
       try {
-        Timestamp ts = tp.parseTimestamp(invalidString);
+        HiveTimestamp ts = tp.parseTimestamp(invalidString);
         fail("Expected exception parsing " + invalidString + ", but parsed value to " + ts);
       } catch (IllegalArgumentException err) {
         // Exception expected
@@ -60,11 +58,11 @@ public class TestTimestampParser {
     TimestampParser tp = new TimestampParser();
     ValidTimestampCase[] validCases = {
         new ValidTimestampCase("1945-12-31 23:59:59.0",
-            Timestamp.valueOf("1945-12-31 23:59:59.0")),
+            HiveTimestamp.valueOf("1945-12-31 23:59:59.0")),
         new ValidTimestampCase("1945-12-31 23:59:59.1234",
-            Timestamp.valueOf("1945-12-31 23:59:59.1234")),
+            HiveTimestamp.valueOf("1945-12-31 23:59:59.1234")),
         new ValidTimestampCase("1970-01-01 00:00:00",
-            Timestamp.valueOf("1970-01-01 00:00:00")),
+            HiveTimestamp.valueOf("1970-01-01 00:00:00")),
     };
 
     String[] invalidCases = {
@@ -93,24 +91,24 @@ public class TestTimestampParser {
 
     ValidTimestampCase[] validCases = {
         new ValidTimestampCase("1945-12-31T23:59:59.0",
-            Timestamp.valueOf("1945-12-31 23:59:59.0")),
+            HiveTimestamp.valueOf("1945-12-31 23:59:59.0")),
         new ValidTimestampCase("2001-01-01 00:00:00.100",
-            Timestamp.valueOf("2001-01-01 00:00:00.100")),
+            HiveTimestamp.valueOf("2001-01-01 00:00:00.100")),
         new ValidTimestampCase("2001-01-01 00:00:00.001",
-            Timestamp.valueOf("2001-01-01 00:00:00.001")),
+            HiveTimestamp.valueOf("2001-01-01 00:00:00.001")),
         // Joda parsing only supports up to millisecond precision
         new ValidTimestampCase("1945-12-31T23:59:59.1234",
-            Timestamp.valueOf("1945-12-31 23:59:59.123")),
+            HiveTimestamp.valueOf("1945-12-31 23:59:59.123")),
         new ValidTimestampCase("1970-01-01T00:00:00",
-            Timestamp.valueOf("1970-01-01 00:00:00")),
+            HiveTimestamp.valueOf("1970-01-01 00:00:00")),
         new ValidTimestampCase("1970-4-5T6:7:8",
-             Timestamp.valueOf("1970-04-05 06:07:08")),
+            HiveTimestamp.valueOf("1970-04-05 06:07:08")),
 
         // Default timestamp format still works?
         new ValidTimestampCase("2001-01-01 00:00:00",
-            Timestamp.valueOf("2001-01-01 00:00:00")),
+            HiveTimestamp.valueOf("2001-01-01 00:00:00")),
         new ValidTimestampCase("1945-12-31 23:59:59.1234",
-            Timestamp.valueOf("1945-12-31 23:59:59.1234")),
+            HiveTimestamp.valueOf("1945-12-31 23:59:59.1234")),
     };
 
     String[] invalidCases = {
@@ -133,14 +131,14 @@ public class TestTimestampParser {
     TimestampParser tp = new TimestampParser(patterns);
 
     ValidTimestampCase[] validCases = {
-        new ValidTimestampCase("0", new Timestamp(0)),
-        new ValidTimestampCase("-1000000", new Timestamp(-1000000)),
-        new ValidTimestampCase("1420509274123", new Timestamp(1420509274123L)),
-        new ValidTimestampCase("1420509274123.456789", new Timestamp(1420509274123L)),
+        new ValidTimestampCase("0", new HiveTimestamp(0)),
+        new ValidTimestampCase("-1000000", new HiveTimestamp(-1000000)),
+        new ValidTimestampCase("1420509274123", new HiveTimestamp(1420509274123L)),
+        new ValidTimestampCase("1420509274123.456789", new HiveTimestamp(1420509274123L)),
 
         // Other format pattern should also work
         new ValidTimestampCase("1945-12-31T23:59:59",
-            Timestamp.valueOf("1945-12-31 23:59:59")),
+            HiveTimestamp.valueOf("1945-12-31 23:59:59")),
     };
 
     String[] invalidCases = {
@@ -164,9 +162,9 @@ public class TestTimestampParser {
 
     ValidTimestampCase[] validCases = {
         new ValidTimestampCase("05:06",
-            Timestamp.valueOf("1970-01-01 05:06:00")),
+            HiveTimestamp.valueOf("1970-01-01 05:06:00")),
         new ValidTimestampCase("05:06:07",
-            Timestamp.valueOf("1970-05-06 00:00:07")),
+            HiveTimestamp.valueOf("1970-05-06 00:00:07")),
     };
 
     String[] invalidCases = {

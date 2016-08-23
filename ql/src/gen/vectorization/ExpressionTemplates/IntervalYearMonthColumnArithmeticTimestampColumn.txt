@@ -18,9 +18,8 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions.gen;
 
-import java.sql.Timestamp;
-
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.VectorExpression;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.NullUtil;
 import org.apache.hadoop.hive.ql.exec.vector.*;
@@ -62,10 +61,10 @@ public class <ClassName> extends VectorExpression {
     // Input #1 is type Interval_Year_Month.
     LongColumnVector inputColVector1 = (LongColumnVector) batch.cols[colNum1];
 
-    // Input #2 is type Timestamp.
+    // Input #2 is type HiveTimestamp.
     TimestampColumnVector inputColVector2 = (TimestampColumnVector) batch.cols[colNum2];
 
-    // Output is type Timestamp.
+    // Output is type HiveTimestamp.
     TimestampColumnVector outputColVector = (TimestampColumnVector) batch.cols[outputColumn];
 
     int[] sel = batch.selected;
@@ -114,7 +113,7 @@ public class <ClassName> extends VectorExpression {
         }
       }
     } else if (inputColVector2.isRepeating) {
-      Timestamp value2 = inputColVector2.asScratchTimestamp(0);
+      HiveTimestamp value2 = inputColVector2.asScratchTimestamp(0);
       if (batch.selectedInUse) {
         for(int j = 0; j != n; j++) {
           int i = sel[j];

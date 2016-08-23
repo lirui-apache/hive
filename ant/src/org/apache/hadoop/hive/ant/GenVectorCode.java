@@ -2800,7 +2800,7 @@ public class GenVectorCode extends Task {
 
   private String getTimestampHiveType(String operandType) {
     if (operandType.equals("timestamp")) {
-      return "Timestamp";
+      return "HiveTimestamp";
     } else if (operandType.equals("interval_day_time")) {
       return "HiveIntervalDayTime";
     } else {
