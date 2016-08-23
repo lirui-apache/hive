@@ -18,40 +18,19 @@
 package org.apache.hadoop.hive.serde2.binarysortable;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.common.type.RandomTypeUtil;
 import org.apache.hadoop.hive.serde2.binarysortable.MyTestPrimitiveClass.ExtraTypeInfo;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableBooleanObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableByteObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableDateObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableDoubleObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableFloatObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableHiveCharObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableHiveDecimalObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableHiveIntervalDayTimeObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableHiveIntervalYearMonthObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableHiveVarcharObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableIntObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableLongObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableShortObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableStringObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableTimestampObjectInspector;
-import org.apache.hadoop.hive.serde2.typeinfo.CharTypeInfo;
-import org.apache.hadoop.hive.serde2.typeinfo.DecimalTypeInfo;
-import org.apache.hadoop.hive.serde2.typeinfo.VarcharTypeInfo;
 
 public class MyTestClass {
 
@@ -68,7 +47,7 @@ public class MyTestClass {
     public byte[] myBinary;
     public HiveDecimal myDecimal;
     public Date myDate;
-    public Timestamp myTimestamp;
+    public HiveTimestamp myTimestamp;
     public HiveIntervalYearMonth myIntervalYearMonth;
     public HiveIntervalDayTime myIntervalDayTime;
 

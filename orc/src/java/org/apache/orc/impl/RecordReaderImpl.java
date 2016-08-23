@@ -20,13 +20,13 @@ package org.apache.orc.impl;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.orc.BooleanColumnStatistics;
 import org.apache.orc.Reader;
 import org.apache.orc.RecordReader;
@@ -564,8 +564,8 @@ public class RecordReaderImpl implements RecordReader {
       if (bf.testString(predObj.toString())) {
         result = TruthValue.YES_NO_NULL;
       }
-    } else if (predObj instanceof Timestamp) {
-      if (bf.testLong(((Timestamp) predObj).getTime())) {
+    } else if (predObj instanceof HiveTimestamp) {
+      if (bf.testLong(((HiveTimestamp) predObj).getTime())) {
         result = TruthValue.YES_NO_NULL;
       }
     } else if (predObj instanceof Date) {
@@ -610,8 +610,8 @@ public class RecordReaderImpl implements RecordReader {
           return obj;
         } else if (obj instanceof String) {
           return Date.valueOf((String) obj);
-        } else if (obj instanceof Timestamp) {
-          return DateWritable.timeToDate(((Timestamp) obj).getTime() / 1000L);
+        } else if (obj instanceof HiveTimestamp) {
+          return DateWritable.timeToDate(((HiveTimestamp) obj).getTime() / 1000L);
         }
         // always string, but prevent the comparison to numbers (are they days/seconds/milliseconds?)
         break;
@@ -632,9 +632,9 @@ public class RecordReaderImpl implements RecordReader {
           return new HiveDecimalWritable((HiveDecimal) obj);
         } else if (obj instanceof HiveDecimalWritable) {
           return obj;
-        } else if (obj instanceof Timestamp) {
+        } else if (obj instanceof HiveTimestamp) {
           return new HiveDecimalWritable(Double.toString(
-              TimestampUtils.getDouble((Timestamp) obj)));
+              TimestampUtils.getDouble((HiveTimestamp) obj)));
         }
         break;
       case FLOAT:
@@ -645,8 +645,8 @@ public class RecordReaderImpl implements RecordReader {
           return ((HiveDecimal) obj).doubleValue();
         } else if (obj instanceof String) {
           return Double.valueOf(obj.toString());
-        } else if (obj instanceof Timestamp) {
-          return TimestampUtils.getDouble((Timestamp) obj);
+        } else if (obj instanceof HiveTimestamp) {
+          return TimestampUtils.getDouble((HiveTimestamp) obj);
         } else if (obj instanceof HiveDecimal) {
           return ((HiveDecimal) obj).doubleValue();
         } else if (obj instanceof BigDecimal) {
@@ -669,10 +669,10 @@ public class RecordReaderImpl implements RecordReader {
         }
         break;
       case TIMESTAMP:
-        if (obj instanceof Timestamp) {
+        if (obj instanceof HiveTimestamp) {
           return obj;
         } else if (obj instanceof Integer) {
-          return new Timestamp(((Number) obj).longValue());
+          return new HiveTimestamp(((Number) obj).longValue());
         } else if (obj instanceof Float) {
           return TimestampUtils.doubleToTimestamp(((Float) obj).doubleValue());
         } else if (obj instanceof Double) {
@@ -682,7 +682,7 @@ public class RecordReaderImpl implements RecordReader {
         } else if (obj instanceof HiveDecimalWritable) {
           return TimestampUtils.decimalToTimestamp(((HiveDecimalWritable) obj).getHiveDecimal());
         } else if (obj instanceof Date) {
-          return new Timestamp(((Date) obj).getTime());
+          return new HiveTimestamp(((Date) obj).getTime());
         }
         // float/double conversion to timestamp is interpreted as seconds whereas integer conversion
         // to timestamp is interpreted as milliseconds by default. The integer to timestamp casting

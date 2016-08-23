@@ -18,7 +18,6 @@
 package org.apache.hadoop.hive.common.type;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -147,11 +146,11 @@ public class RandomTypeUtil {
     }
   }
 
-  public static Timestamp getRandTimestamp(Random r) {
+  public static HiveTimestamp getRandTimestamp(Random r) {
     return getRandTimestamp(r, MIN_YEAR, MAX_YEAR);
   }
 
-  public static Timestamp getRandTimestamp(Random r, int minYear, int maxYear) {
+  public static HiveTimestamp getRandTimestamp(Random r, int minYear, int maxYear) {
     String optionalNanos = "";
     switch (r.nextInt(4)) {
     case 0:
@@ -180,9 +179,9 @@ public class RandomTypeUtil {
         Integer.valueOf(0 + r.nextInt(60)),      // minute
         Integer.valueOf(0 + r.nextInt(60)),      // second
         optionalNanos);
-    Timestamp timestampVal;
+    HiveTimestamp timestampVal;
     try {
-      timestampVal = Timestamp.valueOf(timestampStr);
+      timestampVal = HiveTimestamp.valueOf(timestampStr);
     } catch (Exception e) {
       System.err.println("Timestamp string " + timestampStr + " did not parse");
       throw e;

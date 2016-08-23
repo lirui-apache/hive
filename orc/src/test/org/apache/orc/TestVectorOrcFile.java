@@ -25,6 +25,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DecimalColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DoubleColumnVector;
@@ -58,7 +59,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -281,7 +281,7 @@ public class TestVectorOrcFile {
     assertEquals(4, listInts.vector[start + 1]);
     assertEquals("bad", listStrs.toString(start + 1));
     assertEquals(0, map.lengths[0]);
-    assertEquals(Timestamp.valueOf("2000-03-12 15:00:00"),
+    assertEquals(HiveTimestamp.valueOf("2000-03-12 15:00:00"),
         timestamp.asScratchTimestamp(0));
     assertEquals(new HiveDecimalWritable(HiveDecimal.create("12345678.6547456")),
         decs.vector[0]);
@@ -321,7 +321,7 @@ public class TestVectorOrcFile {
     assertEquals("mauddib", mapKey.toString(start + 1));
     assertEquals(1, mapValueInts.vector[start + 1]);
     assertEquals("mauddib", mapValueStrs.toString(start + 1));
-    assertEquals(Timestamp.valueOf("2000-03-12 15:00:01"),
+    assertEquals(HiveTimestamp.valueOf("2000-03-12 15:00:01"),
         timestamp.asScratchTimestamp(0));
     assertEquals(new HiveDecimalWritable(HiveDecimal.create("12345678.6547457")),
         decs.vector[0]);
@@ -337,19 +337,19 @@ public class TestVectorOrcFile {
     Writer writer = OrcFile.createWriter(testFilePath,
         OrcFile.writerOptions(conf).setSchema(schema).stripeSize(100000)
             .bufferSize(10000).version(org.apache.orc.OrcFile.Version.V_0_11));
-    List<Timestamp> tslist = Lists.newArrayList();
-    tslist.add(Timestamp.valueOf("2037-01-01 00:00:00.000999"));
-    tslist.add(Timestamp.valueOf("2003-01-01 00:00:00.000000222"));
-    tslist.add(Timestamp.valueOf("1999-01-01 00:00:00.999999999"));
-    tslist.add(Timestamp.valueOf("1995-01-01 00:00:00.688888888"));
-    tslist.add(Timestamp.valueOf("2002-01-01 00:00:00.1"));
-    tslist.add(Timestamp.valueOf("2010-03-02 00:00:00.000009001"));
-    tslist.add(Timestamp.valueOf("2005-01-01 00:00:00.000002229"));
-    tslist.add(Timestamp.valueOf("2006-01-01 00:00:00.900203003"));
-    tslist.add(Timestamp.valueOf("2003-01-01 00:00:00.800000007"));
-    tslist.add(Timestamp.valueOf("1996-08-02 00:00:00.723100809"));
-    tslist.add(Timestamp.valueOf("1998-11-02 00:00:00.857340643"));
-    tslist.add(Timestamp.valueOf("2008-10-02 00:00:00"));
+    List<HiveTimestamp> tslist = Lists.newArrayList();
+    tslist.add(HiveTimestamp.valueOf("2037-01-01 00:00:00.000999"));
+    tslist.add(HiveTimestamp.valueOf("2003-01-01 00:00:00.000000222"));
+    tslist.add(HiveTimestamp.valueOf("1999-01-01 00:00:00.999999999"));
+    tslist.add(HiveTimestamp.valueOf("1995-01-01 00:00:00.688888888"));
+    tslist.add(HiveTimestamp.valueOf("2002-01-01 00:00:00.1"));
+    tslist.add(HiveTimestamp.valueOf("2010-03-02 00:00:00.000009001"));
+    tslist.add(HiveTimestamp.valueOf("2005-01-01 00:00:00.000002229"));
+    tslist.add(HiveTimestamp.valueOf("2006-01-01 00:00:00.900203003"));
+    tslist.add(HiveTimestamp.valueOf("2003-01-01 00:00:00.800000007"));
+    tslist.add(HiveTimestamp.valueOf("1996-08-02 00:00:00.723100809"));
+    tslist.add(HiveTimestamp.valueOf("1998-11-02 00:00:00.857340643"));
+    tslist.add(HiveTimestamp.valueOf("2008-10-02 00:00:00"));
 
     VectorizedRowBatch batch = new VectorizedRowBatch(1, 1024);
     TimestampColumnVector vec = new TimestampColumnVector(1024);
@@ -357,7 +357,7 @@ public class TestVectorOrcFile {
     batch.reset();
     batch.size = tslist.size();
     for (int i=0; i < tslist.size(); ++i) {
-      Timestamp ts = tslist.get(i);
+      HiveTimestamp ts = tslist.get(i);
       vec.set(i, ts);
     }
     writer.addRowBatch(batch);
@@ -1311,7 +1311,7 @@ public class TestVectorOrcFile {
       for (int ms = 1000; ms < 2000; ++ms) {
         TimestampColumnVector timestampColVector = (TimestampColumnVector) batch.cols[0];
         timestampColVector.set(ms - 1000,
-            Timestamp.valueOf(year +
+            HiveTimestamp.valueOf(year +
                 "-05-05 12:34:56." + ms));
         ((LongColumnVector) batch.cols[1]).vector[ms - 1000] =
             new DateWritable(new Date(year - 1900, 11, 25)).getDays();
@@ -1362,8 +1362,8 @@ public class TestVectorOrcFile {
   }
 
   private static void setUnion(VectorizedRowBatch batch, int rowId,
-                               Timestamp ts, Integer tag, Integer i, String s,
-                               HiveDecimalWritable dec) {
+      HiveTimestamp ts, Integer tag, Integer i, String s,
+      HiveDecimalWritable dec) {
     UnionColumnVector union = (UnionColumnVector) batch.cols[1];
     if (ts != null) {
       TimestampColumnVector timestampColVector = (TimestampColumnVector) batch.cols[0];
@@ -1428,23 +1428,23 @@ public class TestVectorOrcFile {
                                          .blockPadding(false));
     VectorizedRowBatch batch = schema.createRowBatch();
     batch.size = 6;
-    setUnion(batch, 0, Timestamp.valueOf("2000-03-12 15:00:00"), 0, 42, null,
+    setUnion(batch, 0, HiveTimestamp.valueOf("2000-03-12 15:00:00"), 0, 42, null,
              new HiveDecimalWritable("12345678.6547456"));
-    setUnion(batch, 1, Timestamp.valueOf("2000-03-20 12:00:00.123456789"),
+    setUnion(batch, 1, HiveTimestamp.valueOf("2000-03-20 12:00:00.123456789"),
         1, null, "hello", new HiveDecimalWritable("-5643.234"));
 
     setUnion(batch, 2, null, null, null, null, null);
     setUnion(batch, 3, null, 0, null, null, null);
     setUnion(batch, 4, null, 1, null, null, null);
 
-    setUnion(batch, 5, Timestamp.valueOf("1970-01-01 00:00:00"), 0, 200000,
+    setUnion(batch, 5, HiveTimestamp.valueOf("1970-01-01 00:00:00"), 0, 200000,
         null, new HiveDecimalWritable("10000000000000000000"));
     writer.addRowBatch(batch);
 
     batch.reset();
     Random rand = new Random(42);
     for(int i=1970; i < 2038; ++i) {
-      Timestamp ts = Timestamp.valueOf(i + "-05-05 12:34:56." + i);
+      HiveTimestamp ts = HiveTimestamp.valueOf(i + "-05-05 12:34:56." + i);
       HiveDecimal dec =
           HiveDecimal.create(new BigInteger(64, rand), rand.nextInt(18));
       if ((i & 1) == 0) {
@@ -1580,7 +1580,7 @@ public class TestVectorOrcFile {
     rand = new Random(42);
     for(int i=1970; i < 2038; ++i) {
       int row = 6 + i - 1970;
-      assertEquals(Timestamp.valueOf(i + "-05-05 12:34:56." + i),
+      assertEquals(HiveTimestamp.valueOf(i + "-05-05 12:34:56." + i),
           ts.asScratchTimestamp(row));
       if ((i & 1) == 0) {
         assertEquals(0, union.tags[row]);
@@ -1629,7 +1629,7 @@ public class TestVectorOrcFile {
     rows.seekToRow(1);
     rows.nextBatch(batch);
     assertEquals(1000, batch.size);
-    assertEquals(Timestamp.valueOf("2000-03-20 12:00:00.123456789"), ts.asScratchTimestamp(0));
+    assertEquals(HiveTimestamp.valueOf("2000-03-20 12:00:00.123456789"), ts.asScratchTimestamp(0));
     assertEquals(1, union.tags[0]);
     assertEquals("hello", strs.toString(0));
     assertEquals(new HiveDecimalWritable(HiveDecimal.create("-5643.234")), decs.vector[0]);
@@ -2165,7 +2165,7 @@ public class TestVectorOrcFile {
     ((LongColumnVector) batch.cols[6]).vector[0] =
         new DateWritable(new Date(111, 6, 1)).getDays();
     ((TimestampColumnVector) batch.cols[7]).set(0,
-        new Timestamp(115, 9, 23, 10, 11, 59,
+        new HiveTimestamp(115, 9, 23, 10, 11, 59,
             999999999));
     ((DecimalColumnVector) batch.cols[8]).vector[0] =
         new HiveDecimalWritable("1.234567");
@@ -2220,7 +2220,7 @@ public class TestVectorOrcFile {
       ((LongColumnVector) batch.cols[6]).vector[r] =
           new DateWritable(new Date(111, 6, 1)).getDays() + r;
 
-      Timestamp ts = new Timestamp(115, 9, 25, 10, 11, 59 + r, 999999999);
+      HiveTimestamp ts = new HiveTimestamp(115, 9, 25, 10, 11, 59 + r, 999999999);
       ((TimestampColumnVector) batch.cols[7]).set(r, ts);
       ((DecimalColumnVector) batch.cols[8]).vector[r] =
           new HiveDecimalWritable("1.234567");
@@ -2384,7 +2384,7 @@ public class TestVectorOrcFile {
       assertEquals("row " + r, new DateWritable(new Date(111, 6, 1 + r)),
           new DateWritable((int) dates.vector[r]));
       assertEquals("row " + r,
-          new Timestamp(115, 9, 25, 10, 11, 59 + r, 999999999),
+          new HiveTimestamp(115, 9, 25, 10, 11, 59 + r, 999999999),
           times.asScratchTimestamp(r));
       assertEquals("row " + r, "1.234567", decs.vector[r].toString());
       assertEquals("row " + r, Integer.toString(r), strs.toString(r));

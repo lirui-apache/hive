@@ -20,8 +20,8 @@ package org.apache.hadoop.hive.serde2.lazybinary.fast;
 
 import java.io.IOException;
 import java.sql.Date;
-import java.sql.Timestamp;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hive.common.type.HiveChar;
@@ -540,7 +540,7 @@ public class LazyBinarySerializeWrite implements SerializeWrite {
    * TIMESTAMP.
    */
   @Override
-  public void writeTimestamp(Timestamp v) throws IOException {
+  public void writeTimestamp(HiveTimestamp v) throws IOException {
 
     // Every 8 fields we write a NULL byte.
     if ((fieldIndex % 8) == 0) {

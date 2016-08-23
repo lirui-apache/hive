@@ -23,7 +23,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -32,6 +31,7 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.TreeMap;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.util.JavaDataModel;
 import org.apache.orc.BinaryColumnStatistics;
 import org.apache.orc.BloomFilterIO;
@@ -1717,7 +1717,8 @@ public class WriterImpl implements Writer, MemoryManager.Callback {
           OrcProto.Stream.Kind.SECONDARY), false, isDirectV2, writer);
       recordPosition(rowIndexPosition);
       // for unit tests to set different time zones
-      this.base_timestamp = Timestamp.valueOf(BASE_TIMESTAMP_STRING).getTime() / MILLIS_PER_SECOND;
+      this.base_timestamp =
+          HiveTimestamp.valueOf(BASE_TIMESTAMP_STRING).getTime() / MILLIS_PER_SECOND;
       writer.useWriterTimeZone(true);
     }
 
@@ -1736,7 +1737,7 @@ public class WriterImpl implements Writer, MemoryManager.Callback {
                     int length) throws IOException {
       super.writeBatch(vector, offset, length);
       TimestampColumnVector vec = (TimestampColumnVector) vector;
-      Timestamp val;
+      HiveTimestamp val;
       if (vector.isRepeating) {
         if (vector.noNulls || !vector.isNull[0]) {
           val = vec.asScratchTimestamp(0);

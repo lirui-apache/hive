@@ -18,6 +18,8 @@
 
 package org.apache.hive.hplsql;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -25,7 +27,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Date;
-import java.sql.Timestamp;
 
 /**
  * Variable or the result of expression 
@@ -92,7 +93,7 @@ public class Var {
     this.value = value;
   }
 
-	public Var(Timestamp value, int scale) {
+	public Var(HiveTimestamp value, int scale) {
     this.type = Type.TIMESTAMP;
     this.value = value;
     this.scale = scale;
@@ -593,7 +594,7 @@ public class Var {
     }
     else if (type == Type.TIMESTAMP) {
       int len = 19;
-      String t = ((Timestamp)value).toString();   // .0 returned if the fractional part not set
+      String t = ((HiveTimestamp)value).toString();   // .0 returned if the fractional part not set
       if (scale > 0) {
         len += scale + 1;
       }

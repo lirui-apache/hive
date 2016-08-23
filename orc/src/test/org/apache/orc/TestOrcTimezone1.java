@@ -18,10 +18,8 @@
 package org.apache.orc;
 
 import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
 
 import java.io.File;
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -31,6 +29,7 @@ import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.junit.After;
@@ -134,7 +133,7 @@ public class TestOrcTimezone1 {
     VectorizedRowBatch batch = schema.createRowBatch();
     TimestampColumnVector times = (TimestampColumnVector) batch.cols[0];
     for (String t : ts) {
-      times.set(batch.size++, Timestamp.valueOf(t));
+      times.set(batch.size++, HiveTimestamp.valueOf(t));
     }
     writer.addRowBatch(batch);
     writer.close();
@@ -172,14 +171,14 @@ public class TestOrcTimezone1 {
     RecordReader rows = reader.rows
         (new Reader.Options().include(include));
     assertEquals(true, rows.nextBatch(batch));
-    assertEquals(Timestamp.valueOf("2000-03-12 15:00:00"),
+    assertEquals(HiveTimestamp.valueOf("2000-03-12 15:00:00"),
         ts.asScratchTimestamp(0));
 
     // check the contents of second row
     rows.seekToRow(7499);
     assertEquals(true, rows.nextBatch(batch));
     assertEquals(1, batch.size);
-    assertEquals(Timestamp.valueOf("2000-03-12 15:00:01"),
+    assertEquals(HiveTimestamp.valueOf("2000-03-12 15:00:01"),
         ts.asScratchTimestamp(0));
 
     // handle the close up

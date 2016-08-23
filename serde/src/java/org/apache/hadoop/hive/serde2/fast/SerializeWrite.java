@@ -20,12 +20,12 @@ package org.apache.hadoop.hive.serde2.fast;
 
 import java.io.IOException;
 import java.sql.Date;
-import java.sql.Timestamp;
 
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.serde2.ByteStream.Output;
 
@@ -130,7 +130,7 @@ public interface SerializeWrite {
   /*
    * TIMESTAMP.
    */
-  void writeTimestamp(Timestamp vt) throws IOException;
+  void writeTimestamp(HiveTimestamp vt) throws IOException;
 
   /*
    * INTERVAL_YEAR_MONTH.

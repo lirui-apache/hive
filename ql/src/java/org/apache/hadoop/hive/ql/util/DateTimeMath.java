@@ -18,13 +18,13 @@
 package org.apache.hadoop.hive.ql.util;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.serde2.io.DateWritable;
 import org.apache.hive.common.util.DateUtils;
 
@@ -97,18 +97,18 @@ public class DateTimeMath {
     return DateWritable.millisToDays(millis);
   }
 
-  public Timestamp add(Timestamp ts, HiveIntervalYearMonth interval) {
+  public HiveTimestamp add(HiveTimestamp ts, HiveIntervalYearMonth interval) {
     if (ts == null || interval == null) {
       return null;
     }
 
-    Timestamp tsResult = new Timestamp(0);
+    HiveTimestamp tsResult = new HiveTimestamp(0);
     add(ts, interval, tsResult);
 
     return tsResult;
   }
 
-  public boolean add(Timestamp ts, HiveIntervalYearMonth interval, Timestamp result) {
+  public boolean add(HiveTimestamp ts, HiveIntervalYearMonth interval, HiveTimestamp result) {
     if (ts == null || interval == null) {
       return false;
     }
@@ -122,18 +122,18 @@ public class DateTimeMath {
     return true;
   }
 
-  public Timestamp add(HiveIntervalYearMonth interval, Timestamp ts) {
+  public HiveTimestamp add(HiveIntervalYearMonth interval, HiveTimestamp ts) {
     if (ts == null || interval == null) {
       return null;
     }
 
-    Timestamp tsResult = new Timestamp(0);
+    HiveTimestamp tsResult = new HiveTimestamp(0);
     add(interval, ts, tsResult);
 
     return tsResult;
   }
 
-  public boolean add(HiveIntervalYearMonth interval, Timestamp ts, Timestamp result) {
+  public boolean add(HiveIntervalYearMonth interval, HiveTimestamp ts, HiveTimestamp result) {
     if (ts == null || interval == null) {
       return false;
     }
@@ -203,18 +203,18 @@ public class DateTimeMath {
     return result;
   }
 
-  public Timestamp subtract(Timestamp left, HiveIntervalYearMonth right) {
+  public HiveTimestamp subtract(HiveTimestamp left, HiveIntervalYearMonth right) {
     if (left == null || right == null) {
       return null;
     }
 
-    Timestamp tsResult = new Timestamp(0);
+    HiveTimestamp tsResult = new HiveTimestamp(0);
     subtract(left, right, tsResult);
 
     return tsResult;
   }
 
-  public boolean subtract(Timestamp left, HiveIntervalYearMonth right, Timestamp result) {
+  public boolean subtract(HiveTimestamp left, HiveIntervalYearMonth right, HiveTimestamp result) {
     if (left == null || right == null) {
       return false;
     }
@@ -250,19 +250,19 @@ public class DateTimeMath {
   // Operations involving/returning day-time intervals
   //
 
-  public Timestamp add(Timestamp ts, HiveIntervalDayTime interval) {
+  public HiveTimestamp add(HiveTimestamp ts, HiveIntervalDayTime interval) {
     if (ts == null || interval == null) {
       return null;
     }
 
-    Timestamp tsResult = new Timestamp(0);
+    HiveTimestamp tsResult = new HiveTimestamp(0);
     add(ts, interval, tsResult);
 
     return tsResult;
   }
 
-  public boolean add(Timestamp ts, HiveIntervalDayTime interval,
-      Timestamp result) {
+  public boolean add(HiveTimestamp ts, HiveIntervalDayTime interval,
+      HiveTimestamp result) {
     if (ts == null || interval == null) {
       return false;
     }
@@ -276,18 +276,18 @@ public class DateTimeMath {
     return true;
   }
 
-  public Timestamp add(HiveIntervalDayTime interval, Timestamp ts) {
+  public HiveTimestamp add(HiveIntervalDayTime interval, HiveTimestamp ts) {
     if (ts == null || interval == null) {
       return null;
     }
 
-    Timestamp tsResult = new Timestamp(0);
+    HiveTimestamp tsResult = new HiveTimestamp(0);
     add(interval, ts, tsResult);
     return tsResult;
   }
 
-  public boolean add(HiveIntervalDayTime interval, Timestamp ts,
-      Timestamp result) {
+  public boolean add(HiveIntervalDayTime interval, HiveTimestamp ts,
+      HiveTimestamp result) {
     if (ts == null || interval == null) {
       return false;
     }
@@ -325,14 +325,14 @@ public class DateTimeMath {
     return true;
   }
 
-  public Timestamp subtract(Timestamp left, HiveIntervalDayTime right) {
+  public HiveTimestamp subtract(HiveTimestamp left, HiveIntervalDayTime right) {
     if (left == null || right == null) {
       return null;
     }
     return add(left, right.negate());
   }
 
-  public boolean subtract(Timestamp left, HiveIntervalDayTime right, Timestamp result) {
+  public boolean subtract(HiveTimestamp left, HiveIntervalDayTime right, HiveTimestamp result) {
     if (left == null || right == null) {
       return false;
     }
@@ -354,7 +354,7 @@ public class DateTimeMath {
     return add(left, right.negate(), result);
   }
 
-  public HiveIntervalDayTime subtract(Timestamp left, Timestamp right) {
+  public HiveIntervalDayTime subtract(HiveTimestamp left, HiveTimestamp right) {
     if (left == null || right == null) {
       return null;
     }
@@ -365,7 +365,7 @@ public class DateTimeMath {
     return result;
   }
 
-  public boolean subtract(Timestamp left, Timestamp right,
+  public boolean subtract(HiveTimestamp left, HiveTimestamp right,
       HiveIntervalDayTime result) {
     if (left == null || right == null) {
       return false;

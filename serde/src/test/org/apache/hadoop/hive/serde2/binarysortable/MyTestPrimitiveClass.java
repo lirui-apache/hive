@@ -18,20 +18,17 @@
 package org.apache.hadoop.hive.serde2.binarysortable;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 import junit.framework.TestCase;
 
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.hive.common.type.HiveBaseChar;
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.common.type.RandomTypeUtil;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
@@ -46,10 +43,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableHiveVarch
 import org.apache.hadoop.hive.serde2.typeinfo.CharTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.DecimalTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
-import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.hive.serde2.typeinfo.VarcharTypeInfo;
-import org.apache.hadoop.io.Writable;
 import org.apache.hive.common.util.DateUtils;
 
 // Just the primitive types.
@@ -68,7 +63,7 @@ public class MyTestPrimitiveClass {
     public byte[] myBinary;
     public HiveDecimal myDecimal;
     public Date myDate;
-    public Timestamp myTimestamp;
+    public HiveTimestamp myTimestamp;
     public HiveIntervalYearMonth myIntervalYearMonth;
     public HiveIntervalDayTime myIntervalDayTime;
 

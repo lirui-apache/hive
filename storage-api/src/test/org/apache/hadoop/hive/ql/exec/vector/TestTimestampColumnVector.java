@@ -18,13 +18,9 @@
 
 package org.apache.hadoop.hive.ql.exec.vector;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.junit.Test;
 
-import java.io.PrintWriter;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.sql.Timestamp;
-import java.util.Date;
 import java.util.Random;
 
 import org.apache.hadoop.hive.common.type.RandomTypeUtil;
@@ -45,16 +41,16 @@ public class TestTimestampColumnVector {
 
     Random r = new Random(1234);
     TimestampColumnVector timestampColVector = new TimestampColumnVector();
-    Timestamp[] randTimestamps = new Timestamp[VectorizedRowBatch.DEFAULT_SIZE];
+    HiveTimestamp[] randTimestamps = new HiveTimestamp[VectorizedRowBatch.DEFAULT_SIZE];
 
     for (int i = 0; i < VectorizedRowBatch.DEFAULT_SIZE; i++) {
-      Timestamp randTimestamp = RandomTypeUtil.getRandTimestamp(r);
+      HiveTimestamp randTimestamp = RandomTypeUtil.getRandTimestamp(r);
       randTimestamps[i] = randTimestamp;
       timestampColVector.set(i, randTimestamp);
     }
     for (int i = 0; i < VectorizedRowBatch.DEFAULT_SIZE; i++) {
-      Timestamp retrievedTimestamp = timestampColVector.asScratchTimestamp(i);
-      Timestamp randTimestamp = randTimestamps[i];
+      HiveTimestamp retrievedTimestamp = timestampColVector.asScratchTimestamp(i);
+      HiveTimestamp randTimestamp = randTimestamps[i];
       if (!retrievedTimestamp.equals(randTimestamp)) {
         assertTrue(false);
       }
@@ -65,28 +61,28 @@ public class TestTimestampColumnVector {
   public void testTimestampCompare() throws Exception {
     Random r = new Random(1234);
     TimestampColumnVector timestampColVector = new TimestampColumnVector();
-    Timestamp[] randTimestamps = new Timestamp[VectorizedRowBatch.DEFAULT_SIZE];
-    Timestamp[] candTimestamps = new Timestamp[VectorizedRowBatch.DEFAULT_SIZE];
+    HiveTimestamp[] randTimestamps = new HiveTimestamp[VectorizedRowBatch.DEFAULT_SIZE];
+    HiveTimestamp[] candTimestamps = new HiveTimestamp[VectorizedRowBatch.DEFAULT_SIZE];
     int[] compareToLeftRights = new int[VectorizedRowBatch.DEFAULT_SIZE];
     int[] compareToRightLefts = new int[VectorizedRowBatch.DEFAULT_SIZE];
 
     for (int i = 0; i < VectorizedRowBatch.DEFAULT_SIZE; i++) {
-      Timestamp randTimestamp = RandomTypeUtil.getRandTimestamp(r);
+      HiveTimestamp randTimestamp = RandomTypeUtil.getRandTimestamp(r);
       randTimestamps[i] = randTimestamp;
       timestampColVector.set(i, randTimestamp);
-      Timestamp candTimestamp = RandomTypeUtil.getRandTimestamp(r);
+      HiveTimestamp candTimestamp = RandomTypeUtil.getRandTimestamp(r);
       candTimestamps[i] = candTimestamp;
       compareToLeftRights[i] = candTimestamp.compareTo(randTimestamp);
       compareToRightLefts[i] = randTimestamp.compareTo(candTimestamp);
     }
 
     for (int i = 0; i < VectorizedRowBatch.DEFAULT_SIZE; i++) {
-      Timestamp retrievedTimestamp = timestampColVector.asScratchTimestamp(i);
-      Timestamp randTimestamp = randTimestamps[i];
+      HiveTimestamp retrievedTimestamp = timestampColVector.asScratchTimestamp(i);
+      HiveTimestamp randTimestamp = randTimestamps[i];
       if (!retrievedTimestamp.equals(randTimestamp)) {
         assertTrue(false);
       }
-      Timestamp candTimestamp = candTimestamps[i];
+      HiveTimestamp candTimestamp = candTimestamps[i];
       int compareToLeftRight = timestampColVector.compareTo(candTimestamp, i);
       if (compareToLeftRight != compareToLeftRights[i]) {
         assertTrue(false);

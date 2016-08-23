@@ -18,16 +18,15 @@
 package org.apache.hadoop.hive.serde2.lazybinary;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.Random;
 
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.common.type.RandomTypeUtil;
-import org.apache.hadoop.hive.serde2.binarysortable.MyTestClass;
 import org.apache.hadoop.hive.serde2.binarysortable.MyTestInnerStruct;
 import org.apache.hadoop.hive.serde2.binarysortable.MyTestPrimitiveClass;
 import org.apache.hadoop.hive.serde2.binarysortable.MyTestPrimitiveClass.ExtraTypeInfo;
@@ -47,7 +46,7 @@ public class MyTestClassSmaller {
     public byte[] myBinary;
     public HiveDecimal myDecimal;
     public Date myDate;
-    public Timestamp myTimestamp;
+    public HiveTimestamp myTimestamp;
     public HiveIntervalYearMonth myIntervalYearMonth;
     public HiveIntervalDayTime myIntervalDayTime;
 

@@ -20,11 +20,11 @@ package org.apache.orc.impl;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.EnumMap;
 import java.util.Map;
 
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DecimalColumnVector;
@@ -227,9 +227,9 @@ public class ConvertTreeReaderFactory extends TreeReaderFactory {
      * @param string
      * @return the Timestamp parsed, or null if there was a parse error.
      */
-    protected Timestamp parseTimestampFromString(String string) {
+    protected HiveTimestamp parseTimestampFromString(String string) {
       try {
-        Timestamp value = Timestamp.valueOf(string);
+        HiveTimestamp value = HiveTimestamp.valueOf(string);
         return value;
       } catch (IllegalArgumentException e) {
         return null;
@@ -1771,7 +1771,7 @@ public class ConvertTreeReaderFactory extends TreeReaderFactory {
     public void setConvertVectorElement(int elementNum) {
       long longValue = longColVector.vector[elementNum];
       // UNDONE: What does the boolean setting need to be?
-      timestampColVector.set(elementNum, new Timestamp(longValue));
+      timestampColVector.set(elementNum, new HiveTimestamp(longValue));
     }
 
     @Override
@@ -1807,7 +1807,7 @@ public class ConvertTreeReaderFactory extends TreeReaderFactory {
     @Override
     public void setConvertVectorElement(int elementNum) {
       float floatValue = (float) doubleColVector.vector[elementNum];
-      Timestamp timestampValue = TimestampUtils.doubleToTimestamp(floatValue);
+      HiveTimestamp timestampValue = TimestampUtils.doubleToTimestamp(floatValue);
       // The TimestampColumnVector will set the entry to null when a null timestamp is passed in.
       timestampColVector.set(elementNum, timestampValue);
     }
@@ -1845,7 +1845,7 @@ public class ConvertTreeReaderFactory extends TreeReaderFactory {
     @Override
     public void setConvertVectorElement(int elementNum) {
       double doubleValue = doubleColVector.vector[elementNum];
-      Timestamp timestampValue = TimestampUtils.doubleToTimestamp(doubleValue);
+      HiveTimestamp timestampValue = TimestampUtils.doubleToTimestamp(doubleValue);
       // The TimestampColumnVector will set the entry to null when a null timestamp is passed in.
       timestampColVector.set(elementNum, timestampValue);
     }
@@ -1886,7 +1886,7 @@ public class ConvertTreeReaderFactory extends TreeReaderFactory {
 
     @Override
     public void setConvertVectorElement(int elementNum) {
-      Timestamp timestampValue =
+      HiveTimestamp timestampValue =
             TimestampUtils.decimalToTimestamp(
                 decimalColVector.vector[elementNum].getHiveDecimal());
       // The TimestampColumnVector will set the entry to null when a null timestamp is passed in.
@@ -1927,7 +1927,7 @@ public class ConvertTreeReaderFactory extends TreeReaderFactory {
     public void setConvertVectorElement(int elementNum) throws IOException {
       String stringValue =
           stringFromBytesColumnVectorEntry(bytesColVector, elementNum);
-      Timestamp timestampValue = parseTimestampFromString(stringValue);
+      HiveTimestamp timestampValue = parseTimestampFromString(stringValue);
       if (timestampValue != null) {
         timestampColVector.set(elementNum, timestampValue);
       } else {
@@ -1970,7 +1970,7 @@ public class ConvertTreeReaderFactory extends TreeReaderFactory {
     public void setConvertVectorElement(int elementNum) {
       long millis =
           DateWritable.daysToMillis((int) longColVector.vector[elementNum]);
-      timestampColVector.set(elementNum, new Timestamp(millis));
+      timestampColVector.set(elementNum, new HiveTimestamp(millis));
     }
 
     @Override

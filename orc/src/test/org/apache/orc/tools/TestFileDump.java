@@ -18,9 +18,6 @@
 
 package org.apache.orc.tools;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -28,7 +25,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.PrintStream;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +35,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DecimalColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DoubleColumnVector;
@@ -131,7 +128,7 @@ public class TestFileDump {
                              float f,
                              double d,
                              HiveDecimalWritable de,
-                             Timestamp t,
+                             HiveTimestamp t,
                              DateWritable dt,
                              String str,
                              String c,
@@ -272,7 +269,7 @@ public class TestFileDump {
         4.0f,
         20.0,
         new HiveDecimalWritable("4.2222"),
-        new Timestamp(1416967764000L),
+        new HiveTimestamp(1416967764000L),
         new DateWritable(new Date(1416967764000L)),
         "string",
         "hello",
@@ -292,7 +289,7 @@ public class TestFileDump {
         8.0f,
         40.0,
         new HiveDecimalWritable("2.2222"),
-        new Timestamp(1416967364000L),
+        new HiveTimestamp(1416967364000L),
         new DateWritable(new Date(1411967764000L)),
         "abcd",
         "world",

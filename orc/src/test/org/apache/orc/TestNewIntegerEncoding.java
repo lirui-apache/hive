@@ -20,7 +20,6 @@ package org.apache.orc;
 import static junit.framework.Assert.assertEquals;
 
 import java.io.File;
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -29,6 +28,7 @@ import java.util.Random;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
@@ -60,9 +60,9 @@ public class TestNewIntegerEncoding {
   }
 
   public static class TSRow {
-    Timestamp ts;
+    HiveTimestamp ts;
 
-    public TSRow(Timestamp ts) {
+    public TSRow(HiveTimestamp ts) {
       this.ts = ts;
     }
   }
@@ -1240,42 +1240,42 @@ public class TestNewIntegerEncoding {
             .encodingStrategy(encodingStrategy));
     VectorizedRowBatch batch = schema.createRowBatch();
 
-    List<Timestamp> tslist = Lists.newArrayList();
-    tslist.add(Timestamp.valueOf("2099-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2003-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("1999-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("1995-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2002-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2010-03-02 00:00:00"));
-    tslist.add(Timestamp.valueOf("2005-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2006-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2003-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("1996-08-02 00:00:00"));
-    tslist.add(Timestamp.valueOf("1998-11-02 00:00:00"));
-    tslist.add(Timestamp.valueOf("2008-10-02 00:00:00"));
-    tslist.add(Timestamp.valueOf("1993-08-02 00:00:00"));
-    tslist.add(Timestamp.valueOf("2008-01-02 00:00:00"));
-    tslist.add(Timestamp.valueOf("2007-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2004-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2008-10-02 00:00:00"));
-    tslist.add(Timestamp.valueOf("2003-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2004-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2008-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2005-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("1994-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2006-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2004-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2001-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2000-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2000-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2002-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2006-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2011-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2002-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("2005-01-01 00:00:00"));
-    tslist.add(Timestamp.valueOf("1974-01-01 00:00:00"));
+    List<HiveTimestamp> tslist = Lists.newArrayList();
+    tslist.add(HiveTimestamp.valueOf("2099-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2003-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("1999-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("1995-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2002-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2010-03-02 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2005-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2006-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2003-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("1996-08-02 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("1998-11-02 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2008-10-02 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("1993-08-02 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2008-01-02 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2007-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2004-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2008-10-02 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2003-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2004-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2008-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2005-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("1994-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2006-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2004-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2001-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2000-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2000-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2002-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2006-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2011-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2002-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("2005-01-01 00:00:00"));
+    tslist.add(HiveTimestamp.valueOf("1974-01-01 00:00:00"));
     int idx = 0;
-    for (Timestamp ts : tslist) {
+    for (HiveTimestamp ts : tslist) {
       ((TimestampColumnVector) batch.cols[0]).set(idx, ts);
     }
     writer.addRowBatch(batch);

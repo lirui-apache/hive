@@ -20,13 +20,13 @@ package org.apache.hadoop.hive.serde2.binarysortable.fast;
 
 import java.io.IOException;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.Arrays;
 
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.serde2.ByteStream.Output;
 import org.apache.hadoop.hive.serde2.binarysortable.BinarySortableSerDe;
@@ -341,7 +341,7 @@ public final class BinarySortableSerializeWrite implements SerializeWrite {
    * TIMESTAMP.
    */
   @Override
-  public void writeTimestamp(Timestamp vt) throws IOException {
+  public void writeTimestamp(HiveTimestamp vt) throws IOException {
     ++index;
 
     final boolean invert = columnSortOrderIsDesc[index];

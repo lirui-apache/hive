@@ -72,6 +72,11 @@ public class HiveTimestamp implements Comparable<HiveTimestamp> {
     setNanos(other.getNanos());
   }
 
+  public HiveTimestamp(int year, int month, int date,
+      int hour, int minute, int second, int nano) {
+    this(new Timestamp(year, month, date, hour, minute, second, nano));
+  }
+
   public long getTime() {
     return ts.getTime();
   }

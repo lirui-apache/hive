@@ -19,7 +19,6 @@ package org.apache.hadoop.hive.serde2;
 
 import java.io.IOException;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.Arrays;
 
 import junit.framework.TestCase;
@@ -28,6 +27,7 @@ import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.serde2.fast.DeserializeRead;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
@@ -233,8 +233,8 @@ public class VerifyFast {
       break;
     case TIMESTAMP:
       {
-        Timestamp value = deserializeRead.currentTimestampWritable.getTimestamp();
-        Timestamp expected = ((TimestampWritable) writable).getTimestamp();
+        HiveTimestamp value = deserializeRead.currentTimestampWritable.getTimestamp();
+        HiveTimestamp expected = ((TimestampWritable) writable).getTimestamp();
         if (!value.equals(expected)) {
           TestCase.fail("Timestamp field mismatch (expected " + expected.toString() + " found " + value.toString() + ")");
         }
@@ -367,7 +367,7 @@ public class VerifyFast {
       break;
     case TIMESTAMP:
       {
-        Timestamp value = ((TimestampWritable) writable).getTimestamp();
+        HiveTimestamp value = ((TimestampWritable) writable).getTimestamp();
         serializeWrite.writeTimestamp(value);
       }
       break;

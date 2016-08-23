@@ -20,7 +20,6 @@ package org.apache.orc;
 import static junit.framework.Assert.assertEquals;
 
 import java.io.File;
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -30,6 +29,7 @@ import java.util.TimeZone;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.junit.After;
@@ -120,7 +120,7 @@ public class TestOrcTimezone2 {
     VectorizedRowBatch batch = schema.createRowBatch();
     TimestampColumnVector tsc = (TimestampColumnVector) batch.cols[0];
     for (String t : ts) {
-      tsc.set(batch.size++, Timestamp.valueOf(t));
+      tsc.set(batch.size++, HiveTimestamp.valueOf(t));
     }
     writer.addRowBatch(batch);
     writer.close();
