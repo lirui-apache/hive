@@ -19,10 +19,10 @@
 package org.apache.hive.hplsql;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.Calendar;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hive.hplsql.Var.Type;
 
 /**
@@ -351,7 +351,7 @@ public class Expression {
       exec.stackPush(new Var(((Interval)v2.value).dateChange((Date)v1.value, true /*add*/)));
     }
     else if (v1.type == Type.TIMESTAMP && v2.type == Type.INTERVAL) {
-      exec.stackPush(new Var(((Interval)v2.value).timestampChange((Timestamp)v1.value, true /*add*/), v1.scale));
+      exec.stackPush(new Var(((Interval)v2.value).timestampChange((HiveTimestamp)v1.value, true /*add*/), v1.scale));
     }
     else {
       evalNull();
@@ -377,7 +377,7 @@ public class Expression {
       exec.stackPush(new Var(((Interval)v2.value).dateChange((Date)v1.value, false /*subtract*/)));
     }
     else if (v1.type == Type.TIMESTAMP && v2.type == Type.INTERVAL) {
-      exec.stackPush(new Var(((Interval)v2.value).timestampChange((Timestamp)v1.value, false /*subtract*/), v1.scale));
+      exec.stackPush(new Var(((Interval)v2.value).timestampChange((HiveTimestamp) v1.value, false /*subtract*/), v1.scale));
     }
     else {
       evalNull();

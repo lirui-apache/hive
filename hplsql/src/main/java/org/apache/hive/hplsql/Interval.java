@@ -18,8 +18,9 @@
 
 package org.apache.hive.hplsql;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
+
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.Calendar;
 
 /**
@@ -42,11 +43,11 @@ public class Interval {
   /**
    * Add or subtract interval value to the specified timestamp
    */
-  public Timestamp timestampChange(Timestamp in, boolean add) {
+  public HiveTimestamp timestampChange(HiveTimestamp in, boolean add) {
     Calendar c = Calendar.getInstance();
     c.setTimeInMillis(in.getTime());
     calendarChange(c, add);
-    return new Timestamp(c.getTimeInMillis());
+    return new HiveTimestamp(c.getTimeInMillis());
   }
   
   /**
