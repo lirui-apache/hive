@@ -20,7 +20,6 @@
 package org.apache.hive.hcatalog.data;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +27,7 @@ import org.apache.hadoop.hive.common.classification.InterfaceAudience;
 import org.apache.hadoop.hive.common.classification.InterfaceStability;
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
@@ -186,11 +186,11 @@ public abstract class HCatRecord implements HCatRecordable {
   public Date getDate(String fieldName, HCatSchema recordSchema) throws HCatException {
     return (Date) get(fieldName, recordSchema, Date.class);
   }
-  public void setTimestamp(String fieldName, HCatSchema recordSchema, Timestamp value)
+  public void setTimestamp(String fieldName, HCatSchema recordSchema, HiveTimestamp value)
           throws HCatException {
     set(fieldName, recordSchema, value);
   }
-  public Timestamp getTimestamp(String fieldName, HCatSchema recordSchema) throws HCatException {
-    return (Timestamp) get(fieldName, recordSchema, Timestamp.class);
+  public HiveTimestamp getTimestamp(String fieldName, HCatSchema recordSchema) throws HCatException {
+    return (HiveTimestamp) get(fieldName, recordSchema, HiveTimestamp.class);
   }
 }

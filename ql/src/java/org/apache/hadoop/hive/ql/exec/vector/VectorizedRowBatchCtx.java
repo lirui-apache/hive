@@ -19,13 +19,13 @@ package org.apache.hadoop.hive.ql.exec.vector;
 
 import java.io.IOException;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.hive.common.type.HiveChar;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.serde2.typeinfo.CharTypeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -335,7 +335,7 @@ public class VectorizedRowBatchCtx {
             lcv.isNull[0] = true;
             lcv.isRepeating = true;
           } else {
-            lcv.fill((Timestamp) value);
+            lcv.fill((HiveTimestamp) value);
             lcv.isNull[0] = false;
           }
         }

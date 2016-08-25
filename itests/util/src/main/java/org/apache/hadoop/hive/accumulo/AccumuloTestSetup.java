@@ -18,10 +18,6 @@ package org.apache.hadoop.hive.accumulo;
 
 import java.io.File;
 import java.sql.Date;
-import java.sql.Timestamp;
-
-import junit.extensions.TestSetup;
-import junit.framework.Test;
 
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
@@ -35,6 +31,7 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.accumulo.minicluster.MiniAccumuloConfig;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.conf.HiveConf;
 
 /**
@@ -90,7 +87,7 @@ public class AccumuloTestSetup  {
     double [] doubles = new double [] { Double.MIN_VALUE, -1.0, Double.MAX_VALUE };
     HiveDecimal[] decimals = new HiveDecimal[] {HiveDecimal.create("3.14159"), HiveDecimal.create("2.71828"), HiveDecimal.create("0.57721")};
     Date[] dates = new Date[] {Date.valueOf("2014-01-01"), Date.valueOf("2014-03-01"), Date.valueOf("2014-05-01")};
-    Timestamp[] timestamps = new Timestamp[] {new Timestamp(50), new Timestamp(100), new Timestamp(150)};
+    HiveTimestamp[] timestamps = new HiveTimestamp[] {new HiveTimestamp(50), new HiveTimestamp(100), new HiveTimestamp(150)};
 
     BatchWriter bw = conn.createBatchWriter(TABLE_NAME, new BatchWriterConfig());
     final String cf = "cf";

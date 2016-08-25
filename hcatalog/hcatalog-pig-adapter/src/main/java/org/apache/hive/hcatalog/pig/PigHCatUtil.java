@@ -21,7 +21,6 @@ package org.apache.hive.hcatalog.pig;
 
 import java.io.IOException;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -33,6 +32,7 @@ import java.util.Properties;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
@@ -437,7 +437,7 @@ class PigHCatUtil {
        object in local TZ; This is arbitrary, since Hive value doesn't have any TZ notion, but
        we need to set something for TZ.
        Timestamp is consistently in GMT (unless you call toString() on it) so we use millis*/
-      result = new DateTime(((Timestamp)o).getTime());//uses local TZ
+      result = new DateTime(((HiveTimestamp)o).getTime());//uses local TZ
       break;
     default:
       result = o;

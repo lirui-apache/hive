@@ -18,11 +18,11 @@
 
 package org.apache.hadoop.hive.ql.exec.vector;
 
-import java.sql.Timestamp;
 import java.util.Arrays;
 
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.KeyWrapper;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.StringExpr;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -44,7 +44,7 @@ public class VectorHashKeyWrapper extends KeyWrapper {
   private static final double[] EMPTY_DOUBLE_ARRAY = new double[0];
   private static final byte[][] EMPTY_BYTES_ARRAY = new byte[0][];
   private static final HiveDecimalWritable[] EMPTY_DECIMAL_ARRAY = new HiveDecimalWritable[0];
-  private static final Timestamp[] EMPTY_TIMESTAMP_ARRAY = new Timestamp[0];
+  private static final HiveTimestamp[] EMPTY_TIMESTAMP_ARRAY = new HiveTimestamp[0];
   private static final HiveIntervalDayTime[] EMPTY_INTERVAL_DAY_TIME_ARRAY = new HiveIntervalDayTime[0];
 
   private long[] longValues;
@@ -56,7 +56,7 @@ public class VectorHashKeyWrapper extends KeyWrapper {
 
   private HiveDecimalWritable[] decimalValues;
 
-  private Timestamp[] timestampValues;
+  private HiveTimestamp[] timestampValues;
 
   private HiveIntervalDayTime[] intervalDayTimeValues;
 
@@ -69,7 +69,7 @@ public class VectorHashKeyWrapper extends KeyWrapper {
     longValues = longValuesCount > 0 ? new long[longValuesCount] : EMPTY_LONG_ARRAY;
     doubleValues = doubleValuesCount > 0 ? new double[doubleValuesCount] : EMPTY_DOUBLE_ARRAY;
     decimalValues = decimalValuesCount > 0 ? new HiveDecimalWritable[decimalValuesCount] : EMPTY_DECIMAL_ARRAY;
-    timestampValues = timestampValuesCount > 0 ? new Timestamp[timestampValuesCount] : EMPTY_TIMESTAMP_ARRAY;
+    timestampValues = timestampValuesCount > 0 ? new HiveTimestamp[timestampValuesCount] : EMPTY_TIMESTAMP_ARRAY;
     intervalDayTimeValues = intervalDayTimeValuesCount > 0 ? new HiveIntervalDayTime[intervalDayTimeValuesCount] : EMPTY_INTERVAL_DAY_TIME_ARRAY;
     for(int i = 0; i < decimalValuesCount; ++i) {
       decimalValues[i] = new HiveDecimalWritable(HiveDecimal.ZERO);
@@ -84,7 +84,7 @@ public class VectorHashKeyWrapper extends KeyWrapper {
       byteLengths = EMPTY_INT_ARRAY;
     }
     for(int i = 0; i < timestampValuesCount; ++i) {
-      timestampValues[i] = new Timestamp(0);
+      timestampValues[i] = new HiveTimestamp(0);
     }
     for(int i = 0; i < intervalDayTimeValuesCount; ++i) {
       intervalDayTimeValues[i] = new HiveIntervalDayTime();
@@ -225,9 +225,9 @@ public class VectorHashKeyWrapper extends KeyWrapper {
       clone.byteLengths = EMPTY_INT_ARRAY;
     }
     if (timestampValues.length > 0) {
-      clone.timestampValues = new Timestamp[timestampValues.length];
+      clone.timestampValues = new HiveTimestamp[timestampValues.length];
       for(int i = 0; i < timestampValues.length; ++i) {
-        clone.timestampValues[i] = (Timestamp) timestampValues[i].clone();
+        clone.timestampValues[i] = (HiveTimestamp) timestampValues[i].clone();
       }
     } else {
       clone.timestampValues = EMPTY_TIMESTAMP_ARRAY;
@@ -301,7 +301,7 @@ public class VectorHashKeyWrapper extends KeyWrapper {
       isNull[longValues.length + doubleValues.length + byteValues.length + index] = true;
   }
 
-  public void assignTimestamp(int index, Timestamp value) {
+  public void assignTimestamp(int index, HiveTimestamp value) {
     timestampValues[index] = value;
     isNull[longValues.length + doubleValues.length + byteValues.length +
            decimalValues.length + index] = false;
@@ -402,7 +402,7 @@ public class VectorHashKeyWrapper extends KeyWrapper {
                   decimalValues.length + i];
   }
 
-  public Timestamp getTimestamp(int i) {
+  public HiveTimestamp getTimestamp(int i) {
     return timestampValues[i];
   }
 

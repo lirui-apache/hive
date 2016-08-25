@@ -18,13 +18,13 @@
 
 package org.apache.hive.hplsql.functions;
 
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hive.hplsql.*;
 
 public class FunctionDatetime extends Function {
@@ -157,7 +157,7 @@ public class FunctionDatetime extends Function {
     String format = Utils.convertSqlDatetimeFormat(sqlFormat);
     try {
       long timeInMs = new SimpleDateFormat(format).parse(value).getTime();
-      evalVar(new Var(Var.Type.TIMESTAMP, new Timestamp(timeInMs)));
+      evalVar(new Var(Var.Type.TIMESTAMP, new HiveTimestamp(timeInMs)));
     }
     catch (Exception e) {
       exec.signal(e);

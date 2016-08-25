@@ -30,7 +30,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -39,6 +38,7 @@ import java.util.Map;
 
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
@@ -276,7 +276,7 @@ public class TestDefaultHCatRecord extends TestCase {
     rec_hcat13types.add(new HiveChar("hive_char", 10));
     rec_hcat13types.add(new HiveVarchar("hive_varchar", 20));
     rec_hcat13types.add(Date.valueOf("2014-01-06"));
-    rec_hcat13types.add(new Timestamp(System.currentTimeMillis()));
+    rec_hcat13types.add(new HiveTimestamp(System.currentTimeMillis()));
     return new DefaultHCatRecord(rec_hcat13types);
   }
   private static HCatRecord getHCat13TypesComplexRecord() {
@@ -286,11 +286,11 @@ public class TestDefaultHCatRecord extends TestCase {
     m.put(HiveDecimal.create(new BigDecimal("1234.13")), "1234.13");
     rec_hcat13ComplexTypes.add(m);
 
-    Map<Timestamp, List<Object>> m2 = new HashMap<Timestamp, List<Object>>();
+    Map<HiveTimestamp, List<Object>> m2 = new HashMap<>();
     List<Object> list = new ArrayList<Object>();
     list.add(Date.valueOf("2014-01-05"));
     list.add(new HashMap<HiveDecimal, String>(m));
-    m2.put(new Timestamp(System.currentTimeMillis()), list);
+    m2.put(new HiveTimestamp(System.currentTimeMillis()), list);
     rec_hcat13ComplexTypes.add(m2);
     return new DefaultHCatRecord(rec_hcat13ComplexTypes);
   }

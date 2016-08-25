@@ -27,7 +27,6 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,6 +36,7 @@ import java.util.UUID;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.Context;
 import org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat;
@@ -103,7 +103,7 @@ public class TestUtilities {
 
   @Test
   public void testSerializeTimestamp() {
-    Timestamp ts = new Timestamp(1374554702000L);
+    HiveTimestamp ts = new HiveTimestamp(1374554702000L);
     ts.setNanos(123456);
     ExprNodeConstantDesc constant = new ExprNodeConstantDesc(ts);
     List<ExprNodeDesc> children = new ArrayList<ExprNodeDesc>(1);

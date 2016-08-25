@@ -19,9 +19,9 @@
 package org.apache.hadoop.hive.ql.exec.vector;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.List;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hive.common.type.HiveChar;
@@ -540,7 +540,7 @@ public class VectorAssignRow {
           break;
         case TIMESTAMP:
           {
-            Timestamp timestamp =
+            HiveTimestamp timestamp =
               PrimitiveObjectInspectorUtils.getTimestamp(
                   object, convertSourcePrimitiveObjectInspectors[logicalColumnIndex]);
             if (timestamp == null) {

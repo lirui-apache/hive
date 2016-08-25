@@ -18,9 +18,9 @@
 
 package org.apache.hadoop.hive.ql.exec.vector;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.junit.Test;
 
-import java.sql.Timestamp;
 import java.util.Random;
 
 import org.apache.hadoop.hive.common.type.RandomTypeUtil;
@@ -42,16 +42,16 @@ public class TestTimestampWritableAndColumnVector {
 
     Random r = new Random(1234);
     TimestampColumnVector timestampColVector = new TimestampColumnVector();
-    Timestamp[] randTimestamps = new Timestamp[VectorizedRowBatch.DEFAULT_SIZE];
+    HiveTimestamp[] randTimestamps = new HiveTimestamp[VectorizedRowBatch.DEFAULT_SIZE];
 
     for (int i = 0; i < VectorizedRowBatch.DEFAULT_SIZE; i++) {
-      Timestamp randTimestamp = RandomTypeUtil.getRandTimestamp(r);
+      HiveTimestamp randTimestamp = RandomTypeUtil.getRandTimestamp(r);
       randTimestamps[i] = randTimestamp;
       timestampColVector.set(i, randTimestamp);
     }
     for (int i = 0; i < VectorizedRowBatch.DEFAULT_SIZE; i++) {
-      Timestamp retrievedTimestamp = timestampColVector.asScratchTimestamp(i);
-      Timestamp randTimestamp = randTimestamps[i];
+      HiveTimestamp retrievedTimestamp = timestampColVector.asScratchTimestamp(i);
+      HiveTimestamp randTimestamp = randTimestamps[i];
       if (!retrievedTimestamp.equals(randTimestamp)) {
         assertTrue(false);
       }

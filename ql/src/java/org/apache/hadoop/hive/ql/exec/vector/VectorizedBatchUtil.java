@@ -20,13 +20,13 @@ package org.apache.hadoop.hive.ql.exec.vector;
 
 import java.io.IOException;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.commons.lang.ArrayUtils;
@@ -661,7 +661,7 @@ public class VectorizedBatchUtil {
     case LONG:
       return new LongWritable(0);
     case TIMESTAMP:
-      return new TimestampWritable(new Timestamp(0));
+      return new TimestampWritable(new HiveTimestamp(0));
     case DATE:
       return new DateWritable(new Date(0));
     case FLOAT:
@@ -738,7 +738,7 @@ public class VectorizedBatchUtil {
           } else if (colVector instanceof DecimalColumnVector) {
             sb.append(((DecimalColumnVector) colVector).vector[index].toString());
           } else if (colVector instanceof TimestampColumnVector) {
-            Timestamp timestamp = new Timestamp(0);
+            HiveTimestamp timestamp = new HiveTimestamp(0);
             ((TimestampColumnVector) colVector).timestampUpdate(timestamp, index);
             sb.append(timestamp.toString());
           } else if (colVector instanceof IntervalDayTimeColumnVector) {

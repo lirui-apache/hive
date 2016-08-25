@@ -26,7 +26,6 @@ import static org.junit.Assert.assertTrue;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.reflect.Constructor;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -37,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.CompilationOpContext;
 import org.apache.hadoop.hive.ql.exec.vector.util.FakeCaptureOutputOperator;
@@ -574,9 +574,9 @@ public class TestVectorGroupByOperator {
         new FakeVectorRowBatchFromObjectIterables(
             2,
             new String[] {"timestamp", "bigint"},
-            Arrays.asList(new Object[]{new Timestamp(1),null, new Timestamp(1), null}),
+            Arrays.asList(new Object[]{new HiveTimestamp(1),null, new HiveTimestamp(1), null}),
             Arrays.asList(new Object[]{13L,null,7L, 19L})),
-        buildHashMap(new Timestamp(1), 20L, null, 19L));
+        buildHashMap(new HiveTimestamp(1), 20L, null, 19L));
   }
 
   @Test

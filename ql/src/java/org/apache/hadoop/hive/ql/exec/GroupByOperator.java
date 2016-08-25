@@ -21,7 +21,6 @@ package org.apache.hadoop.hive.ql.exec;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.reflect.Field;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,6 +33,7 @@ import java.util.Set;
 import javolution.util.FastBitSet;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.CompilationOpContext;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -483,7 +483,7 @@ public class GroupByOperator extends Operator<GroupByDesc> {
       return javaSizePrimitiveType;
     }
 
-    if (c.isInstance(new Timestamp(0))){
+    if (c.isInstance(new HiveTimestamp(0))){
       return javaObjectOverHead + javaSizePrimitiveType;
     }
 

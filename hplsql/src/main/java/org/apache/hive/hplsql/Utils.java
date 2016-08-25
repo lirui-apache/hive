@@ -18,8 +18,9 @@
 
 package org.apache.hive.hplsql;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
+
 import java.sql.Date;
-import java.sql.Timestamp;
 
 public class Utils {
 
@@ -109,7 +110,7 @@ public class Utils {
   /**
    * Convert String to Timestamp
    */
-  public static Timestamp toTimestamp(String s) {
+  public static HiveTimestamp toTimestamp(String s) {
     int len = s.length();
     if(len >= 10) {
       int c4 = s.charAt(4);
@@ -121,13 +122,13 @@ public class Utils {
           if(s.charAt(10) == '-') {
             String s2 = s.substring(0, 10) + ' ' + s.substring(11, 13) + ':' + s.substring(14, 16) + ':' + 
                 s.substring(17);
-            return Timestamp.valueOf(s2);
+            return HiveTimestamp.valueOf(s2);
           }          
         }
         else if(len == 10) {
           s += " 00:00:00.000";
         }
-        return Timestamp.valueOf(s);
+        return HiveTimestamp.valueOf(s);
       }
     }
     return null;    

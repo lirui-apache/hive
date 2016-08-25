@@ -20,12 +20,12 @@ package org.apache.hadoop.hive.ql.exec.vector;
 
 import java.io.IOException;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.Random;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.io.ByteWritable;
@@ -246,7 +246,7 @@ public class TestVectorSerDeRow extends TestCase {
         break;
     case TIMESTAMP:
       {
-        Timestamp value = deserializeRead.currentTimestampWritable.getTimestamp();
+        HiveTimestamp value = deserializeRead.currentTimestampWritable.getTimestamp();
         TimestampWritable expectedWritable = (TimestampWritable) expected;
         if (!value.equals(expectedWritable.getTimestamp())) {
           TestCase.fail("Timestamp field mismatch (expected " + expectedWritable.getTimestamp() + " found " + value.toString() + ")");
@@ -482,7 +482,7 @@ public class TestVectorSerDeRow extends TestCase {
       case TIMESTAMP:
         {
           TimestampWritable expectedWritable = (TimestampWritable) object;
-          Timestamp value = expectedWritable.getTimestamp();
+          HiveTimestamp value = expectedWritable.getTimestamp();
           serializeWrite.writeTimestamp(value);
         }
         break;

@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.TableType;
@@ -58,7 +59,6 @@ import java.sql.SQLException;
 import java.sql.SQLTimeoutException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -580,7 +580,7 @@ public class TestJdbcDriver2 {
     ps.setObject(9, (byte) 1); //setByte
     ps.setObject(10, (byte) 1); //setByte
     ps.setString(11, "2012-01-01"); //setString
-    ps.setObject(12, Timestamp.valueOf("2012-04-22 09:00:00.123456789")); //setTimestamp
+    ps.setObject(12, HiveTimestamp.valueOf("2012-04-22 09:00:00.123456789")); //setTimestamp
 
     ps.setMaxRows(2);
     return ps;
@@ -600,7 +600,7 @@ public class TestJdbcDriver2 {
     ps.setByte(9, (byte) 1); //setByte
     ps.setByte(10, (byte) 1); //setByte
     ps.setString(11, "2012-01-01"); //setString
-    ps.setTimestamp(12, Timestamp.valueOf("2012-04-22 09:00:00.123456789")); //setTimestamp
+    ps.setTimestamp(12, HiveTimestamp.valueOf("2012-04-22 09:00:00.123456789")); //setTimestamp
 
     ps.setMaxRows(2);
     return ps;
@@ -2720,7 +2720,7 @@ public void testParseUrlHttpMode() throws SQLException, JdbcUriParseException,
   public void testPrepareSetTimestamp() throws SQLException, ParseException {
     String sql = String.format("SELECT * FROM %s WHERE c17 = ?", dataTypeTableName);
     try (PreparedStatement ps = con.prepareStatement(sql)) {
-      Timestamp timestamp = Timestamp.valueOf("2012-04-22 09:00:00.123456789");
+      HiveTimestamp timestamp = HiveTimestamp.valueOf("2012-04-22 09:00:00.123456789");
       ps.setTimestamp(1, timestamp);
       // Ensure we find the single row which matches our timestamp (where field 1 has value 1)
       try (ResultSet resultSet = ps.executeQuery()) {

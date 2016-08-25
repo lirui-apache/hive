@@ -23,7 +23,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.Map.Entry;
 
 import org.apache.accumulo.core.client.BatchWriter;
@@ -41,6 +40,7 @@ import org.apache.hadoop.hive.accumulo.AccumuloHiveRow;
 import org.apache.hadoop.hive.accumulo.serde.AccumuloSerDeParameters;
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.ByteStream;
@@ -242,9 +242,9 @@ public class TestHiveAccumuloTypes {
 
     // tiemestamp
     baos.reset();
-    Timestamp timestampValue = new Timestamp(now.getTime());
+    HiveTimestamp timestampValue = new HiveTimestamp(now.getTime());
     ByteStream.Output output = new ByteStream.Output();
-    TimestampWritable timestampWritable = new TimestampWritable(new Timestamp(now.getTime()));
+    TimestampWritable timestampWritable = new TimestampWritable(new HiveTimestamp(now.getTime()));
     timestampWritable.write(new DataOutputStream(output));
     output.close();
     m.put(cfBytes, "timestamp".getBytes(), output.toByteArray());
@@ -598,7 +598,7 @@ public class TestHiveAccumuloTypes {
     m.put(cfBytes, "date".getBytes(), baos.toByteArray());
 
     // timestamp
-    Timestamp timestampValue = new Timestamp(now.getTime());
+    HiveTimestamp timestampValue = new HiveTimestamp(now.getTime());
     baos.reset();
     JavaTimestampObjectInspector timestampOI = (JavaTimestampObjectInspector) PrimitiveObjectInspectorFactory
         .getPrimitiveJavaObjectInspector(TypeInfoFactory

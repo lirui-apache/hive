@@ -30,7 +30,7 @@ import java.util.TimeZone;
 /**
  * A thin wrapper of java.sql.Timestamp, with timezoneID offset.
  */
-public class HiveTimestamp implements Comparable<HiveTimestamp> {
+public class HiveTimestamp extends Timestamp {
 
   private static final int MAX_OFFSET = 840;
   private static final int MIN_OFFSET = -720;
@@ -45,15 +45,13 @@ public class HiveTimestamp implements Comparable<HiveTimestamp> {
         }
       };
 
-  private Timestamp ts;
-
   // We store the offset from UTC in minutes . Ranges from [-12:00, 14:00].
   private Integer offsetInMin = null;
 
   private transient String internalID = null;
 
   public HiveTimestamp(long time, String timezoneID) {
-    ts = new Timestamp(time);
+    super(time);
     computeOffset(timezoneID);
   }
 
@@ -75,22 +73,6 @@ public class HiveTimestamp implements Comparable<HiveTimestamp> {
   public HiveTimestamp(int year, int month, int date,
       int hour, int minute, int second, int nano) {
     this(new Timestamp(year, month, date, hour, minute, second, nano));
-  }
-
-  public long getTime() {
-    return ts.getTime();
-  }
-
-  public int getNanos() {
-    return ts.getNanos();
-  }
-
-  public void setTime(long time) {
-    ts.setTime(time);
-  }
-
-  public void setNanos(int nanos) {
-    ts.setNanos(nanos);
   }
 
   private void computeOffset(String timezoneID) {
@@ -152,7 +134,7 @@ public class HiveTimestamp implements Comparable<HiveTimestamp> {
 
   @Override
   public String toString() {
-    String tsStr = ts.toString();
+    String tsStr = super.toString();
     if (!hasTimezone()) {
       return tsStr;
     }
@@ -161,7 +143,7 @@ public class HiveTimestamp implements Comparable<HiveTimestamp> {
     try {
       String timezoneID = getTimezoneID();
       dateFormat.setTimeZone(TimeZone.getTimeZone(timezoneID));
-      String r = dateFormat.format(ts) + tsStr.substring(19);
+      String r = dateFormat.format(this) + tsStr.substring(19);
       r += " " + timezoneID;
       return r;
     } finally {
@@ -170,18 +152,23 @@ public class HiveTimestamp implements Comparable<HiveTimestamp> {
   }
 
   @Override
-  public int compareTo(HiveTimestamp other) {
-    int result = this.ts.compareTo(other.ts);
+  public int compareTo(Timestamp ts) {
+    int result = super.compareTo(ts);
     if (result == 0) {
-      if (!hasTimezone() || !other.hasTimezone()) {
-        if (hasTimezone()) {
-          result = 1;
+      if (ts instanceof HiveTimestamp) {
+        HiveTimestamp hts = (HiveTimestamp) ts;
+        if (!hasTimezone() || !hts.hasTimezone()) {
+          if (hasTimezone()) {
+            result = 1;
+          }
+          if (hts.hasTimezone()) {
+            result = -1;
+          }
+        } else {
+          result = getOffsetInMin() - hts.getOffsetInMin();
         }
-        if (other.hasTimezone()) {
-          result = -1;
-        }
-      } else {
-        result = getOffsetInMin() - other.getOffsetInMin();
+      } else if (hasTimezone()) {
+        result = 1;
       }
     }
     return result;
@@ -189,15 +176,15 @@ public class HiveTimestamp implements Comparable<HiveTimestamp> {
 
   @Override
   public boolean equals(Object o) {
-    if (o instanceof HiveTimestamp) {
-      return compareTo((HiveTimestamp) o) == 0;
+    if (o instanceof Timestamp) {
+      return compareTo((Timestamp) o) == 0;
     }
     return false;
   }
 
   @Override
   public int hashCode() {
-    int hash = ts.hashCode();
+    int hash = super.hashCode();
     if (hasTimezone()) {
       hash ^= getOffsetInMin();
     }

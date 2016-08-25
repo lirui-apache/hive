@@ -20,7 +20,6 @@ package org.apache.hadoop.hive.ql.exec.vector;
 
 import java.lang.reflect.Constructor;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -34,6 +33,7 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hive.common.type.HiveChar;
@@ -1069,7 +1069,7 @@ public class VectorizationContext {
     case DATE:
       return new ConstantVectorExpression(outCol, DateWritable.dateToDays((Date) constantValue));
     case TIMESTAMP:
-      return new ConstantVectorExpression(outCol, (Timestamp) constantValue);
+      return new ConstantVectorExpression(outCol, (HiveTimestamp) constantValue);
     case INTERVAL_YEAR_MONTH:
       return new ConstantVectorExpression(outCol,
           ((HiveIntervalYearMonth) constantValue).getTotalMonths());
@@ -1670,7 +1670,7 @@ public class VectorizationContext {
       ((ILongInExpr) expr).setInListValues(inVals);
     } else if (isTimestampFamily(colType)) {
       cl = (mode == VectorExpressionDescriptor.Mode.FILTER ? FilterTimestampColumnInList.class : TimestampColumnInList.class);
-      Timestamp[] inVals = new Timestamp[childrenForInList.size()];
+      HiveTimestamp[] inVals = new HiveTimestamp[childrenForInList.size()];
       for (int i = 0; i != inVals.length; i++) {
         inVals[i] = getTimestampScalar(childrenForInList.get(i));
       }
@@ -2326,7 +2326,7 @@ public class VectorizationContext {
   }
 
   // Get a timestamp from a string constant or cast
-  private Timestamp getTimestampScalar(ExprNodeDesc expr) throws HiveException {
+  private HiveTimestamp getTimestampScalar(ExprNodeDesc expr) throws HiveException {
     if (expr instanceof ExprNodeGenericFuncDesc &&
         ((ExprNodeGenericFuncDesc) expr).getGenericUDF() instanceof GenericUDFTimestamp) {
       return evaluateCastToTimestamp(expr);
@@ -2354,18 +2354,17 @@ public class VectorizationContext {
         + "Expecting string.");
   }
 
-  private Timestamp evaluateCastToTimestamp(ExprNodeDesc expr) throws HiveException {
+  private HiveTimestamp evaluateCastToTimestamp(ExprNodeDesc expr) throws HiveException {
     ExprNodeGenericFuncDesc expr2 = (ExprNodeGenericFuncDesc) expr;
     ExprNodeEvaluator evaluator = ExprNodeEvaluatorFactory.get(expr2);
     ObjectInspector output = evaluator.initialize(null);
     Object constant = evaluator.evaluate(null);
     Object java = ObjectInspectorUtils.copyToStandardJavaObject(constant, output);
 
-    if (!(java instanceof Timestamp)) {
+    if (!(java instanceof HiveTimestamp)) {
       throw new HiveException("Udf: failed to convert to timestamp");
     }
-    Timestamp ts = (Timestamp) java;
-    return ts;
+    return (HiveTimestamp) java;
   }
 
   private Constructor<?> getConstructor(Class<?> cl) throws HiveException {

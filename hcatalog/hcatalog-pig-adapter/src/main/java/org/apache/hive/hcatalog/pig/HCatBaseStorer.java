@@ -22,7 +22,6 @@ package org.apache.hive.hcatalog.pig;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,6 +35,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.serde2.typeinfo.CharTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.DecimalTypeInfo;
@@ -418,7 +418,7 @@ abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata {
         return new HiveVarchar(varcharVal, vti.getLength());
       case TIMESTAMP:
         DateTime dt = (DateTime)pigObj;
-        return new Timestamp(dt.getMillis());//getMillis() returns UTC time regardless of TZ
+        return new HiveTimestamp(dt.getMillis());//getMillis() returns UTC time regardless of TZ
       case DATE:
         /**
          * We ignore any TZ setting on Pig value since java.sql.Date doesn't have it (in any

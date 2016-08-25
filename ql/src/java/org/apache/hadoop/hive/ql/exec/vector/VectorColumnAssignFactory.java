@@ -18,7 +18,6 @@
 
 package org.apache.hadoop.hive.ql.exec.vector;
 
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +25,7 @@ import java.util.Map;
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.io.ByteWritable;
@@ -169,7 +169,7 @@ public class VectorColumnAssignFactory {
   private static abstract class VectorTimestampColumnAssign
   extends VectorColumnAssignVectorBase<TimestampColumnVector> {
 
-    protected void assignTimestamp(Timestamp value, int index) {
+    protected void assignTimestamp(HiveTimestamp value, int index) {
       outCol.set(index, value);
     }
     protected void assignTimestamp(TimestampWritable tw, int index) {

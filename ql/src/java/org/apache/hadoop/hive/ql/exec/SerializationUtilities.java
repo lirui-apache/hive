@@ -28,7 +28,6 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.net.URI;
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +36,7 @@ import java.util.Map;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.CompilationOpContext;
 import org.apache.hadoop.hive.ql.exec.tez.TezJobMonitor;
 import org.apache.hadoop.hive.ql.exec.vector.VectorFileSinkOperator;
@@ -221,7 +221,7 @@ public class SerializationUtilities {
     public Kryo create() {
       KryoWithHooks kryo = new KryoWithHooks();
       kryo.register(java.sql.Date.class, new SqlDateSerializer());
-      kryo.register(java.sql.Timestamp.class, new TimestampSerializer());
+      kryo.register(HiveTimestamp.class, new TimestampSerializer());
       kryo.register(Path.class, new PathSerializer());
       kryo.register(Arrays.asList("").getClass(), new ArraysAsListSerializer());
 
@@ -289,19 +289,25 @@ public class SerializationUtilities {
    * Kryo serializer for timestamp.
    */
   private static class TimestampSerializer extends
-      com.esotericsoftware.kryo.Serializer<Timestamp> {
+      com.esotericsoftware.kryo.Serializer<HiveTimestamp> {
 
     @Override
-    public Timestamp read(Kryo kryo, Input input, Class<Timestamp> clazz) {
-      Timestamp ts = new Timestamp(input.readLong());
+    public HiveTimestamp read(Kryo kryo, Input input, Class<HiveTimestamp> clazz) {
+      HiveTimestamp ts = new HiveTimestamp(input.readLong());
       ts.setNanos(input.readInt());
+      ts.setOffsetInMin(input.readInt());
       return ts;
     }
 
     @Override
-    public void write(Kryo kryo, Output output, Timestamp ts) {
+    public void write(Kryo kryo, Output output, HiveTimestamp ts) {
       output.writeLong(ts.getTime());
       output.writeInt(ts.getNanos());
+      if (ts.hasTimezone()) {
+        output.writeInt(ts.getOffsetInMin());
+      } else {
+        output.writeInt(HiveTimestamp.NULL_OFFSET);
+      }
     }
   }
 

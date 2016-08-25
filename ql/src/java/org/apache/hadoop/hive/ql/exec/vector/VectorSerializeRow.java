@@ -19,10 +19,10 @@
 package org.apache.hadoop.hive.ql.exec.vector;
 
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.util.List;
 
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.ByteStream.Output;
 import org.apache.hadoop.hive.serde2.io.HiveDecimalWritable;
@@ -257,11 +257,11 @@ public final class VectorSerializeRow<T extends SerializeWrite> {
 
   private class TimestampWriter extends Writer {
 
-    Timestamp scratchTimestamp;
+    HiveTimestamp scratchTimestamp;
 
     TimestampWriter(int columnIndex) {
       super(columnIndex);
-      scratchTimestamp =  new Timestamp(0);
+      scratchTimestamp =  new HiveTimestamp(0);
     }
 
     @Override

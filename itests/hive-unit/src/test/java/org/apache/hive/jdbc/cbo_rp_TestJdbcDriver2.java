@@ -37,7 +37,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -49,6 +48,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.fs.Path;
@@ -512,7 +512,7 @@ public class cbo_rp_TestJdbcDriver2 {
     ps.setObject(9, (byte) 1); //setByte
     ps.setObject(10, (byte) 1); //setByte
     ps.setString(11, "2012-01-01"); //setString
-    ps.setObject(12, Timestamp.valueOf("2012-04-22 09:00:00.123456789")); //setTimestamp
+    ps.setObject(12, HiveTimestamp.valueOf("2012-04-22 09:00:00.123456789")); //setTimestamp
 
     ps.setMaxRows(2);
     return ps;
@@ -532,7 +532,7 @@ public class cbo_rp_TestJdbcDriver2 {
     ps.setByte(9, (byte) 1); //setByte
     ps.setByte(10, (byte) 1); //setByte
     ps.setString(11, "2012-01-01"); //setString
-    ps.setTimestamp(12, Timestamp.valueOf("2012-04-22 09:00:00.123456789")); //setTimestamp
+    ps.setTimestamp(12, HiveTimestamp.valueOf("2012-04-22 09:00:00.123456789")); //setTimestamp
 
     ps.setMaxRows(2);
     return ps;
@@ -2407,7 +2407,7 @@ public void testParseUrlHttpMode() throws SQLException, JdbcUriParseException,
   public void testPrepareSetTimestamp() throws SQLException, ParseException {
     String sql = String.format("SELECT * FROM %s WHERE c17 = ?", dataTypeTableName);
     try (PreparedStatement ps = con.prepareStatement(sql)) {
-      Timestamp timestamp = Timestamp.valueOf("2012-04-22 09:00:00.123456789");
+      HiveTimestamp timestamp = HiveTimestamp.valueOf("2012-04-22 09:00:00.123456789");
       ps.setTimestamp(1, timestamp);
       // Ensure we find the single row which matches our timestamp (where field 1 has value 1)
       try (ResultSet resultSet = ps.executeQuery()) {

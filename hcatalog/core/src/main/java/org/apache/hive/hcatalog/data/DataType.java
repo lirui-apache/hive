@@ -21,10 +21,10 @@ package org.apache.hive.hcatalog.data;
 
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -103,7 +103,7 @@ public abstract class DataType {
       return DECIMAL;
     } else if(o instanceof Date) {
       return DATE;
-    } else if(o instanceof Timestamp) {
+    } else if(o instanceof HiveTimestamp) {
       return TIMESTAMP;
     } else {
       return ERROR;
@@ -205,7 +205,7 @@ public abstract class DataType {
       case DATE:
         return ((Date)o1).compareTo((Date)o2);
       case TIMESTAMP:
-        return ((Timestamp)o1).compareTo((Timestamp)o2);
+        return ((HiveTimestamp)o1).compareTo((HiveTimestamp)o2);
      default:
         throw new RuntimeException("Unkown type " + dt1 +
           " in compare");
