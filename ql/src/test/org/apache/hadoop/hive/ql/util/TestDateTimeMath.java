@@ -18,11 +18,11 @@
 package org.apache.hadoop.hive.ql.util;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.TimeZone;
 
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.util.DateTimeMath;
 import org.junit.*;
 
@@ -303,19 +303,19 @@ public class TestDateTimeMath {
 
   private static void checkTimestampIntervalYearMonthArithmetic(
       String left, char operationType, String right, String expected) throws Exception {
-    Timestamp leftTs = null;
+    HiveTimestamp leftTs = null;
     if (left != null) {
-      leftTs = Timestamp.valueOf(left);
+      leftTs = HiveTimestamp.valueOf(left);
     }
     HiveIntervalYearMonth rightInterval = null;
     if (right != null) {
       rightInterval = HiveIntervalYearMonth.valueOf(right);
     }
-    Timestamp expectedResult = null;
+    HiveTimestamp expectedResult = null;
     if (expected != null) {
-      expectedResult = Timestamp.valueOf(expected);
+      expectedResult = HiveTimestamp.valueOf(expected);
     }
-    Timestamp testResult = null;
+    HiveTimestamp testResult = null;
 
     DateTimeMath dtm = new DateTimeMath();
     switch (operationType) {
@@ -390,16 +390,16 @@ public class TestDateTimeMath {
 
   private static void checkTsIntervalDayTimeArithmetic(
       String left, char operationType, String right, String expected) throws Exception {
-    Timestamp leftTs = null;
+    HiveTimestamp leftTs = null;
     if (left != null) {
-      leftTs = Timestamp.valueOf(left);
+      leftTs = HiveTimestamp.valueOf(left);
     }
     HiveIntervalDayTime rightInterval = right == null ? null : HiveIntervalDayTime.valueOf(right);
-    Timestamp expectedResult = null;
+    HiveTimestamp expectedResult = null;
     if (expected != null) {
-      expectedResult = Timestamp.valueOf(expected);
+      expectedResult = HiveTimestamp.valueOf(expected);
     }
-    Timestamp testResult = null;
+    HiveTimestamp testResult = null;
 
     DateTimeMath dtm = new DateTimeMath();
     switch (operationType) {
@@ -442,13 +442,13 @@ public class TestDateTimeMath {
 
   private static void checkTsArithmetic(
       String left, String right, String expected) throws Exception {
-    Timestamp leftTs = null;
+    HiveTimestamp leftTs = null;
     if (left != null) {
-      leftTs = Timestamp.valueOf(left);
+      leftTs = HiveTimestamp.valueOf(left);
     }
-    Timestamp rightTs = null;
+    HiveTimestamp rightTs = null;
     if (left != null) {
-      rightTs = Timestamp.valueOf(right);
+      rightTs = HiveTimestamp.valueOf(right);
     }
     HiveIntervalDayTime expectedResult = null;
     if (expected != null) {

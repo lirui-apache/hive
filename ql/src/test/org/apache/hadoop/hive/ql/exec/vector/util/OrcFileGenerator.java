@@ -21,7 +21,6 @@ package org.apache.hadoop.hive.ql.exec.vector.util;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -29,6 +28,7 @@ import java.util.Random;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.hadoop.hive.ql.io.orc.CompressionKind;
 import org.apache.hadoop.hive.ql.io.orc.Writer;
@@ -248,23 +248,23 @@ public class OrcFileGenerator {
 
   }
 
-  private static class TimestampBatchGenerator extends BatchGenerator<Timestamp> {
+  private static class TimestampBatchGenerator extends BatchGenerator<HiveTimestamp> {
 
     private final ShortBatchGenerator shortGen = new ShortBatchGenerator();
 
     @Override
-    protected Timestamp generateRandomNonNullValue(Random rand) {
-      return new Timestamp(shortGen.generateRandomNonNullValue(rand));
+    protected HiveTimestamp generateRandomNonNullValue(Random rand) {
+      return new HiveTimestamp(shortGen.generateRandomNonNullValue(rand));
     }
 
     @Override
-    protected Timestamp[] initializeFixedPointValues() {
+    protected HiveTimestamp[] initializeFixedPointValues() {
       // TODO Auto-generated method stub
-      return new Timestamp[] {
-          new Timestamp(-29071),
-          new Timestamp(-10669),
-          new Timestamp(16558),
-          new Timestamp(31808)
+      return new HiveTimestamp[] {
+          new HiveTimestamp(-29071),
+          new HiveTimestamp(-10669),
+          new HiveTimestamp(16558),
+          new HiveTimestamp(31808)
       };
     }
   }
@@ -284,7 +284,7 @@ public class OrcFileGenerator {
 
     TYPE_TO_BATCH_GEN_MAP.put(String.class, new StringBatchGenerator());
 
-    TYPE_TO_BATCH_GEN_MAP.put(Timestamp.class, new TimestampBatchGenerator());
+    TYPE_TO_BATCH_GEN_MAP.put(HiveTimestamp.class, new TimestampBatchGenerator());
   }
 
   /**

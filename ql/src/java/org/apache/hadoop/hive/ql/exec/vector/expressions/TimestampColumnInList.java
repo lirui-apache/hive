@@ -18,9 +18,9 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
-import java.sql.Timestamp;
 import java.util.HashSet;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorExpressionDescriptor.Descriptor;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
@@ -32,11 +32,11 @@ import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 public class TimestampColumnInList extends VectorExpression implements ITimestampInExpr {
   private static final long serialVersionUID = 1L;
   private int inputCol;
-  private Timestamp[] inListValues;
+  private HiveTimestamp[] inListValues;
   private int outputColumn;
 
   // The set object containing the IN list.
-  private transient HashSet<Timestamp> inSet;
+  private transient HashSet<HiveTimestamp> inSet;
 
   public TimestampColumnInList() {
     super();
@@ -60,8 +60,8 @@ public class TimestampColumnInList extends VectorExpression implements ITimestam
     }
 
     if (inSet == null) {
-      inSet = new HashSet<Timestamp>(inListValues.length);
-      for (Timestamp val : inListValues) {
+      inSet = new HashSet<HiveTimestamp>(inListValues.length);
+      for (HiveTimestamp val : inListValues) {
         inSet.add(val);
       }
     }
@@ -147,7 +147,7 @@ public class TimestampColumnInList extends VectorExpression implements ITimestam
     return null;
   }
 
-  public void setInListValues(Timestamp[] a) {
+  public void setInListValues(HiveTimestamp[] a) {
     this.inListValues = a;
   }
 }

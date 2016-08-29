@@ -18,7 +18,7 @@
 
 package org.apache.orc;
 
-import java.sql.Timestamp;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 
 /**
  * Statistics for Timestamp columns.
@@ -28,11 +28,11 @@ public interface TimestampColumnStatistics extends ColumnStatistics {
    * Get the minimum value for the column.
    * @return minimum value
    */
-  Timestamp getMinimum();
+  HiveTimestamp getMinimum();
 
   /**
    * Get the maximum value for the column.
    * @return maximum value
    */
-  Timestamp getMaximum();
+  HiveTimestamp getMaximum();
 }

@@ -23,7 +23,6 @@ import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
 
 import java.io.File;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,6 +33,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
@@ -120,14 +120,14 @@ public class TestOrcSerDeStats {
     Text string1;
     List<InnerStruct> list = new ArrayList<InnerStruct>();
     Map<Text, InnerStruct> map = new HashMap<Text, InnerStruct>();
-    Timestamp ts;
+    HiveTimestamp ts;
     HiveDecimal decimal1;
     MiddleStruct middle;
 
     BigRow(Boolean b1, Byte b2, Short s1, Integer i1, Long l1, Float f1,
         Double d1,
         BytesWritable b3, String s2, MiddleStruct m1,
-        List<InnerStruct> l2, Map<Text, InnerStruct> m2, Timestamp ts1,
+        List<InnerStruct> l2, Map<Text, InnerStruct> m2, HiveTimestamp ts1,
         HiveDecimal dec1) {
       this.boolean1 = b1;
       this.byte1 = b2;
@@ -406,7 +406,7 @@ public class TestOrcSerDeStats {
         Long.MAX_VALUE, (float) 1.0, -15.0, bytes(0, 1, 2, 3, 4), "hi",
         new MiddleStruct(inner(1, "bye"), inner(2, "sigh")),
         list(inner(3, "good"), inner(4, "bad")),
-        map(), Timestamp.valueOf("2000-03-12 15:00:00"), HiveDecimal.create(
+        map(), HiveTimestamp.valueOf("2000-03-12 15:00:00"), HiveDecimal.create(
             "12345678.6547456")));
     // 1 + 2 + 4 + 8 + 4 + 8 + 3 + 4 + 3 + 4 + 4 + 4 + 3 + 4 + 2 + 4 + 3 + 5 + 4 + 5 + 7 + 4 + 7 =
     // 97
@@ -414,7 +414,7 @@ public class TestOrcSerDeStats {
         Long.MAX_VALUE, (float) 2.0, -5.0, bytes(), "bye",
         new MiddleStruct(inner(1, "bye"), inner(2, "sigh")),
         list(inner(100000000, "cat"), inner(-100000, "in"), inner(1234, "hat")),
-        map(inner(5, "chani"), inner(1, "mauddib")), Timestamp.valueOf("2000-03-11 15:00:00"),
+        map(inner(5, "chani"), inner(1, "mauddib")), HiveTimestamp.valueOf("2000-03-11 15:00:00"),
         HiveDecimal.create("12345678.6547452")));
     writer.close();
     long rowCount = writer.getNumberOfRows();
@@ -500,7 +500,7 @@ public class TestOrcSerDeStats {
         Long.MAX_VALUE, (float) 1.0, -15.0, bytes(0, 1, 2, 3, 4), "hi",
         new MiddleStruct(inner(1, "bye"), inner(2, "sigh")),
         list(inner(3, "good"), inner(4, "bad")),
-        map(), Timestamp.valueOf("2000-03-12 15:00:00"), HiveDecimal.create(
+        map(), HiveTimestamp.valueOf("2000-03-12 15:00:00"), HiveDecimal.create(
             "12345678.6547456")));
     // 1 + 2 + 4 + 8 + 4 + 8 + 3 + 4 + 3 + 4 + 4 + 4 + 3 + 4 + 2 + 4 + 3 + 5 + 4 + 5 + 7 + 4 + 7 =
     // 97
@@ -508,7 +508,7 @@ public class TestOrcSerDeStats {
         Long.MAX_VALUE, (float) 2.0, -5.0, bytes(), "bye",
         new MiddleStruct(inner(1, "bye"), inner(2, "sigh")),
         list(inner(100000000, "cat"), inner(-100000, "in"), inner(1234, "hat")),
-        map(inner(5, "chani"), inner(1, "mauddib")), Timestamp.valueOf("2000-03-11 15:00:00"),
+        map(inner(5, "chani"), inner(1, "mauddib")), HiveTimestamp.valueOf("2000-03-11 15:00:00"),
         HiveDecimal.create("12345678.6547452")));
     writer.close();
     long rowCount = writer.getNumberOfRows();

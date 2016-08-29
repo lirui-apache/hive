@@ -27,7 +27,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.PrivilegedExceptionAction;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,6 +54,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.api.hive_metastoreConstants;
@@ -161,7 +161,7 @@ public class TestInputOutputFormat {
     String stringValue;
     HiveDecimal decimalValue;
     Date dateValue;
-    Timestamp timestampValue;
+    HiveTimestamp timestampValue;
 
     BigRow(long x) {
       booleanValue = x % 2 == 0;
@@ -176,7 +176,7 @@ public class TestInputOutputFormat {
       long millisUtc = x * MILLIS_IN_DAY;
       millisUtc -= LOCAL_TIMEZONE.getOffset(millisUtc);
       dateValue = new Date(millisUtc);
-      timestampValue = new Timestamp(millisUtc);
+      timestampValue = new HiveTimestamp(millisUtc);
     }
 
     @Override

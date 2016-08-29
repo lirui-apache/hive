@@ -24,13 +24,13 @@ import static org.junit.Assume.assumeTrue;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
-import java.sql.Timestamp;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.hadoop.hive.serde2.io.DateWritable;
@@ -147,17 +147,17 @@ public class TestColumnStatistics {
 
     ColumnStatisticsImpl stats1 = ColumnStatisticsImpl.create(schema);
     ColumnStatisticsImpl stats2 = ColumnStatisticsImpl.create(schema);
-    stats1.updateTimestamp(new Timestamp(10));
-    stats1.updateTimestamp(new Timestamp(100));
-    stats2.updateTimestamp(new Timestamp(1));
-    stats2.updateTimestamp(new Timestamp(1000));
+    stats1.updateTimestamp(new HiveTimestamp(10));
+    stats1.updateTimestamp(new HiveTimestamp(100));
+    stats2.updateTimestamp(new HiveTimestamp(1));
+    stats2.updateTimestamp(new HiveTimestamp(1000));
     stats1.merge(stats2);
     TimestampColumnStatistics typed = (TimestampColumnStatistics) stats1;
     assertEquals(1, typed.getMinimum().getTime());
     assertEquals(1000, typed.getMaximum().getTime());
     stats1.reset();
-    stats1.updateTimestamp(new Timestamp(-10));
-    stats1.updateTimestamp(new Timestamp(10000));
+    stats1.updateTimestamp(new HiveTimestamp(-10));
+    stats1.updateTimestamp(new HiveTimestamp(10000));
     stats1.merge(stats2);
     assertEquals(-10, typed.getMinimum().getTime());
     assertEquals(10000, typed.getMaximum().getTime());

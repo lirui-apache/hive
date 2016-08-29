@@ -18,9 +18,7 @@
 
 package org.apache.hadoop.hive.ql.udf.generic;
 
-import java.sql.Date;
-import java.sql.Timestamp;
-
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredJavaObject;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredObject;
@@ -54,18 +52,18 @@ public class TestGenericUDFFromUtcTimestamp extends TestCase {
 
     runAndVerify(udf,
         new Text("2015-03-28 17:00:00"), new Text("Europe/London"),
-        Timestamp.valueOf("2015-03-28 17:00:00"));
+        HiveTimestamp.valueOf("2015-03-28 17:00:00"));
     runAndVerify(udf,
         new Text("2015-03-28 18:00:00"), new Text("Europe/London"),
-        Timestamp.valueOf("2015-03-28 18:00:00"));
+        HiveTimestamp.valueOf("2015-03-28 18:00:00"));
     runAndVerify(udf,
         new Text("2015-03-28 19:00:00"), new Text("Europe/London"),
-        Timestamp.valueOf("2015-03-28 19:00:00"));
+        HiveTimestamp.valueOf("2015-03-28 19:00:00"));
 
     // Make sure nanos are preserved
     runAndVerify(udf,
         new Text("2015-03-28 18:00:00.123456789"), new Text("Europe/London"),
-        Timestamp.valueOf("2015-03-28 18:00:00.123456789"));
+        HiveTimestamp.valueOf("2015-03-28 18:00:00.123456789"));
   }
 
   public void testToUtcTimestamp() throws Exception {
@@ -76,17 +74,17 @@ public class TestGenericUDFFromUtcTimestamp extends TestCase {
 
     runAndVerify(udf,
         new Text("2015-03-28 17:00:00"), new Text("Europe/London"),
-        Timestamp.valueOf("2015-03-28 17:00:00"));
+        HiveTimestamp.valueOf("2015-03-28 17:00:00"));
     runAndVerify(udf,
         new Text("2015-03-28 18:00:00"), new Text("Europe/London"),
-        Timestamp.valueOf("2015-03-28 18:00:00"));
+        HiveTimestamp.valueOf("2015-03-28 18:00:00"));
     runAndVerify(udf,
         new Text("2015-03-28 19:00:00"), new Text("Europe/London"),
-        Timestamp.valueOf("2015-03-28 19:00:00"));
+        HiveTimestamp.valueOf("2015-03-28 19:00:00"));
 
     // Make sure nanos are preserved
     runAndVerify(udf,
         new Text("2015-03-28 18:00:00.123456789"), new Text("Europe/London"),
-        Timestamp.valueOf("2015-03-28 18:00:00.123456789"));
+        HiveTimestamp.valueOf("2015-03-28 18:00:00.123456789"));
   }
 }

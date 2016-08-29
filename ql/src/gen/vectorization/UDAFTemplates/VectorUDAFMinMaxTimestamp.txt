@@ -18,8 +18,7 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions.aggregates.gen;
 
-import java.sql.Timestamp;
-
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.VectorExpression;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.aggregates.VectorAggregateExpression;
@@ -50,7 +49,7 @@ public class <ClassName> extends VectorAggregateExpression {
 
       private static final long serialVersionUID = 1L;
 
-      transient private final Timestamp value;
+      transient private final HiveTimestamp value;
 
       /**
       * Value is explicitly (re)initialized in reset()
@@ -58,7 +57,7 @@ public class <ClassName> extends VectorAggregateExpression {
       transient private boolean isNull = true;
 
       public Aggregation() {
-        value = new Timestamp(0);
+        value = new HiveTimestamp(0);
       }
 
       public void checkValue(TimestampColumnVector colVector, int index) {

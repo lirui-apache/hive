@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
@@ -28,7 +29,6 @@ import org.apache.hadoop.hive.serde2.io.DateWritable;
 import org.apache.hadoop.io.Text;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
@@ -38,7 +38,7 @@ public class VectorUDFDateDiffScalarCol extends VectorExpression {
   private int colNum;
   private int outputColumn;
   private long longValue;
-  private Timestamp timestampValue = null;
+  private HiveTimestamp timestampValue = null;
   private byte[] stringValue;
   private transient SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
   private transient final Text text = new Text();
@@ -52,8 +52,8 @@ public class VectorUDFDateDiffScalarCol extends VectorExpression {
 
     if (object instanceof Long) {
       this.longValue = (Long) object;
-    } else if (object instanceof Timestamp) {
-      this.timestampValue = (Timestamp) object;
+    } else if (object instanceof HiveTimestamp) {
+      this.timestampValue = (HiveTimestamp) object;
     } else if (object instanceof byte []) {
       this.stringValue = (byte[]) object;
     }

@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.hive.ql.udf.generic;
 
-import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;

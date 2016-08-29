@@ -20,10 +20,10 @@ package org.apache.hadoop.hive.ql.udf.generic;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.text.ParseException;
 import java.util.Date;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.FunctionRegistry;
 import org.apache.hadoop.hive.ql.exec.MapredContext;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -509,7 +509,7 @@ public abstract class GenericUDF implements Closeable {
     return date;
   }
 
-  protected Timestamp getTimestampValue(DeferredObject[] arguments, int i, Converter[] converters)
+  protected HiveTimestamp getTimestampValue(DeferredObject[] arguments, int i, Converter[] converters)
       throws HiveException {
     Object obj;
     if ((obj = arguments[i].get()) == null) {
@@ -520,7 +520,7 @@ public abstract class GenericUDF implements Closeable {
     if (writableValue == null) {
       return null;
     }
-    Timestamp ts = ((TimestampWritable) writableValue).getTimestamp();
+    HiveTimestamp ts = ((TimestampWritable) writableValue).getTimestamp();
     return ts;
   }
 

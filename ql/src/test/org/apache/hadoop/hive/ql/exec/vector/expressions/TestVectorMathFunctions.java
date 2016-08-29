@@ -19,12 +19,12 @@
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
 import java.io.UnsupportedEncodingException;
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Random;
 
 import junit.framework.Assert;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.RandomTypeUtil;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DoubleColumnVector;
@@ -239,7 +239,7 @@ public class TestVectorMathFunctions {
     inV = new TimestampColumnVector(longValues.length);
     outV = new LongColumnVector(longValues.length);
     for (int i = 0; i < longValues.length; i++) {
-      Timestamp randTimestamp = RandomTypeUtil.getRandTimestamp(r);
+      HiveTimestamp randTimestamp = RandomTypeUtil.getRandTimestamp(r);
       longValues[i] = TimestampWritable.getLong(randTimestamp);
       inV.set(0, randTimestamp);
     }

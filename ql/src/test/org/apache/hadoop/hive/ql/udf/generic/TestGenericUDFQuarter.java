@@ -18,10 +18,10 @@
 package org.apache.hadoop.hive.ql.udf.generic;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 
 import junit.framework.TestCase;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredJavaObject;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredObject;
@@ -169,7 +169,7 @@ public class TestGenericUDFQuarter extends TestCase {
 
   private void runAndVerifyTs(String str, Integer expResult, GenericUDF udf) throws HiveException {
     DeferredObject valueObj0 = new DeferredJavaObject(str != null ? new TimestampWritable(
-        Timestamp.valueOf(str)) : null);
+        HiveTimestamp.valueOf(str)) : null);
     DeferredObject[] args = { valueObj0 };
     IntWritable output = (IntWritable) udf.evaluate(args);
     if (expResult == null) {

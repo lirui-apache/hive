@@ -18,8 +18,8 @@
 package org.apache.hadoop.hive.ql.udf.generic;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredJavaObject;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredObject;
@@ -196,8 +196,8 @@ public class TestGenericUDFMonthsBetween extends TestCase {
 
   protected void runTestTs(String ts1, String ts2, Double expDiff, GenericUDFMonthsBetween udf)
       throws HiveException {
-    TimestampWritable tsWr1 = ts1 == null ? null : new TimestampWritable(Timestamp.valueOf(ts1));
-    TimestampWritable tsWr2 = ts2 == null ? null : new TimestampWritable(Timestamp.valueOf(ts2));
+    TimestampWritable tsWr1 = ts1 == null ? null : new TimestampWritable(HiveTimestamp.valueOf(ts1));
+    TimestampWritable tsWr2 = ts2 == null ? null : new TimestampWritable(HiveTimestamp.valueOf(ts2));
     DeferredJavaObject valueObj1 = new DeferredJavaObject(tsWr1);
     DeferredJavaObject valueObj2 = new DeferredJavaObject(tsWr2);
     DeferredObject[] args = new DeferredObject[] { valueObj1, valueObj2 };

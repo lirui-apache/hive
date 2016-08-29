@@ -18,14 +18,10 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
-import java.sql.Timestamp;
-
-import org.apache.hadoop.hive.ql.exec.vector.expressions.VectorExpression;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.NullUtil;
-import org.apache.hadoop.hive.ql.exec.vector.VectorExpressionDescriptor;
 
 /**
  * Compute IF(expr1, expr2, expr3) for 3 input column expressions.
@@ -38,10 +34,10 @@ public abstract class IfExprTimestampColumnScalarBase extends VectorExpression {
   private static final long serialVersionUID = 1L;
 
   private int arg1Column, arg2Column;
-  private Timestamp arg3Scalar;
+  private HiveTimestamp arg3Scalar;
   private int outputColumn;
 
-  public IfExprTimestampColumnScalarBase(int arg1Column, int arg2Column, Timestamp arg3Scalar,
+  public IfExprTimestampColumnScalarBase(int arg1Column, int arg2Column, HiveTimestamp arg3Scalar,
       int outputColumn) {
     this.arg1Column = arg1Column;
     this.arg2Column = arg2Column;

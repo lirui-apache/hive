@@ -18,8 +18,7 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
-import java.sql.Timestamp;
-
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.DecimalColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.hadoop.hive.ql.util.TimestampUtils;
@@ -41,7 +40,7 @@ public class CastDecimalToTimestamp extends FuncDecimalToTimestamp {
 
   @Override
   protected void func(TimestampColumnVector outV, DecimalColumnVector inV,  int i) {
-    Timestamp timestamp = TimestampUtils.decimalToTimestamp(inV.vector[i].getHiveDecimal());
+    HiveTimestamp timestamp = TimestampUtils.decimalToTimestamp(inV.vector[i].getHiveDecimal());
     outV.set(i, timestamp);
   }
 }

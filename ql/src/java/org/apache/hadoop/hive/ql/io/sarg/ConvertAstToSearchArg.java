@@ -19,13 +19,13 @@
 package org.apache.hadoop.hive.ql.io.sarg;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.List;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.SerializationUtilities;
 import org.apache.hadoop.hive.ql.plan.ExprNodeColumnDesc;
 import org.apache.hadoop.hive.ql.plan.ExprNodeConstantDesc;
@@ -160,7 +160,7 @@ public class ConvertAstToSearchArg {
           return ((Number) lit).doubleValue();
         }
       case TIMESTAMP:
-        return Timestamp.valueOf(lit.toString());
+        return HiveTimestamp.valueOf(lit.toString());
       case DATE:
         return Date.valueOf(lit.toString());
       case DECIMAL:

@@ -19,8 +19,8 @@
 package org.apache.hadoop.hive.ql.udf.generic;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredJavaObject;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredObject;
@@ -203,83 +203,83 @@ public class TestGenericUDFTrunc extends TestCase {
 
     // test date string
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-01-01 00:00:00")));
+        HiveTimestamp.valueOf("2014-01-01 00:00:00")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-01-14 00:00:00")));
+        HiveTimestamp.valueOf("2014-01-14 00:00:00")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-01-31 00:00:00")));
+        HiveTimestamp.valueOf("2014-01-31 00:00:00")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-02-02 00:00:00")));
+        HiveTimestamp.valueOf("2014-02-02 00:00:00")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-02-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-02-28 00:00:00")));
+        HiveTimestamp.valueOf("2014-02-28 00:00:00")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-02-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2016-02-03 00:00:00")));
+        HiveTimestamp.valueOf("2016-02-03 00:00:00")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2016-02-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2016-02-28 00:00:00")));
+        HiveTimestamp.valueOf("2016-02-28 00:00:00")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2016-02-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2016-02-29 00:00:00")));
+        HiveTimestamp.valueOf("2016-02-29 00:00:00")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2016-02-01", udf, initArgs, evalArgs);
 
     // test timestamp string
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-01-01 10:30:45")));
+        HiveTimestamp.valueOf("2014-01-01 10:30:45")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-01-14 10:30:45")));
+        HiveTimestamp.valueOf("2014-01-14 10:30:45")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-01-31 10:30:45")));
+        HiveTimestamp.valueOf("2014-01-31 10:30:45")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-02-02 10:30:45")));
+        HiveTimestamp.valueOf("2014-02-02 10:30:45")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-02-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-02-28 10:30:45")));
+        HiveTimestamp.valueOf("2014-02-28 10:30:45")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-02-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2016-02-03 10:30:45")));
+        HiveTimestamp.valueOf("2016-02-03 10:30:45")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2016-02-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2016-02-28 10:30:45")));
+        HiveTimestamp.valueOf("2016-02-28 10:30:45")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2016-02-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2016-02-29 10:30:45")));
+        HiveTimestamp.valueOf("2016-02-29 10:30:45")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2016-02-01", udf, initArgs, evalArgs);
   }
@@ -297,83 +297,83 @@ public class TestGenericUDFTrunc extends TestCase {
 
     // test date string
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-01-01 00:00:00")));
+        HiveTimestamp.valueOf("2014-01-01 00:00:00")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-01-14 00:00:00")));
+        HiveTimestamp.valueOf("2014-01-14 00:00:00")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-01-31 00:00:00")));
+        HiveTimestamp.valueOf("2014-01-31 00:00:00")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-02-02 00:00:00")));
+        HiveTimestamp.valueOf("2014-02-02 00:00:00")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-02-28 00:00:00")));
+        HiveTimestamp.valueOf("2014-02-28 00:00:00")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2016-02-03 00:00:00")));
+        HiveTimestamp.valueOf("2016-02-03 00:00:00")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2016-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2016-02-28 00:00:00")));
+        HiveTimestamp.valueOf("2016-02-28 00:00:00")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2016-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2016-02-29 00:00:00")));
+        HiveTimestamp.valueOf("2016-02-29 00:00:00")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2016-01-01", udf, initArgs, evalArgs);
 
     // test timestamp string
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-01-01 10:30:45")));
+        HiveTimestamp.valueOf("2014-01-01 10:30:45")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-01-14 10:30:45")));
+        HiveTimestamp.valueOf("2014-01-14 10:30:45")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-01-31 10:30:45")));
+        HiveTimestamp.valueOf("2014-01-31 10:30:45")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-02-02 10:30:45")));
+        HiveTimestamp.valueOf("2014-02-02 10:30:45")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2014-02-28 10:30:45")));
+        HiveTimestamp.valueOf("2014-02-28 10:30:45")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2014-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2016-02-03 10:30:45")));
+        HiveTimestamp.valueOf("2016-02-03 10:30:45")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2016-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2016-02-28 10:30:45")));
+        HiveTimestamp.valueOf("2016-02-28 10:30:45")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2016-01-01", udf, initArgs, evalArgs);
 
     valueObj0 = new DeferredJavaObject(new TimestampWritable(
-        Timestamp.valueOf("2016-02-29 10:30:45")));
+        HiveTimestamp.valueOf("2016-02-29 10:30:45")));
     evalArgs = new DeferredObject[] { valueObj0, valueObjFmt };
     runAndVerify("2016-01-01", udf, initArgs, evalArgs);
   }

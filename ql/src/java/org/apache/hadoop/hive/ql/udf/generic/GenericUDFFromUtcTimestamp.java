@@ -17,11 +17,11 @@
  */
 package org.apache.hadoop.hive.ql.udf.generic;
 
-import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hive.ql.exec.Description;
@@ -77,14 +77,14 @@ public class GenericUDFFromUtcTimestamp extends GenericUDF {
    * @param tz
    * @return
    */
-  protected Timestamp timestampFromString(String tsString, TimeZone tz) {
+  protected HiveTimestamp timestampFromString(String tsString, TimeZone tz) {
     dateFormat.setTimeZone(tz);
     try {
       java.util.Date date = dateFormat.parse(tsString);
       if (date == null) {
         return null;
       }
-      return new Timestamp(date.getTime());
+      return new HiveTimestamp(date.getTime());
     } catch (ParseException err) {
       return null;
     }
@@ -106,7 +106,7 @@ public class GenericUDFFromUtcTimestamp extends GenericUDF {
       return null;
     }
 
-    Timestamp inputTs = ((TimestampWritable) converted_o0).getTimestamp();
+    HiveTimestamp inputTs = ((TimestampWritable) converted_o0).getTimestamp();
 
     String tzStr = textConverter.convert(o1).toString();
     TimeZone timezone = TimeZone.getTimeZone(tzStr);
@@ -123,14 +123,14 @@ public class GenericUDFFromUtcTimestamp extends GenericUDF {
 
     // inputTs is the year/month/day/hour/minute/second in the local timezone.
     // For this UDF we want it in the timezone represented by fromTz
-    Timestamp fromTs = timestampFromString(inputTs.toString(), fromTz);
+    HiveTimestamp fromTs = timestampFromString(inputTs.toString(), fromTz);
     if (fromTs == null) {
       return null;
     }
 
     // Now output this timestamp's millis value to the equivalent toTz.
     dateFormat.setTimeZone(toTz);
-    Timestamp result = Timestamp.valueOf(dateFormat.format(fromTs));
+    HiveTimestamp result = HiveTimestamp.valueOf(dateFormat.format(fromTs));
 
     if (inputTs.getNanos() != 0) {
       result.setNanos(inputTs.getNanos());

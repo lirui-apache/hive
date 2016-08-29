@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.junit.Assert;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
@@ -39,7 +40,6 @@ import org.junit.internal.runners.statements.Fail;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -56,7 +56,7 @@ public class TestVectorDateExpressions {
 
   /* copied over from VectorUDFTimestampFieldLong */
   private TimestampWritable toTimestampWritable(long daysSinceEpoch) {
-    Timestamp ts = new Timestamp(DateWritable.daysToMillis((int) daysSinceEpoch));
+    HiveTimestamp ts = new HiveTimestamp(DateWritable.daysToMillis((int) daysSinceEpoch));
     return new TimestampWritable(ts);
   }
 

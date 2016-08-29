@@ -27,7 +27,6 @@ import java.lang.management.ManagementFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLClassLoader;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,6 +44,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -264,7 +264,7 @@ public class SessionState {
   /**
    * CURRENT_TIMESTAMP value for query
    */
-  private Timestamp queryCurrentTimestamp;
+  private HiveTimestamp queryCurrentTimestamp;
 
   private final ResourceMaps resourceMaps;
 
@@ -1677,14 +1677,14 @@ public class SessionState {
    * Initialize current timestamp, other necessary query initialization.
    */
   public void setupQueryCurrentTimestamp() {
-    queryCurrentTimestamp = new Timestamp(System.currentTimeMillis());
+    queryCurrentTimestamp = new HiveTimestamp(System.currentTimeMillis());
 
     // Provide a facility to set current timestamp during tests
     if (sessionConf.getBoolVar(ConfVars.HIVE_IN_TEST)) {
       String overrideTimestampString =
           HiveConf.getVar(sessionConf, HiveConf.ConfVars.HIVETESTCURRENTTIMESTAMP, (String)null);
       if (overrideTimestampString != null && overrideTimestampString.length() > 0) {
-        queryCurrentTimestamp = Timestamp.valueOf(overrideTimestampString);
+        queryCurrentTimestamp = HiveTimestamp.valueOf(overrideTimestampString);
       }
     }
   }
@@ -1693,7 +1693,7 @@ public class SessionState {
    * Get query current timestamp
    * @return
    */
-  public Timestamp getQueryCurrentTimestamp() {
+  public HiveTimestamp getQueryCurrentTimestamp() {
     return queryCurrentTimestamp;
   }
 

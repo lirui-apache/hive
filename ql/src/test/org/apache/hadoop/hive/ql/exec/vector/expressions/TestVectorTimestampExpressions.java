@@ -20,7 +20,6 @@ package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,6 +31,7 @@ import java.util.Random;
 import junit.framework.Assert;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.RandomTypeUtil;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
@@ -58,8 +58,8 @@ import org.junit.Test;
 public class TestVectorTimestampExpressions {
   private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-  private Timestamp[] getAllBoundaries(int minYear, int maxYear) {
-     ArrayList<Timestamp> boundaries = new ArrayList<Timestamp>(1);
+  private HiveTimestamp[] getAllBoundaries(int minYear, int maxYear) {
+     ArrayList<HiveTimestamp> boundaries = new ArrayList<HiveTimestamp>(1);
     Calendar c = Calendar.getInstance();
     c.setTimeInMillis(0); // c.set doesn't reset millis
     for (int year = minYear; year <= maxYear; year++) {
@@ -72,17 +72,17 @@ public class TestVectorTimestampExpressions {
       long before = exactly - 1000;
       long after = exactly + 1000;
       if (minYear != 0) {
-        boundaries.add(new Timestamp(before));
+        boundaries.add(new HiveTimestamp(before));
       }
-      boundaries.add(new Timestamp(exactly));
+      boundaries.add(new HiveTimestamp(exactly));
       if (year != maxYear) {
-        boundaries.add(new Timestamp(after));
+        boundaries.add(new HiveTimestamp(after));
       }
     }
-    return boundaries.toArray(new Timestamp[0]);
+    return boundaries.toArray(new HiveTimestamp[0]);
   }
 
-  private Timestamp[] getAllBoundaries() {
+  private HiveTimestamp[] getAllBoundaries() {
     return getAllBoundaries(RandomTypeUtil.MIN_YEAR, RandomTypeUtil.MAX_YEAR);
   }
 
@@ -130,7 +130,7 @@ public class TestVectorTimestampExpressions {
   /*
    * Input array is used to fill the entire size of the vector row batch
    */
-  private VectorizedRowBatch getVectorizedRowBatchTimestampLong(Timestamp[] inputs, int size) {
+  private VectorizedRowBatch getVectorizedRowBatchTimestampLong(HiveTimestamp[] inputs, int size) {
     VectorizedRowBatch batch = new VectorizedRowBatch(2, size);
     TimestampColumnVector tcv = new TimestampColumnVector(size);
     for (int i = 0; i < size; i++) {
@@ -145,7 +145,7 @@ public class TestVectorTimestampExpressions {
   /*
    * Input array is used to fill the entire size of the vector row batch
    */
-  private VectorizedRowBatch getVectorizedRowBatchStringLong(Timestamp[] inputs, int size) {
+  private VectorizedRowBatch getVectorizedRowBatchStringLong(HiveTimestamp[] inputs, int size) {
     VectorizedRowBatch batch = new VectorizedRowBatch(2, size);
     BytesColumnVector bcv = new BytesColumnVector(size);
     for (int i = 0; i < size; i++) {
@@ -174,7 +174,7 @@ public class TestVectorTimestampExpressions {
     return batch;
   }
 
-  private VectorizedRowBatch getVectorizedRowBatch(Timestamp[] inputs, int size, TestType testType) {
+  private VectorizedRowBatch getVectorizedRowBatch(HiveTimestamp[] inputs, int size, TestType testType) {
     switch (testType) {
       case TIMESTAMP_LONG:
         return getVectorizedRowBatchTimestampLong(inputs, size);
@@ -185,7 +185,7 @@ public class TestVectorTimestampExpressions {
     }
   }
 
-  private byte[] encodeTime(Timestamp timestamp) {
+  private byte[] encodeTime(HiveTimestamp timestamp) {
     ByteBuffer encoded;
     long time = timestamp.getTime();
     try {
@@ -197,15 +197,15 @@ public class TestVectorTimestampExpressions {
     return Arrays.copyOf(encoded.array(), encoded.limit());
   }
 
-  private Timestamp decodeTime(byte[] time) {
+  private HiveTimestamp decodeTime(byte[] time) {
     try {
-      return new Timestamp(dateFormat.parse(Text.decode(time)).getTime());
+      return new HiveTimestamp(dateFormat.parse(Text.decode(time)).getTime());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
-  private Timestamp readVectorElementAt(ColumnVector col, int i) {
+  private HiveTimestamp readVectorElementAt(ColumnVector col, int i) {
     if (col instanceof TimestampColumnVector) {
       return ((TimestampColumnVector) col).asScratchTimestamp(i);
     }
@@ -220,7 +220,7 @@ public class TestVectorTimestampExpressions {
     TIMESTAMP_LONG, STRING_LONG
   }
 
-  private void compareToUDFYearLong(Timestamp t, int y) {
+  private void compareToUDFYearLong(HiveTimestamp t, int y) {
     UDFYear udf = new UDFYear();
     TimestampWritable tsw = new TimestampWritable(t);
     IntWritable res = udf.evaluate(tsw);
@@ -249,7 +249,7 @@ public class TestVectorTimestampExpressions {
         if (!batch.cols[in].noNulls) {
           Assert.assertEquals(batch.cols[out].isNull[i], batch.cols[in].isNull[i]);
         }
-        Timestamp t = readVectorElementAt(batch.cols[in], i);
+        HiveTimestamp t = readVectorElementAt(batch.cols[in], i);
         long y = ((LongColumnVector) batch.cols[out]).vector[i];
         compareToUDFYearLong(t, (int) y);
       } else {
@@ -259,7 +259,7 @@ public class TestVectorTimestampExpressions {
   }
 
   private void testVectorUDFYear(TestType testType) {
-    VectorizedRowBatch batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)},
+    VectorizedRowBatch batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)},
             VectorizedRowBatch.DEFAULT_SIZE, testType);
     Assert.assertTrue(((LongColumnVector) batch.cols[1]).noNulls);
     Assert.assertFalse(((LongColumnVector) batch.cols[1]).isRepeating);
@@ -267,7 +267,7 @@ public class TestVectorTimestampExpressions {
     TestVectorizedRowBatch.addRandomNulls(batch.cols[0]);
     verifyUDFYear(batch, testType);
 
-    Timestamp[] boundaries = getAllBoundaries();
+    HiveTimestamp[] boundaries = getAllBoundaries();
     batch = getVectorizedRowBatch(boundaries, boundaries.length, testType);
     verifyUDFYear(batch, testType);
     TestVectorizedRowBatch.addRandomNulls(batch.cols[0]);
@@ -275,14 +275,14 @@ public class TestVectorTimestampExpressions {
     TestVectorizedRowBatch.addRandomNulls(batch.cols[1]);
     verifyUDFYear(batch, testType);
 
-    batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)}, 1, testType);
+    batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)}, 1, testType);
     batch.cols[0].isRepeating = true;
     verifyUDFYear(batch, testType);
     batch.cols[0].noNulls = false;
     batch.cols[0].isNull[0] = true;
     verifyUDFYear(batch, testType);
 
-    batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)}, 1, testType);
+    batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)}, 1, testType);
     batch.cols[0].isRepeating = true;
     batch.selectedInUse = true;
     batch.selected = new int[] {42};
@@ -316,7 +316,7 @@ public class TestVectorTimestampExpressions {
     Assert.assertEquals(true, lcv.isNull[0]);
   }
 
-  private void compareToUDFDayOfMonthLong(Timestamp t, int y) {
+  private void compareToUDFDayOfMonthLong(HiveTimestamp t, int y) {
     UDFDayOfMonth udf = new UDFDayOfMonth();
     TimestampWritable tsw = new TimestampWritable(t);
     IntWritable res = udf.evaluate(tsw);
@@ -341,7 +341,7 @@ public class TestVectorTimestampExpressions {
         if (!batch.cols[in].noNulls) {
           Assert.assertEquals(batch.cols[out].isNull[i], batch.cols[in].isNull[i]);
         }
-        Timestamp t = readVectorElementAt(batch.cols[in], i);
+        HiveTimestamp t = readVectorElementAt(batch.cols[in], i);
         long y = ((LongColumnVector) batch.cols[out]).vector[i];
         compareToUDFDayOfMonthLong(t, (int) y);
       } else {
@@ -351,7 +351,7 @@ public class TestVectorTimestampExpressions {
   }
 
   private void testVectorUDFDayOfMonth(TestType testType) {
-    VectorizedRowBatch batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)},
+    VectorizedRowBatch batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)},
             VectorizedRowBatch.DEFAULT_SIZE, testType);
     Assert.assertTrue(((LongColumnVector) batch.cols[1]).noNulls);
     Assert.assertFalse(((LongColumnVector) batch.cols[1]).isRepeating);
@@ -359,7 +359,7 @@ public class TestVectorTimestampExpressions {
     TestVectorizedRowBatch.addRandomNulls(batch.cols[0]);
     verifyUDFDayOfMonth(batch, testType);
 
-    Timestamp[] boundaries = getAllBoundaries();
+    HiveTimestamp[] boundaries = getAllBoundaries();
     batch = getVectorizedRowBatch(boundaries, boundaries.length, testType);
     verifyUDFDayOfMonth(batch, testType);
     TestVectorizedRowBatch.addRandomNulls(batch.cols[0]);
@@ -367,14 +367,14 @@ public class TestVectorTimestampExpressions {
     TestVectorizedRowBatch.addRandomNulls(batch.cols[1]);
     verifyUDFDayOfMonth(batch, testType);
 
-    batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)}, 1, testType);
+    batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)}, 1, testType);
     batch.cols[0].isRepeating = true;
     verifyUDFDayOfMonth(batch, testType);
     batch.cols[0].noNulls = false;
     batch.cols[0].isNull[0] = true;
     verifyUDFDayOfMonth(batch, testType);
 
-    batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)}, 1, testType);
+    batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)}, 1, testType);
     batch.cols[0].isRepeating = true;
     batch.selectedInUse = true;
     batch.selected = new int[] {42};
@@ -401,7 +401,7 @@ public class TestVectorTimestampExpressions {
     testVectorUDFDayOfMonth(TestType.STRING_LONG);
   }
 
-  private void compareToUDFHourLong(Timestamp t, int y) {
+  private void compareToUDFHourLong(HiveTimestamp t, int y) {
     UDFHour udf = new UDFHour();
     TimestampWritable tsw = new TimestampWritable(t);
     IntWritable res = udf.evaluate(tsw);
@@ -426,7 +426,7 @@ public class TestVectorTimestampExpressions {
         if (!batch.cols[in].noNulls) {
           Assert.assertEquals(batch.cols[out].isNull[i], batch.cols[in].isNull[i]);
         }
-        Timestamp t = readVectorElementAt(batch.cols[in], i);
+        HiveTimestamp t = readVectorElementAt(batch.cols[in], i);
         long y = ((LongColumnVector) batch.cols[out]).vector[i];
         compareToUDFHourLong(t, (int) y);
       } else {
@@ -436,7 +436,7 @@ public class TestVectorTimestampExpressions {
   }
 
   private void testVectorUDFHour(TestType testType) {
-    VectorizedRowBatch batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)},
+    VectorizedRowBatch batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)},
             VectorizedRowBatch.DEFAULT_SIZE, testType);
     Assert.assertTrue(((LongColumnVector) batch.cols[1]).noNulls);
     Assert.assertFalse(((LongColumnVector) batch.cols[1]).isRepeating);
@@ -444,7 +444,7 @@ public class TestVectorTimestampExpressions {
     TestVectorizedRowBatch.addRandomNulls(batch.cols[0]);
     verifyUDFHour(batch, testType);
 
-    Timestamp[] boundaries = getAllBoundaries();
+    HiveTimestamp[] boundaries = getAllBoundaries();
     batch = getVectorizedRowBatch(boundaries, boundaries.length, testType);
     verifyUDFHour(batch, testType);
     TestVectorizedRowBatch.addRandomNulls(batch.cols[0]);
@@ -452,14 +452,14 @@ public class TestVectorTimestampExpressions {
     TestVectorizedRowBatch.addRandomNulls(batch.cols[1]);
     verifyUDFHour(batch, testType);
 
-    batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)}, 1, testType);
+    batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)}, 1, testType);
     batch.cols[0].isRepeating = true;
     verifyUDFHour(batch, testType);
     batch.cols[0].noNulls = false;
     batch.cols[0].isNull[0] = true;
     verifyUDFHour(batch, testType);
 
-    batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)}, 1, testType);
+    batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)}, 1, testType);
     batch.cols[0].isRepeating = true;
     batch.selectedInUse = true;
     batch.selected = new int[] {42};
@@ -486,7 +486,7 @@ public class TestVectorTimestampExpressions {
     testVectorUDFHour(TestType.STRING_LONG);
   }
 
-  private void compareToUDFMinuteLong(Timestamp t, int y) {
+  private void compareToUDFMinuteLong(HiveTimestamp t, int y) {
     UDFMinute udf = new UDFMinute();
     TimestampWritable tsw = new TimestampWritable(t);
     IntWritable res = udf.evaluate(tsw);
@@ -511,7 +511,7 @@ public class TestVectorTimestampExpressions {
         if (!batch.cols[in].noNulls) {
           Assert.assertEquals(batch.cols[out].isNull[i], batch.cols[in].isNull[i]);
         }
-        Timestamp t = readVectorElementAt(batch.cols[in], i);
+        HiveTimestamp t = readVectorElementAt(batch.cols[in], i);
         long y = ((LongColumnVector) batch.cols[out]).vector[i];
         compareToUDFMinuteLong(t, (int) y);
       } else {
@@ -521,7 +521,7 @@ public class TestVectorTimestampExpressions {
   }
 
   private void testVectorUDFMinute(TestType testType) {
-    VectorizedRowBatch batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)},
+    VectorizedRowBatch batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)},
             VectorizedRowBatch.DEFAULT_SIZE, testType);
     Assert.assertTrue(((LongColumnVector) batch.cols[1]).noNulls);
     Assert.assertFalse(((LongColumnVector) batch.cols[1]).isRepeating);
@@ -529,7 +529,7 @@ public class TestVectorTimestampExpressions {
     TestVectorizedRowBatch.addRandomNulls(batch.cols[0]);
     verifyUDFMinute(batch, testType);
 
-    Timestamp[] boundaries = getAllBoundaries();
+    HiveTimestamp[] boundaries = getAllBoundaries();
     batch = getVectorizedRowBatch(boundaries, boundaries.length, testType);
     verifyUDFMinute(batch, testType);
     TestVectorizedRowBatch.addRandomNulls(batch.cols[0]);
@@ -537,14 +537,14 @@ public class TestVectorTimestampExpressions {
     TestVectorizedRowBatch.addRandomNulls(batch.cols[1]);
     verifyUDFMinute(batch, testType);
 
-    batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)}, 1, testType);
+    batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)}, 1, testType);
     batch.cols[0].isRepeating = true;
     verifyUDFMinute(batch, testType);
     batch.cols[0].noNulls = false;
     batch.cols[0].isNull[0] = true;
     verifyUDFMinute(batch, testType);
 
-    batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)}, 1, testType);
+    batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)}, 1, testType);
     batch.cols[0].isRepeating = true;
     batch.selectedInUse = true;
     batch.selected = new int[] {42};
@@ -571,7 +571,7 @@ public class TestVectorTimestampExpressions {
     testVectorUDFMinute(TestType.STRING_LONG);
   }
 
-  private void compareToUDFMonthLong(Timestamp t, int y) {
+  private void compareToUDFMonthLong(HiveTimestamp t, int y) {
     UDFMonth udf = new UDFMonth();
     TimestampWritable tsw = new TimestampWritable(t);
     IntWritable res = udf.evaluate(tsw);
@@ -596,7 +596,7 @@ public class TestVectorTimestampExpressions {
         if (!batch.cols[in].noNulls) {
           Assert.assertEquals(batch.cols[out].isNull[i], batch.cols[in].isNull[i]);
         }
-        Timestamp t = readVectorElementAt(batch.cols[in], i);
+        HiveTimestamp t = readVectorElementAt(batch.cols[in], i);
         long y = ((LongColumnVector) batch.cols[out]).vector[i];
         compareToUDFMonthLong(t, (int) y);
       } else {
@@ -606,7 +606,7 @@ public class TestVectorTimestampExpressions {
   }
 
   private void testVectorUDFMonth(TestType testType) {
-    VectorizedRowBatch batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)},
+    VectorizedRowBatch batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)},
             VectorizedRowBatch.DEFAULT_SIZE, testType);
     Assert.assertTrue(((LongColumnVector) batch.cols[1]).noNulls);
     Assert.assertFalse(((LongColumnVector) batch.cols[1]).isRepeating);
@@ -614,7 +614,7 @@ public class TestVectorTimestampExpressions {
     TestVectorizedRowBatch.addRandomNulls(batch.cols[0]);
     verifyUDFMonth(batch, testType);
 
-    Timestamp[] boundaries = getAllBoundaries();
+    HiveTimestamp[] boundaries = getAllBoundaries();
     batch = getVectorizedRowBatch(boundaries, boundaries.length, testType);
     verifyUDFMonth(batch, testType);
     TestVectorizedRowBatch.addRandomNulls(batch.cols[0]);
@@ -622,14 +622,14 @@ public class TestVectorTimestampExpressions {
     TestVectorizedRowBatch.addRandomNulls(batch.cols[1]);
     verifyUDFMonth(batch, testType);
 
-    batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)}, 1, testType);
+    batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)}, 1, testType);
     batch.cols[0].isRepeating = true;
     verifyUDFMonth(batch, testType);
     batch.cols[0].noNulls = false;
     batch.cols[0].isNull[0] = true;
     verifyUDFMonth(batch, testType);
 
-    batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)}, 1, testType);
+    batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)}, 1, testType);
     batch.cols[0].isRepeating = true;
     batch.selectedInUse = true;
     batch.selected = new int[] {42};
@@ -656,7 +656,7 @@ public class TestVectorTimestampExpressions {
     testVectorUDFMonth(TestType.STRING_LONG);
   }
 
-  private void compareToUDFSecondLong(Timestamp t, int y) {
+  private void compareToUDFSecondLong(HiveTimestamp t, int y) {
     UDFSecond udf = new UDFSecond();
     TimestampWritable tsw = new TimestampWritable(t);
     IntWritable res = udf.evaluate(tsw);
@@ -681,7 +681,7 @@ public class TestVectorTimestampExpressions {
         if (!batch.cols[in].noNulls) {
           Assert.assertEquals(batch.cols[out].isNull[i], batch.cols[in].isNull[i]);
         }
-        Timestamp t = readVectorElementAt(batch.cols[in], i);
+        HiveTimestamp t = readVectorElementAt(batch.cols[in], i);
         long y = ((LongColumnVector) batch.cols[out]).vector[i];
         compareToUDFSecondLong(t, (int) y);
       } else {
@@ -691,7 +691,7 @@ public class TestVectorTimestampExpressions {
   }
 
   private void testVectorUDFSecond(TestType testType) {
-    VectorizedRowBatch batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)},
+    VectorizedRowBatch batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)},
             VectorizedRowBatch.DEFAULT_SIZE, testType);
     Assert.assertTrue(((LongColumnVector) batch.cols[1]).noNulls);
     Assert.assertFalse(((LongColumnVector) batch.cols[1]).isRepeating);
@@ -699,7 +699,7 @@ public class TestVectorTimestampExpressions {
     TestVectorizedRowBatch.addRandomNulls(batch.cols[0]);
     verifyUDFSecond(batch, testType);
 
-    Timestamp[] boundaries = getAllBoundaries();
+    HiveTimestamp[] boundaries = getAllBoundaries();
     batch = getVectorizedRowBatch(boundaries, boundaries.length, testType);
     verifyUDFSecond(batch, testType);
     TestVectorizedRowBatch.addRandomNulls(batch.cols[0]);
@@ -707,14 +707,14 @@ public class TestVectorTimestampExpressions {
     TestVectorizedRowBatch.addRandomNulls(batch.cols[1]);
     verifyUDFSecond(batch, testType);
 
-    batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)}, 1, testType);
+    batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)}, 1, testType);
     batch.cols[0].isRepeating = true;
     verifyUDFSecond(batch, testType);
     batch.cols[0].noNulls = false;
     batch.cols[0].isNull[0] = true;
     verifyUDFSecond(batch, testType);
 
-    batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)}, 1, testType);
+    batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)}, 1, testType);
     batch.cols[0].isRepeating = true;
     batch.selectedInUse = true;
     batch.selected = new int[] {42};
@@ -741,7 +741,7 @@ public class TestVectorTimestampExpressions {
     testVectorUDFSecond(TestType.STRING_LONG);
   }
 
-  private void compareToUDFUnixTimeStampLong(Timestamp ts, long y) {
+  private void compareToUDFUnixTimeStampLong(HiveTimestamp ts, long y) {
     long seconds = ts.getTime() / 1000;
     if(seconds != y) {
       System.out.printf("%d vs %d for %s\n", seconds, y, ts.toString());
@@ -767,7 +767,7 @@ public class TestVectorTimestampExpressions {
         if (!batch.cols[out].noNulls) {
           Assert.assertEquals(batch.cols[out].isNull[i], batch.cols[in].isNull[i]);
         }
-        Timestamp t = readVectorElementAt(batch.cols[in], i);
+        HiveTimestamp t = readVectorElementAt(batch.cols[in], i);
         long y = ((LongColumnVector) batch.cols[out]).vector[i];
         compareToUDFUnixTimeStampLong(t, y);
       } else {
@@ -777,7 +777,7 @@ public class TestVectorTimestampExpressions {
   }
 
   private void testVectorUDFUnixTimeStamp(TestType testType) {
-    VectorizedRowBatch batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)},
+    VectorizedRowBatch batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)},
             VectorizedRowBatch.DEFAULT_SIZE, testType);
     Assert.assertTrue(((LongColumnVector) batch.cols[1]).noNulls);
     Assert.assertFalse(((LongColumnVector) batch.cols[1]).isRepeating);
@@ -785,7 +785,7 @@ public class TestVectorTimestampExpressions {
     TestVectorizedRowBatch.addRandomNulls(batch.cols[0]);
     verifyUDFUnixTimeStamp(batch, testType);
 
-    Timestamp[] boundaries = getAllBoundaries();
+    HiveTimestamp[] boundaries = getAllBoundaries();
     batch = getVectorizedRowBatch(boundaries, boundaries.length, testType);
     verifyUDFUnixTimeStamp(batch, testType);
     TestVectorizedRowBatch.addRandomNulls(batch.cols[0]);
@@ -793,14 +793,14 @@ public class TestVectorTimestampExpressions {
     TestVectorizedRowBatch.addRandomNulls(batch.cols[1]);
     verifyUDFUnixTimeStamp(batch, testType);
 
-    batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)}, 1, testType);
+    batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)}, 1, testType);
     batch.cols[0].isRepeating = true;
     verifyUDFUnixTimeStamp(batch, testType);
     batch.cols[0].noNulls = false;
     batch.cols[0].isNull[0] = true;
     verifyUDFUnixTimeStamp(batch, testType);
 
-    batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)}, 1, testType);
+    batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)}, 1, testType);
     batch.cols[0].isRepeating = true;
     batch.selectedInUse = true;
     batch.selected = new int[] {42};
@@ -827,7 +827,7 @@ public class TestVectorTimestampExpressions {
     testVectorUDFUnixTimeStamp(TestType.STRING_LONG);
   }
 
-  private void compareToUDFWeekOfYearLong(Timestamp t, int y) {
+  private void compareToUDFWeekOfYearLong(HiveTimestamp t, int y) {
     UDFWeekOfYear udf = new UDFWeekOfYear();
     TimestampWritable tsw = new TimestampWritable(t);
     IntWritable res = udf.evaluate(tsw);
@@ -849,7 +849,7 @@ public class TestVectorTimestampExpressions {
 
     for (int i = 0; i < batch.size; i++) {
       if (batch.cols[in].noNulls || !batch.cols[in].isNull[i]) {
-        Timestamp t = readVectorElementAt(batch.cols[in], i);
+        HiveTimestamp t = readVectorElementAt(batch.cols[in], i);
         long y = ((LongColumnVector) batch.cols[out]).vector[i];
         compareToUDFWeekOfYearLong(t, (int) y);
       } else {
@@ -859,7 +859,7 @@ public class TestVectorTimestampExpressions {
   }
 
   private void testVectorUDFWeekOfYear(TestType testType) {
-    VectorizedRowBatch batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)},
+    VectorizedRowBatch batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)},
             VectorizedRowBatch.DEFAULT_SIZE, testType);
     Assert.assertTrue(((LongColumnVector) batch.cols[1]).noNulls);
     Assert.assertFalse(((LongColumnVector) batch.cols[1]).isRepeating);
@@ -867,7 +867,7 @@ public class TestVectorTimestampExpressions {
     TestVectorizedRowBatch.addRandomNulls(batch.cols[0]);
     verifyUDFWeekOfYear(batch, testType);
 
-    Timestamp[] boundaries = getAllBoundaries();
+    HiveTimestamp[] boundaries = getAllBoundaries();
     batch = getVectorizedRowBatch(boundaries, boundaries.length, testType);
     verifyUDFWeekOfYear(batch, testType);
     TestVectorizedRowBatch.addRandomNulls(batch.cols[0]);
@@ -875,14 +875,14 @@ public class TestVectorTimestampExpressions {
     TestVectorizedRowBatch.addRandomNulls(batch.cols[1]);
     verifyUDFWeekOfYear(batch, testType);
 
-    batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)}, 1, testType);
+    batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)}, 1, testType);
     batch.cols[0].isRepeating = true;
     verifyUDFWeekOfYear(batch, testType);
     batch.cols[0].noNulls = false;
     batch.cols[0].isNull[0] = true;
     verifyUDFWeekOfYear(batch, testType);
 
-    batch = getVectorizedRowBatch(new Timestamp[] {new Timestamp(0)}, 1, testType);
+    batch = getVectorizedRowBatch(new HiveTimestamp[] {new HiveTimestamp(0)}, 1, testType);
     batch.cols[0].isRepeating = true;
     batch.selectedInUse = true;
     batch.selected = new int[] {42};

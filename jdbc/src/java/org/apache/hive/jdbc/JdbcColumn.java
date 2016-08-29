@@ -21,11 +21,11 @@ package org.apache.hive.jdbc;
 import java.math.BigInteger;
 import java.sql.Date;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.sql.Types;
 
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.thrift.Type;
 
@@ -93,7 +93,7 @@ public class JdbcColumn {
       case Types.DOUBLE:
         return Double.class.getName();
       case  Types.TIMESTAMP:
-        return Timestamp.class.getName();
+        return HiveTimestamp.class.getName();
       case Types.DECIMAL:
         return BigInteger.class.getName();
       case Types.BINARY:

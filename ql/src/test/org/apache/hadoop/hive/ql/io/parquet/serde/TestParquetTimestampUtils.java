@@ -13,7 +13,6 @@
  */
 package org.apache.hadoop.hive.ql.io.parquet.serde;
 
-import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -23,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.io.parquet.timestamp.NanoTime;
 import org.apache.hadoop.hive.ql.io.parquet.timestamp.NanoTimeUtils;
 
@@ -42,11 +42,11 @@ public class TestParquetTimestampUtils extends TestCase {
     cal.set(Calendar.HOUR_OF_DAY, 0);
     cal.setTimeZone(TimeZone.getTimeZone("GMT"));
 
-    Timestamp ts = new Timestamp(cal.getTimeInMillis());
+    HiveTimestamp ts = new HiveTimestamp(cal.getTimeInMillis());
     NanoTime nt = NanoTimeUtils.getNanoTime(ts, false);
     Assert.assertEquals(nt.getJulianDay(), 2440000);
 
-    Timestamp tsFetched = NanoTimeUtils.getTimestamp(nt, false);
+    HiveTimestamp tsFetched = NanoTimeUtils.getTimestamp(nt, false);
     Assert.assertEquals(tsFetched, ts);
 
     //check if 30 Julian Days between Jan 1, 2005 and Jan 31, 2005.
@@ -57,10 +57,10 @@ public class TestParquetTimestampUtils extends TestCase {
     cal1.set(Calendar.HOUR_OF_DAY, 0);
     cal1.setTimeZone(TimeZone.getTimeZone("GMT"));
 
-    Timestamp ts1 = new Timestamp(cal1.getTimeInMillis());
+    HiveTimestamp ts1 = new HiveTimestamp(cal1.getTimeInMillis());
     NanoTime nt1 = NanoTimeUtils.getNanoTime(ts1, false);
 
-    Timestamp ts1Fetched = NanoTimeUtils.getTimestamp(nt1, false);
+    HiveTimestamp ts1Fetched = NanoTimeUtils.getTimestamp(nt1, false);
     Assert.assertEquals(ts1Fetched, ts1);
 
     Calendar cal2 = Calendar.getInstance();
@@ -70,10 +70,10 @@ public class TestParquetTimestampUtils extends TestCase {
     cal2.set(Calendar.HOUR_OF_DAY, 0);
     cal2.setTimeZone(TimeZone.getTimeZone("UTC"));
 
-    Timestamp ts2 = new Timestamp(cal2.getTimeInMillis());
+    HiveTimestamp ts2 = new HiveTimestamp(cal2.getTimeInMillis());
     NanoTime nt2 = NanoTimeUtils.getNanoTime(ts2, false);
 
-    Timestamp ts2Fetched = NanoTimeUtils.getTimestamp(nt2, false);
+    HiveTimestamp ts2Fetched = NanoTimeUtils.getTimestamp(nt2, false);
     Assert.assertEquals(ts2Fetched, ts2);
     Assert.assertEquals(nt2.getJulianDay() - nt1.getJulianDay(), 30);
 
@@ -86,7 +86,7 @@ public class TestParquetTimestampUtils extends TestCase {
     cal1.set(Calendar.HOUR_OF_DAY, 0);
     cal1.setTimeZone(TimeZone.getTimeZone("GMT"));
 
-    ts1 = new Timestamp(cal1.getTimeInMillis());
+    ts1 = new HiveTimestamp(cal1.getTimeInMillis());
     nt1 = NanoTimeUtils.getNanoTime(ts1, false);
 
     ts1Fetched = NanoTimeUtils.getTimestamp(nt1, false);
@@ -99,7 +99,7 @@ public class TestParquetTimestampUtils extends TestCase {
     cal2.set(Calendar.HOUR_OF_DAY, 0);
     cal2.setTimeZone(TimeZone.getTimeZone("UTC"));
 
-    ts2 = new Timestamp(cal2.getTimeInMillis());
+    ts2 = new HiveTimestamp(cal2.getTimeInMillis());
     nt2 = NanoTimeUtils.getNanoTime(ts2, false);
 
     ts2Fetched = NanoTimeUtils.getTimestamp(nt2, false);
@@ -117,7 +117,7 @@ public class TestParquetTimestampUtils extends TestCase {
     cal.set(Calendar.MINUTE, 1);
     cal.set(Calendar.SECOND, 1);
     cal.setTimeZone(TimeZone.getTimeZone("GMT"));
-    Timestamp ts = new Timestamp(cal.getTimeInMillis());
+    HiveTimestamp ts = new HiveTimestamp(cal.getTimeInMillis());
     ts.setNanos(1);
 
     //(1*60*60 + 1*60 + 1) * 10e9 + 1
@@ -133,7 +133,7 @@ public class TestParquetTimestampUtils extends TestCase {
     cal.set(Calendar.MINUTE, 59);
     cal.set(Calendar.SECOND, 59);
     cal.setTimeZone(TimeZone.getTimeZone("GMT"));
-    ts = new Timestamp(cal.getTimeInMillis());
+    ts = new HiveTimestamp(cal.getTimeInMillis());
     ts.setNanos(999999999);
 
     //(23*60*60 + 59*60 + 59)*10e9 + 999999999
@@ -149,7 +149,7 @@ public class TestParquetTimestampUtils extends TestCase {
     cal2.set(Calendar.MINUTE, 10);
     cal2.set(Calendar.SECOND, 0);
     cal2.setTimeZone(TimeZone.getTimeZone("GMT"));
-    Timestamp ts2 = new Timestamp(cal2.getTimeInMillis());
+    HiveTimestamp ts2 = new HiveTimestamp(cal2.getTimeInMillis());
     ts2.setNanos(10);
 
     Calendar cal1 = Calendar.getInstance();
@@ -160,7 +160,7 @@ public class TestParquetTimestampUtils extends TestCase {
     cal1.set(Calendar.MINUTE, 0);
     cal1.set(Calendar.SECOND, 0);
     cal1.setTimeZone(TimeZone.getTimeZone("GMT"));
-    Timestamp ts1 = new Timestamp(cal1.getTimeInMillis());
+    HiveTimestamp ts1 = new HiveTimestamp(cal1.getTimeInMillis());
     ts1.setNanos(1);
 
     NanoTime n2 = NanoTimeUtils.getNanoTime(ts2, false);
@@ -183,7 +183,7 @@ public class TestParquetTimestampUtils extends TestCase {
     cal.set(Calendar.MINUTE, 1);
     cal.set(Calendar.SECOND, 1);
     cal.setTimeZone(TimeZone.getTimeZone("US/Pacific"));
-    Timestamp ts = new Timestamp(cal.getTimeInMillis());
+    HiveTimestamp ts = new HiveTimestamp(cal.getTimeInMillis());
     ts.setNanos(1);
 
     /**
@@ -210,18 +210,18 @@ public class TestParquetTimestampUtils extends TestCase {
   }
 
   public void testTimezoneless() {
-    Timestamp ts1 = Timestamp.valueOf("2011-01-01 00:30:30.111111111");
+    HiveTimestamp ts1 = HiveTimestamp.valueOf("2011-01-01 00:30:30.111111111");
     NanoTime nt1 = NanoTimeUtils.getNanoTime(ts1, true);
     Assert.assertEquals(nt1.getJulianDay(), 2455563);
     Assert.assertEquals(nt1.getTimeOfDayNanos(), 1830111111111L);
-    Timestamp ts1Fetched = NanoTimeUtils.getTimestamp(nt1, true);
+    HiveTimestamp ts1Fetched = NanoTimeUtils.getTimestamp(nt1, true);
     Assert.assertEquals(ts1Fetched.toString(), ts1.toString());
 
-    Timestamp ts2 = Timestamp.valueOf("2011-02-02 08:30:30.222222222");
+    HiveTimestamp ts2 = HiveTimestamp.valueOf("2011-02-02 08:30:30.222222222");
     NanoTime nt2 = NanoTimeUtils.getNanoTime(ts2, true);
     Assert.assertEquals(nt2.getJulianDay(), 2455595);
     Assert.assertEquals(nt2.getTimeOfDayNanos(), 30630222222222L);
-    Timestamp ts2Fetched = NanoTimeUtils.getTimestamp(nt2, true);
+    HiveTimestamp ts2Fetched = NanoTimeUtils.getTimestamp(nt2, true);
     Assert.assertEquals(ts2Fetched.toString(), ts2.toString());
   }
 
@@ -255,9 +255,9 @@ public class TestParquetTimestampUtils extends TestCase {
   }
 
   private void verifyTsString(String tsString, boolean local) {
-    Timestamp ts = Timestamp.valueOf(tsString);
+    HiveTimestamp ts = HiveTimestamp.valueOf(tsString);
     NanoTime nt = NanoTimeUtils.getNanoTime(ts, local);
-    Timestamp tsFetched = NanoTimeUtils.getTimestamp(nt, local);
+    HiveTimestamp tsFetched = NanoTimeUtils.getTimestamp(nt, local);
     Assert.assertEquals(tsString, tsFetched.toString());
   }
 }

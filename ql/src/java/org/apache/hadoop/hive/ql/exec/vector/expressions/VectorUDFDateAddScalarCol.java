@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorExpressionDescriptor;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
@@ -26,7 +27,6 @@ import org.apache.hive.common.util.DateParser;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.Date;
-import java.sql.Timestamp;
 
 
 public class VectorUDFDateAddScalarCol extends VectorExpression {
@@ -35,7 +35,7 @@ public class VectorUDFDateAddScalarCol extends VectorExpression {
   private int colNum;
   private int outputColumn;
   private long longValue = 0;
-  private Timestamp timestampValue = null;
+  private HiveTimestamp timestampValue = null;
   private byte[] stringValue = null;
   protected boolean isPositive = true;
   private transient final DateParser dateParser = new DateParser();
@@ -52,8 +52,8 @@ public class VectorUDFDateAddScalarCol extends VectorExpression {
 
     if (object instanceof Long) {
       this.longValue = (Long) object;
-    } else if (object instanceof Timestamp) {
-        this.timestampValue = (Timestamp) object;
+    } else if (object instanceof HiveTimestamp) {
+        this.timestampValue = (HiveTimestamp) object;
     } else if (object instanceof byte []) {
       this.stringValue = (byte[]) object;
     }

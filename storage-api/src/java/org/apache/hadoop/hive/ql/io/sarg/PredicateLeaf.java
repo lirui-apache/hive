@@ -18,10 +18,10 @@
 
 package org.apache.hadoop.hive.ql.io.sarg;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.serde2.io.HiveDecimalWritable;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.List;
 
 /**
@@ -52,7 +52,7 @@ public interface PredicateLeaf {
     STRING(String.class),  // string, char, varchar
     DATE(Date.class),
     DECIMAL(HiveDecimalWritable.class),
-    TIMESTAMP(Timestamp.class),
+    TIMESTAMP(HiveTimestamp.class),
     BOOLEAN(Boolean.class);
 
     private final Class cls;

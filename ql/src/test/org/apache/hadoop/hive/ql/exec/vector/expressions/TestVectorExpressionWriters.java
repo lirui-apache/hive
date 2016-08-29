@@ -18,14 +18,13 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
-
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Random;
 
 import junit.framework.Assert;
 
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DecimalColumnVector;
@@ -83,7 +82,7 @@ public class TestVectorExpressionWriters {
   }
 
 
-  private Writable getWritableValue(TypeInfo ti, Timestamp value) {
+  private Writable getWritableValue(TypeInfo ti, HiveTimestamp value) {
     return new TimestampWritable(value);
   }
 
@@ -115,7 +114,7 @@ public class TestVectorExpressionWriters {
     } else if (ti.equals(TypeInfoFactory.booleanTypeInfo)) {
       return new BooleanWritable( value == 0 ? false : true);
     } else if (ti.equals(TypeInfoFactory.timestampTypeInfo)) {
-      Timestamp ts = new Timestamp(value);
+      HiveTimestamp ts = new HiveTimestamp(value);
       TimestampWritable tw = new TimestampWritable(ts);
       return tw;
     }
@@ -229,7 +228,7 @@ public class TestVectorExpressionWriters {
   }
 
   private void testWriterTimestamp(TypeInfo type) throws HiveException {
-    Timestamp[] timestampValues = new Timestamp[vectorSize];
+    HiveTimestamp[] timestampValues = new HiveTimestamp[vectorSize];
     TimestampColumnVector tcv =
         VectorizedRowGroupGenUtil.generateTimestampColumnVector(true, false,
         vectorSize, new Random(10), timestampValues);
@@ -249,7 +248,7 @@ public class TestVectorExpressionWriters {
   }
 
   private void testSetterTimestamp(TypeInfo type) throws HiveException {
-    Timestamp[] timestampValues = new Timestamp[vectorSize];
+    HiveTimestamp[] timestampValues = new HiveTimestamp[vectorSize];
     TimestampColumnVector tcv =
         VectorizedRowGroupGenUtil.generateTimestampColumnVector(true, false,
         vectorSize, new Random(10), timestampValues);

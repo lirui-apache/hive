@@ -18,7 +18,7 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.util;
 
-import java.sql.Timestamp;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 
 /**
  *
@@ -37,8 +37,8 @@ public class AllVectorTypesRecord {
   private final String cstring1;
   private final String cstring2;
 
-  private final Timestamp ctimestamp1;
-  private final Timestamp ctimestamp2;
+  private final HiveTimestamp ctimestamp1;
+  private final HiveTimestamp ctimestamp2;
 
   private final Boolean cboolean1;
   private final Boolean cboolean2;
@@ -59,8 +59,8 @@ public class AllVectorTypesRecord {
    * @param cboolean2
    */
   public AllVectorTypesRecord(Byte ctinyInt, Short csmallInt, Integer cint, Long cbigInt,
-      Float cfloat, Double cdouble, String cstring1, String cstring2, Timestamp ctimestamp1,
-      Timestamp ctimestamp2, Boolean cboolean1, Boolean cboolean2) {
+      Float cfloat, Double cdouble, String cstring1, String cstring2, HiveTimestamp ctimestamp1,
+      HiveTimestamp ctimestamp2, Boolean cboolean1, Boolean cboolean2) {
 
     this.ctinyInt = ctinyInt;
     this.csmallInt = csmallInt;

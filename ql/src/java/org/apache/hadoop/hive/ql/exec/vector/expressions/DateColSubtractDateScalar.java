@@ -18,8 +18,7 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
-import java.sql.Timestamp;
-
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.VectorExpression;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
@@ -36,17 +35,17 @@ public class DateColSubtractDateScalar extends VectorExpression {
   private static final long serialVersionUID = 1L;
 
   private int colNum;
-  private Timestamp value;
+  private HiveTimestamp value;
   private int outputColumn;
-  private Timestamp scratchTimestamp1;
+  private HiveTimestamp scratchTimestamp1;
   private DateTimeMath dtm = new DateTimeMath();
 
   public DateColSubtractDateScalar(int colNum, long value, int outputColumn) {
     this.colNum = colNum;
-    this.value = new Timestamp(0);
+    this.value = new HiveTimestamp(0);
     this.value.setTime(DateWritable.daysToMillis((int) value));
     this.outputColumn = outputColumn;
-    scratchTimestamp1 = new Timestamp(0);
+    scratchTimestamp1 = new HiveTimestamp(0);
   }
 
   public DateColSubtractDateScalar() {

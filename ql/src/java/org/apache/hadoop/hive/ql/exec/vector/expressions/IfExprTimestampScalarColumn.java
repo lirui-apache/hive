@@ -18,8 +18,7 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
-import java.sql.Timestamp;
-
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.VectorExpressionDescriptor;
 
 /**
@@ -32,7 +31,7 @@ public class IfExprTimestampScalarColumn extends IfExprTimestampScalarColumnBase
 
   private static final long serialVersionUID = 1L;
 
-  public IfExprTimestampScalarColumn(int arg1Column, Timestamp arg2Scalar, int arg3Column,
+  public IfExprTimestampScalarColumn(int arg1Column, HiveTimestamp arg2Scalar, int arg3Column,
       int outputColumn) {
     super(arg1Column, arg2Scalar, arg3Column, outputColumn);
   }

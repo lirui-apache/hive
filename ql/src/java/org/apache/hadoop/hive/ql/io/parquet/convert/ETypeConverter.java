@@ -14,10 +14,10 @@
 package org.apache.hadoop.hive.ql.io.parquet.convert;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Map;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.io.parquet.timestamp.NanoTime;
 import org.apache.hadoop.hive.ql.io.parquet.timestamp.NanoTimeUtils;
@@ -202,7 +202,7 @@ public enum ETypeConverter {
           //If this file written by current Hive implementation itself, we need to do the reverse conversion, else skip the conversion.
           boolean skipConversion = Boolean.parseBoolean(
               metadata.get(HiveConf.ConfVars.HIVE_PARQUET_TIMESTAMP_SKIP_CONVERSION.varname));
-          Timestamp ts = NanoTimeUtils.getTimestamp(nt, skipConversion);
+          HiveTimestamp ts = NanoTimeUtils.getTimestamp(nt, skipConversion);
           return new TimestampWritable(ts);
         }
       };
@@ -235,7 +235,7 @@ public enum ETypeConverter {
   public static PrimitiveConverter getNewConverter(final PrimitiveType type, final int index,
                                                    final ConverterParent parent, TypeInfo hiveTypeInfo) {
     if (type.isPrimitive() && (type.asPrimitiveType().getPrimitiveTypeName().equals(PrimitiveType.PrimitiveTypeName.INT96))) {
-      //TODO- cleanup once parquet support Timestamp type annotation.
+      //TODO- cleanup once parquet support HiveTimestamp type annotation.
       return ETypeConverter.ETIMESTAMP_CONVERTER.getConverter(type, index, parent, hiveTypeInfo);
     }
     if (OriginalType.DECIMAL == type.getOriginalType()) {

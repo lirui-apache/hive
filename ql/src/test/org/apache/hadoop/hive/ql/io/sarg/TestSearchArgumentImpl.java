@@ -24,6 +24,7 @@ import static junit.framework.Assert.assertTrue;
 import com.google.common.collect.Sets;
 
 import org.apache.hadoop.hive.common.type.HiveChar;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.ql.io.orc.TestInputOutputFormat;
 import org.apache.hadoop.hive.ql.io.sarg.SearchArgument.TruthValue;
@@ -33,7 +34,6 @@ import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Set;
 
@@ -427,10 +427,10 @@ public class TestSearchArgumentImpl {
   @Test
   public void testTimestampSerialization() throws Exception {
     // There is a kryo which after serialize/deserialize,
-    // Timestamp becomes Date. We get around this issue in
+    // HiveTimestamp becomes Date. We get around this issue in
     // SearchArgumentImpl.getLiteral. Once kryo fixed the issue
     // We can simplify SearchArgumentImpl.getLiteral
-    Timestamp now = new Timestamp(new java.util.Date().getTime());
+    HiveTimestamp now = new HiveTimestamp(new java.util.Date().getTime());
     SearchArgument sarg =
       SearchArgumentFactory.newBuilder()
         .startAnd()
@@ -444,7 +444,7 @@ public class TestSearchArgumentImpl {
     Field literalField = PredicateLeafImpl.class.getDeclaredField("literal");
     literalField.setAccessible(true);
     assertTrue(literalField.get(sarg2.getLeaves().get(0)) instanceof java.util.Date);
-    Timestamp ts = (Timestamp)sarg2.getLeaves().get(0).getLiteral();
+    HiveTimestamp ts = (HiveTimestamp)sarg2.getLeaves().get(0).getLiteral();
     assertEquals(ts, now);
   }
 

@@ -18,11 +18,8 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
-import java.sql.Timestamp;
-
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.VectorExpression;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.NullUtil;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.*;
 import org.apache.hadoop.hive.ql.util.DateTimeMath;
 import org.apache.hadoop.hive.serde2.io.DateWritable;
@@ -36,16 +33,16 @@ public class DateColSubtractDateColumn extends VectorExpression {
   private int colNum1;
   private int colNum2;
   private int outputColumn;
-  private Timestamp scratchTimestamp1;
-  private Timestamp scratchTimestamp2;
+  private HiveTimestamp scratchTimestamp1;
+  private HiveTimestamp scratchTimestamp2;
   private DateTimeMath dtm = new DateTimeMath();
 
   public DateColSubtractDateColumn(int colNum1, int colNum2, int outputColumn) {
     this.colNum1 = colNum1;
     this.colNum2 = colNum2;
     this.outputColumn = outputColumn;
-    scratchTimestamp1 = new Timestamp(0);
-    scratchTimestamp2 = new Timestamp(0);
+    scratchTimestamp1 = new HiveTimestamp(0);
+    scratchTimestamp2 = new HiveTimestamp(0);
   }
 
   public DateColSubtractDateColumn() {

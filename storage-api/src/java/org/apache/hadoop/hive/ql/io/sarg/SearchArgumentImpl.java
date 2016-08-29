@@ -18,7 +18,8 @@
 
 package org.apache.hadoop.hive.ql.io.sarg;
 
-import java.sql.Timestamp;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -103,7 +104,7 @@ public final class SearchArgumentImpl implements SearchArgument {
       // (https://github.com/EsotericSoftware/kryo/issues/88)
       // When we see a Date, convert back into Timestamp
       if (literal instanceof java.util.Date) {
-        return new Timestamp(((java.util.Date)literal).getTime());
+        return new HiveTimestamp(((java.util.Date)literal).getTime());
       }
       return literal;
     }

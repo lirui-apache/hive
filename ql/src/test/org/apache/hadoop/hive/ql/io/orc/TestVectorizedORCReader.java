@@ -20,7 +20,6 @@ package org.apache.hadoop.hive.ql.io.orc;
 
 import java.io.File;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Random;
 
@@ -30,6 +29,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DecimalColumnVector;
@@ -86,12 +86,12 @@ public class TestVectorizedORCReader {
     private final Short s;
     private final Double d;
     private final String k;
-    private final Timestamp t;
+    private final HiveTimestamp t;
     private final Date dt;
     private final HiveDecimal hd;
 
     MyRecord(Boolean bo, Byte by, Integer i, Long l, Short s, Double d, String k,
-        Timestamp t, Date dt, HiveDecimal hd) {
+        HiveTimestamp t, Date dt, HiveDecimal hd) {
       this.bo = bo;
       this.by = by;
       this.i = i;
@@ -133,7 +133,7 @@ public class TestVectorizedORCReader {
     for (int i = 0; i < 21000; ++i) {
       if ((i % 7) != 0) {
         writer.addRow(new MyRecord(((i % 3) == 0), (byte)(i % 5), i, (long) 200, (short) (300 + i), (double) (400 + i),
-            words[r1.nextInt(words.length)], new Timestamp(Calendar.getInstance().getTime().getTime()),
+            words[r1.nextInt(words.length)], new HiveTimestamp(Calendar.getInstance().getTime().getTime()),
             Date.valueOf(dates[i % 3]), HiveDecimal.create(decimalStrings[i % decimalStrings.length])));
       } else {
         writer.addRow(new MyRecord(null, null, i, (long) 200, null, null, null, null, null, null));

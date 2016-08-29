@@ -20,12 +20,12 @@ package org.apache.hive.service.cli;
 
 import java.math.BigDecimal;
 import java.sql.Date;
-import java.sql.Timestamp;
 
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.serde2.thrift.Type;
 import org.apache.hive.service.rpc.thrift.TBoolValue;
@@ -131,7 +131,7 @@ public class ColumnValue {
     return new TColumnValue(TColumnValue.stringVal(tStringValue));
   }
 
-  private static TColumnValue timestampValue(Timestamp value) {
+  private static TColumnValue timestampValue(HiveTimestamp value) {
     TStringValue tStringValue = new TStringValue();
     if (value != null) {
       tStringValue.setValue(value.toString());
@@ -191,7 +191,7 @@ public class ColumnValue {
     case DATE_TYPE:
       return dateValue((Date)value);
     case TIMESTAMP_TYPE:
-      return timestampValue((Timestamp)value);
+      return timestampValue((HiveTimestamp)value);
     case INTERVAL_YEAR_MONTH_TYPE:
       return stringValue((HiveIntervalYearMonth) value);
     case INTERVAL_DAY_TIME_TYPE:
@@ -262,9 +262,9 @@ public class ColumnValue {
     return null;
   }
 
-  private static Timestamp getTimestampValue(TStringValue tStringValue) {
+  private static HiveTimestamp getTimestampValue(TStringValue tStringValue) {
     if (tStringValue.isSetValue()) {
-      return Timestamp.valueOf(tStringValue.getValue());
+      return HiveTimestamp.valueOf(tStringValue.getValue());
     }
     return null;
   }

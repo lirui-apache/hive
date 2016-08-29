@@ -18,10 +18,9 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
-import java.sql.Timestamp;
-
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.serde2.io.HiveDecimalWritable;
@@ -42,7 +41,7 @@ public interface VectorExpressionWriter {
   Object writeValue(HiveDecimalWritable value) throws HiveException;
   Object writeValue(HiveDecimal value) throws HiveException;
   Object writeValue(TimestampWritable value) throws HiveException;
-  Object writeValue(Timestamp value) throws HiveException;
+  Object writeValue(HiveTimestamp value) throws HiveException;
   Object writeValue(HiveIntervalDayTimeWritable value) throws HiveException;
   Object writeValue(HiveIntervalDayTime value) throws HiveException;
   Object setValue(Object row, ColumnVector column, int columnRow) throws HiveException;

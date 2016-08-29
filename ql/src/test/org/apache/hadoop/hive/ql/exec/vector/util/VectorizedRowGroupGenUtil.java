@@ -18,10 +18,10 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.util;
 
-import java.sql.Timestamp;
 import java.util.Random;
 
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.RandomTypeUtil;
 import org.apache.hadoop.hive.ql.exec.vector.DecimalColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DoubleColumnVector;
@@ -80,13 +80,13 @@ public class VectorizedRowGroupGenUtil {
   }
 
   public static TimestampColumnVector generateTimestampColumnVector(
-      boolean nulls, boolean repeating, int size, Random rand, Timestamp[] timestampValues) {
+      boolean nulls, boolean repeating, int size, Random rand, HiveTimestamp[] timestampValues) {
     TimestampColumnVector tcv = new TimestampColumnVector(size);
 
     tcv.noNulls = !nulls;
     tcv.isRepeating = repeating;
 
-    Timestamp repeatingTimestamp = RandomTypeUtil.getRandTimestamp(rand);
+    HiveTimestamp repeatingTimestamp = RandomTypeUtil.getRandTimestamp(rand);
 
     int nullFrequency = generateNullFrequency(rand);
 
@@ -98,7 +98,7 @@ public class VectorizedRowGroupGenUtil {
       }else {
         tcv.isNull[i] = false;
         if (!repeating) {
-          Timestamp randomTimestamp = RandomTypeUtil.getRandTimestamp(rand);
+          HiveTimestamp randomTimestamp = RandomTypeUtil.getRandTimestamp(rand);
           tcv.set(i,  randomTimestamp);
           timestampValues[i] = randomTimestamp;
         } else {

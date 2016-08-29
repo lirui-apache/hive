@@ -19,12 +19,12 @@
 package org.apache.hadoop.hive.ql.udf.generic;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.NoMatchingMethodException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -110,13 +110,13 @@ public class GenericUDFOPDTIMinus extends GenericUDFBaseDTI {
     // Allowed operations:
     // IntervalYearMonth - IntervalYearMonth = IntervalYearMonth
     // Date - IntervalYearMonth = Date (operands not reversible)
-    // Timestamp - IntervalYearMonth = Timestamp (operands not reversible)
+    // HiveTimestamp - IntervalYearMonth = HiveTimestamp (operands not reversible)
     // IntervalDayTime - IntervalDayTime = IntervalDayTime
-    // Date - IntervalYearMonth = Timestamp (operands not reversible)
-    // Timestamp - IntervalYearMonth = Timestamp (operands not reversible)
-    // Timestamp - Timestamp = IntervalDayTime
+    // Date - IntervalYearMonth = HiveTimestamp (operands not reversible)
+    // HiveTimestamp - IntervalYearMonth = HiveTimestamp (operands not reversible)
+    // HiveTimestamp - HiveTimestamp = IntervalDayTime
     // Date - Date = IntervalDayTime
-    // Timestamp - Date = IntervalDayTime (operands reversible)
+    // HiveTimestamp - Date = IntervalDayTime (operands reversible)
     if (checkArgs(PrimitiveCategory.INTERVAL_YEAR_MONTH, PrimitiveCategory.INTERVAL_YEAR_MONTH)) {
       minusOpType = OperationType.INTERVALYM_MINUS_INTERVALYM;
       intervalArg1Idx = 0;
@@ -192,7 +192,7 @@ public class GenericUDFOPDTIMinus extends GenericUDFBaseDTI {
       case TIMESTAMP_MINUS_INTERVALYM: {
         HiveIntervalYearMonth iym1 = PrimitiveObjectInspectorUtils.getHiveIntervalYearMonth(
             arguments[intervalArg1Idx].get(), inputOIs[intervalArg1Idx]);
-        Timestamp ts1 = PrimitiveObjectInspectorUtils.getTimestamp(
+        HiveTimestamp ts1 = PrimitiveObjectInspectorUtils.getTimestamp(
             arguments[dtArg1Idx].get(), inputOIs[dtArg1Idx]);
         return handleTimestampResult(dtm.subtract(ts1, iym1));
       }
@@ -206,14 +206,14 @@ public class GenericUDFOPDTIMinus extends GenericUDFBaseDTI {
       case TIMESTAMP_MINUS_INTERVALDT: {
         HiveIntervalDayTime idt1 = PrimitiveObjectInspectorUtils.getHiveIntervalDayTime(
             arguments[intervalArg1Idx].get(), inputOIs[intervalArg1Idx]);
-        Timestamp ts1 = PrimitiveObjectInspectorUtils.getTimestamp(
+        HiveTimestamp ts1 = PrimitiveObjectInspectorUtils.getTimestamp(
             arguments[dtArg1Idx].get(), inputOIs[dtArg1Idx]);
         return handleTimestampResult(dtm.subtract(ts1, idt1));
       }
       case TIMESTAMP_MINUS_TIMESTAMP: {
-        Timestamp ts1 = PrimitiveObjectInspectorUtils.getTimestamp(
+        HiveTimestamp ts1 = PrimitiveObjectInspectorUtils.getTimestamp(
             arguments[dtArg1Idx].get(), inputOIs[dtArg1Idx]);
-        Timestamp ts2 = PrimitiveObjectInspectorUtils.getTimestamp(
+        HiveTimestamp ts2 = PrimitiveObjectInspectorUtils.getTimestamp(
             arguments[dtArg2Idx].get(), inputOIs[dtArg2Idx]);
         return handleIntervalDayTimeResult(dtm.subtract(ts1, ts2));
       }
@@ -230,7 +230,7 @@ public class GenericUDFOPDTIMinus extends GenericUDFBaseDTI {
     return dateResult;
   }
 
-  protected TimestampWritable handleTimestampResult(Timestamp result) {
+  protected TimestampWritable handleTimestampResult(HiveTimestamp result) {
     if (result == null) {
       return null;
     }

@@ -20,9 +20,9 @@ package org.apache.hadoop.hive.ql.udf.generic;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.sql.Timestamp;
 
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
@@ -163,7 +163,7 @@ public class GenericUDFReflect2 extends AbstractGenericUDFReflect {
         ((Text)returnObj).set((String)result);
         return returnObj;
       case TIMESTAMP:
-        ((TimestampWritable)returnObj).set((Timestamp)result);
+        ((TimestampWritable)returnObj).set((HiveTimestamp) result);
         return returnObj;
       case BINARY:
         ((BytesWritable)returnObj).set((byte[])result, 0, ((byte[]) result).length);

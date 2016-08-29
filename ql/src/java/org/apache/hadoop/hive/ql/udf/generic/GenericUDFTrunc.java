@@ -19,12 +19,12 @@
 
 package org.apache.hadoop.hive.ql.udf.generic;
 
-import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
@@ -163,7 +163,7 @@ public class GenericUDFTrunc extends GenericUDF {
       }
       break;
     case TIMESTAMP:
-      Timestamp ts = ((TimestampWritable) timestampConverter.convert(arguments[0].get()))
+      HiveTimestamp ts = ((TimestampWritable) timestampConverter.convert(arguments[0].get()))
           .getTimestamp();
       date = ts;
       break;

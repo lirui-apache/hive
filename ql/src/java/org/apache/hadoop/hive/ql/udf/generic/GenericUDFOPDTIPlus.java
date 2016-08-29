@@ -19,12 +19,12 @@
 package org.apache.hadoop.hive.ql.udf.generic;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.NoMatchingMethodException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
@@ -107,10 +107,10 @@ public class GenericUDFOPDTIPlus extends GenericUDFBaseDTI {
     // Allowed operations:
     // IntervalYearMonth + IntervalYearMonth = IntervalYearMonth
     // IntervalYearMonth + Date = Date (operands reversible)
-    // IntervalYearMonth + Timestamp = Timestamp (operands reversible)
+    // IntervalYearMonth + HiveTimestamp = HiveTimestamp (operands reversible)
     // IntervalDayTime + IntervalDayTime = IntervalDayTime
-    // IntervalDayTime + Date = Timestamp (operands reversible)
-    // IntervalDayTime + Timestamp = Timestamp (operands reversible)
+    // IntervalDayTime + Date = HiveTimestamp (operands reversible)
+    // IntervalDayTime + HiveTimestamp = HiveTimestamp (operands reversible)
     if (checkArgs(PrimitiveCategory.INTERVAL_YEAR_MONTH, PrimitiveCategory.INTERVAL_YEAR_MONTH)) {
       plusOpType = OperationType.INTERVALYM_PLUS_INTERVALYM;
       intervalArg1Idx = 0;
@@ -194,7 +194,7 @@ public class GenericUDFOPDTIPlus extends GenericUDFBaseDTI {
       case INTERVALYM_PLUS_TIMESTAMP: {
         HiveIntervalYearMonth iym1 = PrimitiveObjectInspectorUtils.getHiveIntervalYearMonth(
             arguments[intervalArg1Idx].get(), inputOIs[intervalArg1Idx]);
-        Timestamp ts1 = PrimitiveObjectInspectorUtils.getTimestamp(
+        HiveTimestamp ts1 = PrimitiveObjectInspectorUtils.getTimestamp(
             arguments[dtArgIdx].get(), inputOIs[dtArgIdx]);
         return handleTimestampResult(dtm.add(ts1, iym1));
       }
@@ -208,7 +208,7 @@ public class GenericUDFOPDTIPlus extends GenericUDFBaseDTI {
       case INTERVALDT_PLUS_TIMESTAMP: {
         HiveIntervalDayTime idt1 = PrimitiveObjectInspectorUtils.getHiveIntervalDayTime(
             arguments[intervalArg1Idx].get(), inputOIs[intervalArg1Idx]);
-        Timestamp ts1 = PrimitiveObjectInspectorUtils.getTimestamp(
+        HiveTimestamp ts1 = PrimitiveObjectInspectorUtils.getTimestamp(
             arguments[dtArgIdx].get(), inputOIs[dtArgIdx]);
         return handleTimestampResult(dtm.add(ts1, idt1));
       }
@@ -225,7 +225,7 @@ public class GenericUDFOPDTIPlus extends GenericUDFBaseDTI {
     return dateResult;
   }
 
-  protected TimestampWritable handleTimestampResult(Timestamp result) {
+  protected TimestampWritable handleTimestampResult(HiveTimestamp result) {
     if (result == null) {
       return null;
     }

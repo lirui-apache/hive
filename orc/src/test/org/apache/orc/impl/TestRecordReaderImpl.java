@@ -31,7 +31,6 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,6 +44,7 @@ import org.apache.hadoop.fs.PositionedReadable;
 import org.apache.hadoop.fs.Seekable;
 import org.apache.hadoop.hive.common.io.DiskRangeList;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.io.sarg.SearchArgumentImpl;
 import org.apache.orc.BloomFilterIO;
 import org.apache.orc.DataReader;
@@ -424,7 +424,7 @@ public class TestRecordReaderImpl {
         RecordReaderImpl.evaluatePredicateProto(createIntStats(10, 100), pred, null));
 
     pred = createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
-        PredicateLeaf.Type.TIMESTAMP, "x", new Timestamp(15), null);
+        PredicateLeaf.Type.TIMESTAMP, "x", new HiveTimestamp(15), null);
     assertEquals(TruthValue.YES_NO,
       RecordReaderImpl.evaluatePredicateProto(createIntStats(10, 100), pred, null));
   }
@@ -459,12 +459,12 @@ public class TestRecordReaderImpl {
         RecordReaderImpl.evaluatePredicateProto(createDoubleStats(10.0, 100.0), pred, null));
 
     pred = createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
-        PredicateLeaf.Type.TIMESTAMP, "x", new Timestamp(15*1000L), null);
+        PredicateLeaf.Type.TIMESTAMP, "x", new HiveTimestamp(15*1000L), null);
     assertEquals(TruthValue.YES_NO,
         RecordReaderImpl.evaluatePredicateProto(createDoubleStats(10.0, 100.0), pred, null));
 
     pred = createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
-        PredicateLeaf.Type.TIMESTAMP, "x", new Timestamp(150*1000L), null);
+        PredicateLeaf.Type.TIMESTAMP, "x", new HiveTimestamp(150*1000L), null);
     assertEquals(TruthValue.NO,
         RecordReaderImpl.evaluatePredicateProto(createDoubleStats(10.0, 100.0), pred, null));
   }
@@ -498,7 +498,7 @@ public class TestRecordReaderImpl {
         RecordReaderImpl.evaluatePredicateProto(createStringStats("10", "1000"), pred, null));
 
     pred = createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
-        PredicateLeaf.Type.TIMESTAMP, "x", new Timestamp(100), null);
+        PredicateLeaf.Type.TIMESTAMP, "x", new HiveTimestamp(100), null);
     assertEquals(TruthValue.YES_NO,
         RecordReaderImpl.evaluatePredicateProto(createStringStats("10", "1000"), pred, null));
   }
@@ -564,12 +564,12 @@ public class TestRecordReaderImpl {
         RecordReaderImpl.evaluatePredicateProto(createDateStats(10, 100), pred, null));
 
     pred = createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
-        PredicateLeaf.Type.TIMESTAMP, "x", new Timestamp(15), null);
+        PredicateLeaf.Type.TIMESTAMP, "x", new HiveTimestamp(15), null);
     assertEquals(TruthValue.NO,
         RecordReaderImpl.evaluatePredicateProto(createDateStats(10, 100), pred, null));
 
     pred = createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
-        PredicateLeaf.Type.TIMESTAMP, "x", new Timestamp(15L * 24L * 60L * 60L * 1000L), null);
+        PredicateLeaf.Type.TIMESTAMP, "x", new HiveTimestamp(15L * 24L * 60L * 60L * 1000L), null);
     assertEquals(TruthValue.YES_NO,
         RecordReaderImpl.evaluatePredicateProto(createDateStats(10, 100), pred, null));
   }
@@ -604,12 +604,12 @@ public class TestRecordReaderImpl {
         RecordReaderImpl.evaluatePredicateProto(createDecimalStats("10.0", "100.0"), pred, null));
 
     pred = createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
-        PredicateLeaf.Type.TIMESTAMP, "x", new Timestamp(15 * 1000L), null);
+        PredicateLeaf.Type.TIMESTAMP, "x", new HiveTimestamp(15 * 1000L), null);
     assertEquals(TruthValue.YES_NO,
         RecordReaderImpl.evaluatePredicateProto(createDecimalStats("10.0", "100.0"), pred, null));
 
     pred = createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
-        PredicateLeaf.Type.TIMESTAMP, "x", new Timestamp(150 * 1000L), null);
+        PredicateLeaf.Type.TIMESTAMP, "x", new HiveTimestamp(150 * 1000L), null);
     assertEquals(TruthValue.NO,
         RecordReaderImpl.evaluatePredicateProto(createDecimalStats("10.0", "100.0"), pred, null));
   }
@@ -634,7 +634,7 @@ public class TestRecordReaderImpl {
         RecordReaderImpl.evaluatePredicateProto(createTimestampStats(10, 100), pred, null));
 
     pred = createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
-        PredicateLeaf.Type.STRING, "x", new Timestamp(15).toString(), null);
+        PredicateLeaf.Type.STRING, "x", new HiveTimestamp(15).toString(), null);
     assertEquals(TruthValue.YES_NO,
         RecordReaderImpl.evaluatePredicateProto(createTimestampStats(10, 100), pred, null));
 
@@ -654,7 +654,7 @@ public class TestRecordReaderImpl {
         RecordReaderImpl.evaluatePredicateProto(createTimestampStats(10000, 100000), pred, null));
 
     pred = createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
-        PredicateLeaf.Type.TIMESTAMP, "x", new Timestamp(15), null);
+        PredicateLeaf.Type.TIMESTAMP, "x", new HiveTimestamp(15), null);
     assertEquals(TruthValue.YES_NO,
         RecordReaderImpl.evaluatePredicateProto(createTimestampStats(10, 100), pred, null));
     assertEquals(TruthValue.NO,
@@ -1514,53 +1514,53 @@ public class TestRecordReaderImpl {
   public void testTimestampNullSafeEqualsBloomFilter() throws Exception {
     PredicateLeaf pred = createPredicateLeaf(
         PredicateLeaf.Operator.NULL_SAFE_EQUALS, PredicateLeaf.Type.TIMESTAMP, "x",
-        new Timestamp(15),
+        new HiveTimestamp(15),
         null);
     BloomFilterIO bf = new BloomFilterIO(10000);
     for (int i = 20; i < 1000; i++) {
-      bf.addLong((new Timestamp(i)).getTime());
+      bf.addLong((new HiveTimestamp(i)).getTime());
     }
     ColumnStatistics cs = ColumnStatisticsImpl.deserialize(createTimestampStats(10, 100));
     assertEquals(TruthValue.NO, RecordReaderImpl.evaluatePredicate(cs, pred, bf));
 
-    bf.addLong((new Timestamp(15)).getTime());
+    bf.addLong((new HiveTimestamp(15)).getTime());
     assertEquals(TruthValue.YES_NO, RecordReaderImpl.evaluatePredicate(cs, pred, bf));
   }
 
   @Test
   public void testTimestampEqualsBloomFilter() throws Exception {
     PredicateLeaf pred = createPredicateLeaf(
-        PredicateLeaf.Operator.EQUALS, PredicateLeaf.Type.TIMESTAMP, "x", new Timestamp(15), null);
+        PredicateLeaf.Operator.EQUALS, PredicateLeaf.Type.TIMESTAMP, "x", new HiveTimestamp(15), null);
     BloomFilterIO bf = new BloomFilterIO(10000);
     for (int i = 20; i < 1000; i++) {
-      bf.addLong((new Timestamp(i)).getTime());
+      bf.addLong((new HiveTimestamp(i)).getTime());
     }
     ColumnStatistics cs = ColumnStatisticsImpl.deserialize(createTimestampStats(10, 100));
     assertEquals(TruthValue.NO_NULL, RecordReaderImpl.evaluatePredicate(cs, pred, bf));
 
-    bf.addLong((new Timestamp(15)).getTime());
+    bf.addLong((new HiveTimestamp(15)).getTime());
     assertEquals(TruthValue.YES_NO_NULL, RecordReaderImpl.evaluatePredicate(cs, pred, bf));
   }
 
   @Test
   public void testTimestampInBloomFilter() throws Exception {
     List<Object> args = new ArrayList<Object>();
-    args.add(new Timestamp(15));
-    args.add(new Timestamp(19));
+    args.add(new HiveTimestamp(15));
+    args.add(new HiveTimestamp(19));
     PredicateLeaf pred = createPredicateLeaf
         (PredicateLeaf.Operator.IN, PredicateLeaf.Type.TIMESTAMP,
             "x", null, args);
     BloomFilterIO bf = new BloomFilterIO(10000);
     for (int i = 20; i < 1000; i++) {
-      bf.addLong((new Timestamp(i)).getTime());
+      bf.addLong((new HiveTimestamp(i)).getTime());
     }
     ColumnStatistics cs = ColumnStatisticsImpl.deserialize(createTimestampStats(10, 100));
     assertEquals(TruthValue.NO_NULL, RecordReaderImpl.evaluatePredicate(cs, pred, bf));
 
-    bf.addLong((new Timestamp(19)).getTime());
+    bf.addLong((new HiveTimestamp(19)).getTime());
     assertEquals(TruthValue.YES_NO_NULL, RecordReaderImpl.evaluatePredicate(cs, pred, bf));
 
-    bf.addLong((new Timestamp(15)).getTime());
+    bf.addLong((new HiveTimestamp(15)).getTime());
     assertEquals(TruthValue.YES_NO_NULL, RecordReaderImpl.evaluatePredicate(cs, pred, bf));
   }
 

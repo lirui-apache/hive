@@ -19,7 +19,6 @@ package org.apache.hadoop.hive.ql.optimizer.calcite.translator;
 
 import java.math.BigDecimal;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedList;
@@ -46,6 +45,7 @@ import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.optimizer.ConstantPropagateProcFactory;
@@ -278,7 +278,7 @@ public class ExprNodeConverter extends RexVisitorImpl<ExprNodeDesc> {
       case TIMESTAMP: {
         Object value = literal.getValue3();
         if (value instanceof Long) {
-          value = new Timestamp((Long)value);
+          value = new HiveTimestamp((Long)value);
         }
         return new ExprNodeConstantDesc(TypeInfoFactory.timestampTypeInfo, value);
       }

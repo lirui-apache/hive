@@ -20,7 +20,6 @@ package org.apache.hadoop.hive.ql.parse;
 
 import java.math.BigDecimal;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -36,6 +35,7 @@ import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.exec.ColumnInfo;
 import org.apache.hadoop.hive.ql.exec.FunctionInfo;
@@ -492,7 +492,7 @@ public class TypeCheckProcFactory {
         }
         if (expr.getType() == HiveParser.TOK_TIMESTAMPLITERAL) {
           return new ExprNodeConstantDesc(TypeInfoFactory.timestampTypeInfo,
-              Timestamp.valueOf(timeString));
+              HiveTimestamp.valueOf(timeString));
         }
         throw new IllegalArgumentException("Invalid time literal type " + expr.getType());
       } catch (Exception err) {

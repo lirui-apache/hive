@@ -18,11 +18,10 @@
 
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
-import java.sql.Timestamp;
-
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.ql.exec.vector.*;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
@@ -40,7 +39,7 @@ public class ConstantVectorExpression extends VectorExpression {
   private double doubleValue = 0;
   private byte[] bytesValue = null;
   private HiveDecimal decimalValue = null;
-  private Timestamp timestampValue = null;
+  private HiveTimestamp timestampValue = null;
   private HiveIntervalDayTime intervalDayTimeValue = null;
   private boolean isNullValue = false;
 
@@ -88,7 +87,7 @@ public class ConstantVectorExpression extends VectorExpression {
     setDecimalValue(value);
   }
 
-  public ConstantVectorExpression(int outputColumn, Timestamp value) {
+  public ConstantVectorExpression(int outputColumn, HiveTimestamp value) {
     this(outputColumn, "timestamp");
     setTimestampValue(value);
   }
@@ -235,11 +234,11 @@ public class ConstantVectorExpression extends VectorExpression {
     return decimalValue;
   }
 
-  public void setTimestampValue(Timestamp timestampValue) {
+  public void setTimestampValue(HiveTimestamp timestampValue) {
     this.timestampValue = timestampValue;
   }
 
-  public Timestamp getTimestampValue() {
+  public HiveTimestamp getTimestampValue() {
     return timestampValue;
   }
 

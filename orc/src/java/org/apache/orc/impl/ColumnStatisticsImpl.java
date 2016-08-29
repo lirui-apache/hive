@@ -18,9 +18,9 @@
 package org.apache.orc.impl;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.serde2.io.DateWritable;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Text;
@@ -845,7 +845,7 @@ public class ColumnStatisticsImpl implements ColumnStatistics {
     }
 
     @Override
-    public void updateTimestamp(Timestamp value) {
+    public void updateTimestamp(HiveTimestamp value) {
       if (minimum == null) {
         minimum = value.getTime();
         maximum = value.getTime();
@@ -905,13 +905,13 @@ public class ColumnStatisticsImpl implements ColumnStatistics {
     }
 
     @Override
-    public Timestamp getMinimum() {
-      return minimum == null ? null : new Timestamp(minimum);
+    public HiveTimestamp getMinimum() {
+      return minimum == null ? null : new HiveTimestamp(minimum);
     }
 
     @Override
-    public Timestamp getMaximum() {
-      return maximum == null ? null : new Timestamp(maximum);
+    public HiveTimestamp getMaximum() {
+      return maximum == null ? null : new HiveTimestamp(maximum);
     }
 
     @Override
@@ -999,7 +999,7 @@ public class ColumnStatisticsImpl implements ColumnStatistics {
     throw new UnsupportedOperationException("Can't update date");
   }
 
-  public void updateTimestamp(Timestamp value) {
+  public void updateTimestamp(HiveTimestamp value) {
     throw new UnsupportedOperationException("Can't update timestamp");
   }
 

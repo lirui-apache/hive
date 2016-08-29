@@ -23,7 +23,6 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,6 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.api.MetadataPpdResult;
@@ -80,9 +80,9 @@ public class TestOrcSplitElimination {
     Text string1;
     Double subtype;
     HiveDecimal decimal1;
-    Timestamp ts;
+    HiveTimestamp ts;
 
-    AllTypesRow(Long uid, String s1, Double d1, HiveDecimal decimal, Timestamp ts) {
+    AllTypesRow(Long uid, String s1, Double d1, HiveDecimal decimal, HiveTimestamp ts) {
       this.userid = uid;
       this.string1 = new Text(s1);
       this.subtype = d1;
@@ -728,21 +728,21 @@ public class TestOrcSplitElimination {
   private void writeData(Writer writer) throws IOException {
     for (int i = 0; i < 25000; i++) {
       if (i == 0) {
-        writer.addRow(new AllTypesRow(2L, "foo", 0.8, HiveDecimal.create("1.2"), new Timestamp(0)));
+        writer.addRow(new AllTypesRow(2L, "foo", 0.8, HiveDecimal.create("1.2"), new HiveTimestamp(0)));
       } else if (i == 5000) {
-        writer.addRow(new AllTypesRow(13L, "bar", 80.0, HiveDecimal.create("2.2"), new Timestamp(
+        writer.addRow(new AllTypesRow(13L, "bar", 80.0, HiveDecimal.create("2.2"), new HiveTimestamp(
             5000)));
       } else if (i == 10000) {
-        writer.addRow(new AllTypesRow(29L, "cat", 8.0, HiveDecimal.create("3.3"), new Timestamp(
+        writer.addRow(new AllTypesRow(29L, "cat", 8.0, HiveDecimal.create("3.3"), new HiveTimestamp(
             10000)));
       } else if (i == 15000) {
-        writer.addRow(new AllTypesRow(70L, "dog", 1.8, HiveDecimal.create("4.4"), new Timestamp(
+        writer.addRow(new AllTypesRow(70L, "dog", 1.8, HiveDecimal.create("4.4"), new HiveTimestamp(
             15000)));
       } else if (i == 20000) {
-        writer.addRow(new AllTypesRow(5L, "eat", 0.8, HiveDecimal.create("5.5"), new Timestamp(
+        writer.addRow(new AllTypesRow(5L, "eat", 0.8, HiveDecimal.create("5.5"), new HiveTimestamp(
             20000)));
       } else {
-        writer.addRow(new AllTypesRow(100L, "zebra", 8.0, HiveDecimal.create("0.0"), new Timestamp(
+        writer.addRow(new AllTypesRow(100L, "zebra", 8.0, HiveDecimal.create("0.0"), new HiveTimestamp(
             250000)));
       }
     }

@@ -18,10 +18,10 @@
 package org.apache.hadoop.hive.serde2.lazy;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 
 import junit.framework.TestCase;
 
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.serde2.ByteStream;
 import org.apache.hadoop.hive.serde2.io.ByteWritable;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
@@ -401,7 +401,7 @@ public class TestLazyPrimitive extends TestCase {
     byte[] good2013 = sampleDate.getBytes();
     initLazyObject(t, good2013, 0, good2013.length);
     assertEquals(false, t.isNull);
-    assertEquals(Timestamp.valueOf(sampleDate),
+    assertEquals(HiveTimestamp.valueOf(sampleDate),
         t.getWritableObject().getTimestamp());
     String badDate = "2013-02-12 21:04:XX";
     byte[] bad2013 = badDate.getBytes();

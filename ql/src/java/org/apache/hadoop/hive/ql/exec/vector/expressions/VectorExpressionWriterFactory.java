@@ -19,7 +19,6 @@
 package org.apache.hadoop.hive.ql.exec.vector.expressions;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,6 +29,7 @@ import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.ql.exec.vector.*;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -164,15 +164,15 @@ public final class VectorExpressionWriterFactory {
     }
 
     /**
-     * The base implementation must be overridden by the Timestamp specialization
+     * The base implementation must be overridden by the HiveTimestamp specialization
      */
     @Override
-    public Object writeValue(Timestamp value) throws HiveException {
+    public Object writeValue(HiveTimestamp value) throws HiveException {
       throw new HiveException("Internal error: should not reach here");
     }
 
     /**
-     * The base implementation must be overridden by the Timestamp specialization
+     * The base implementation must be overridden by the HiveTimestamp specialization
      */
     @Override
     public Object writeValue(TimestampWritable value) throws HiveException {
@@ -180,16 +180,16 @@ public final class VectorExpressionWriterFactory {
     }
 
     /**
-     * The base implementation must be overridden by the Timestamp specialization
+     * The base implementation must be overridden by the HiveTimestamp specialization
      */
     public Object setValue(Object field, TimestampWritable value) throws HiveException {
       throw new HiveException("Internal error: should not reach here");
     }
 
     /**
-     * The base implementation must be overridden by the Timestamp specialization
+     * The base implementation must be overridden by the HiveTimestamp specialization
      */
-    public Object setValue(Object field, Timestamp value) throws HiveException {
+    public Object setValue(Object field, HiveTimestamp value) throws HiveException {
       throw new HiveException("Internal error: should not reach here");
     }
 
@@ -702,7 +702,7 @@ public final class VectorExpressionWriterFactory {
       }
 
       @Override
-      public Object setValue(Object field, Timestamp value) {
+      public Object setValue(Object field, HiveTimestamp value) {
         if (null == field) {
           field = initValue(null);
         }
@@ -773,7 +773,7 @@ public final class VectorExpressionWriterFactory {
       }
 
       @Override
-      public Object writeValue(Timestamp value) throws HiveException {
+      public Object writeValue(HiveTimestamp value) throws HiveException {
         return ((SettableTimestampObjectInspector) this.objectInspector).set(obj, value);
       }
 
@@ -796,7 +796,7 @@ public final class VectorExpressionWriterFactory {
       }
 
       @Override
-      public Object setValue(Object field, Timestamp value) {
+      public Object setValue(Object field, HiveTimestamp value) {
         if (null == field) {
           field = initValue(null);
         }
@@ -805,7 +805,7 @@ public final class VectorExpressionWriterFactory {
 
       @Override
       public Object initValue(Object ignored) {
-        return ((SettableTimestampObjectInspector) this.objectInspector).create(new Timestamp(0));
+        return ((SettableTimestampObjectInspector) this.objectInspector).create(new HiveTimestamp(0));
       }
     }.init(fieldObjInspector);
   }

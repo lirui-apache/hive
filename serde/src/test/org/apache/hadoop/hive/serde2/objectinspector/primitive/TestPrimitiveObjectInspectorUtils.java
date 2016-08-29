@@ -19,13 +19,13 @@
 package org.apache.hadoop.hive.serde2.objectinspector.primitive;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
@@ -143,7 +143,9 @@ public class TestPrimitiveObjectInspectorUtils extends TestCase {
 
     PrimitiveObjectInspector timestampOI = PrimitiveObjectInspectorFactory
         .getPrimitiveJavaObjectInspector(PrimitiveCategory.TIMESTAMP);
-    assertEquals("2015-02-07 15:01:22.123", gmtDateFormat.format(PrimitiveObjectInspectorUtils.getTimestamp(new Timestamp(1423321282123L), timestampOI)));
+    assertEquals("2015-02-07 15:01:22.123", gmtDateFormat.format(
+        PrimitiveObjectInspectorUtils.getTimestamp(
+            new HiveTimestamp(1423321282123L), timestampOI)));
   }
 
   @Test
@@ -215,6 +217,6 @@ public class TestPrimitiveObjectInspectorUtils extends TestCase {
 
     PrimitiveObjectInspector timestampOI = PrimitiveObjectInspectorFactory
         .getPrimitiveJavaObjectInspector(PrimitiveCategory.TIMESTAMP);
-    assertEquals("2015-02-07 15:01:22.123", gmtDateFormat.format(PrimitiveObjectInspectorUtils.getTimestamp(new Timestamp(1423321282123L), timestampOI, true)));
+    assertEquals("2015-02-07 15:01:22.123", gmtDateFormat.format(PrimitiveObjectInspectorUtils.getTimestamp(new HiveTimestamp(1423321282123L), timestampOI, true)));
   }
 }

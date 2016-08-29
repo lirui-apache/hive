@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.rmi.server.UID;
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,6 +41,7 @@ import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.UnresolvedUnionException;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hive.common.type.HiveChar;
@@ -294,7 +294,7 @@ class AvroDeserializer {
         throw new AvroSerdeException(
           "Unexpected Avro schema for Date TypeInfo: " + recordSchema.getType());
       }
-      return new Timestamp((Long)datum);
+      return new HiveTimestamp((Long)datum);
     default:
       return datum;
     }

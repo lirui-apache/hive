@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.hive.ql.exec.vector;
 
-import java.sql.Timestamp;
 import java.util.Arrays;
 
 import org.apache.hadoop.hive.common.type.HiveTimestamp;

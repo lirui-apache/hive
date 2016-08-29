@@ -19,11 +19,11 @@
 package org.apache.hadoop.hive.ql.udf.generic;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
+import org.apache.hadoop.hive.common.type.HiveTimestamp;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.session.SessionState;
@@ -336,7 +336,7 @@ public class TestGenericUDFOPPlus extends AbstractTestGenericUDFOPNumeric {
     HiveIntervalYearMonthWritable left =
         new HiveIntervalYearMonthWritable(HiveIntervalYearMonth.valueOf("2-2"));
     TimestampWritable right =
-        new TimestampWritable(Timestamp.valueOf("2001-11-15 01:02:03.123456789"));
+        new TimestampWritable(HiveTimestamp.valueOf("2001-11-15 01:02:03.123456789"));
     ObjectInspector[] inputOIs = {
         PrimitiveObjectInspectorFactory.writableHiveIntervalYearMonthObjectInspector,
         PrimitiveObjectInspectorFactory.writableTimestampObjectInspector
@@ -349,7 +349,7 @@ public class TestGenericUDFOPPlus extends AbstractTestGenericUDFOPNumeric {
     PrimitiveObjectInspector oi = (PrimitiveObjectInspector) udf.initialize(inputOIs);
     Assert.assertEquals(TypeInfoFactory.timestampTypeInfo, oi.getTypeInfo());
     TimestampWritable res = (TimestampWritable) udf.evaluate(args);
-    Assert.assertEquals(Timestamp.valueOf("2004-01-15 01:02:03.123456789"), res.getTimestamp());
+    Assert.assertEquals(HiveTimestamp.valueOf("2004-01-15 01:02:03.123456789"), res.getTimestamp());
   }
 
   @Test
@@ -357,7 +357,7 @@ public class TestGenericUDFOPPlus extends AbstractTestGenericUDFOPNumeric {
     GenericUDFOPPlus udf = new GenericUDFOPPlus();
 
     TimestampWritable left =
-        new TimestampWritable(Timestamp.valueOf("2001-11-15 01:02:03.123456789"));
+        new TimestampWritable(HiveTimestamp.valueOf("2001-11-15 01:02:03.123456789"));
     HiveIntervalYearMonthWritable right =
         new HiveIntervalYearMonthWritable(HiveIntervalYearMonth.valueOf("2-2"));
     ObjectInspector[] inputOIs = {
@@ -372,7 +372,7 @@ public class TestGenericUDFOPPlus extends AbstractTestGenericUDFOPNumeric {
     PrimitiveObjectInspector oi = (PrimitiveObjectInspector) udf.initialize(inputOIs);
     Assert.assertEquals(TypeInfoFactory.timestampTypeInfo, oi.getTypeInfo());
     TimestampWritable res = (TimestampWritable) udf.evaluate(args);
-    Assert.assertEquals(Timestamp.valueOf("2004-01-15 01:02:03.123456789"), res.getTimestamp());
+    Assert.assertEquals(HiveTimestamp.valueOf("2004-01-15 01:02:03.123456789"), res.getTimestamp());
   }
 
   @Test
@@ -405,7 +405,7 @@ public class TestGenericUDFOPPlus extends AbstractTestGenericUDFOPNumeric {
     HiveIntervalDayTimeWritable left =
         new HiveIntervalDayTimeWritable(HiveIntervalDayTime.valueOf("1 2:3:4.567"));
     TimestampWritable right =
-        new TimestampWritable(Timestamp.valueOf("2001-01-01 00:00:00"));
+        new TimestampWritable(HiveTimestamp.valueOf("2001-01-01 00:00:00"));
     ObjectInspector[] inputOIs = {
         PrimitiveObjectInspectorFactory.writableHiveIntervalDayTimeObjectInspector,
         PrimitiveObjectInspectorFactory.writableTimestampObjectInspector
@@ -418,7 +418,7 @@ public class TestGenericUDFOPPlus extends AbstractTestGenericUDFOPNumeric {
     PrimitiveObjectInspector oi = (PrimitiveObjectInspector) udf.initialize(inputOIs);
     Assert.assertEquals(TypeInfoFactory.timestampTypeInfo, oi.getTypeInfo());
     TimestampWritable res = (TimestampWritable) udf.evaluate(args);
-    Assert.assertEquals(Timestamp.valueOf("2001-01-02 2:3:4.567"), res.getTimestamp());
+    Assert.assertEquals(HiveTimestamp.valueOf("2001-01-02 2:3:4.567"), res.getTimestamp());
   }
 
   @Test
@@ -426,7 +426,7 @@ public class TestGenericUDFOPPlus extends AbstractTestGenericUDFOPNumeric {
     GenericUDFOPPlus udf = new GenericUDFOPPlus();
 
     TimestampWritable left =
-        new TimestampWritable(Timestamp.valueOf("2001-01-01 00:00:00"));
+        new TimestampWritable(HiveTimestamp.valueOf("2001-01-01 00:00:00"));
     HiveIntervalDayTimeWritable right =
         new HiveIntervalDayTimeWritable(HiveIntervalDayTime.valueOf("1 2:3:4.567"));
     ObjectInspector[] inputOIs = {
@@ -441,7 +441,7 @@ public class TestGenericUDFOPPlus extends AbstractTestGenericUDFOPNumeric {
     PrimitiveObjectInspector oi = (PrimitiveObjectInspector) udf.initialize(inputOIs);
     Assert.assertEquals(TypeInfoFactory.timestampTypeInfo, oi.getTypeInfo());
     TimestampWritable res = (TimestampWritable) udf.evaluate(args);
-    Assert.assertEquals(Timestamp.valueOf("2001-01-02 2:3:4.567"), res.getTimestamp());
+    Assert.assertEquals(HiveTimestamp.valueOf("2001-01-02 2:3:4.567"), res.getTimestamp());
   }
 
   @Test
@@ -465,7 +465,7 @@ public class TestGenericUDFOPPlus extends AbstractTestGenericUDFOPNumeric {
     PrimitiveObjectInspector oi = (PrimitiveObjectInspector) udf.initialize(inputOIs);
     Assert.assertEquals(TypeInfoFactory.timestampTypeInfo, oi.getTypeInfo());
     TimestampWritable res = (TimestampWritable) udf.evaluate(args);
-    Assert.assertEquals(Timestamp.valueOf("2001-01-02 2:3:4.567"), res.getTimestamp());
+    Assert.assertEquals(HiveTimestamp.valueOf("2001-01-02 2:3:4.567"), res.getTimestamp());
   }
 
   @Test
@@ -489,6 +489,6 @@ public class TestGenericUDFOPPlus extends AbstractTestGenericUDFOPNumeric {
     PrimitiveObjectInspector oi = (PrimitiveObjectInspector) udf.initialize(inputOIs);
     Assert.assertEquals(TypeInfoFactory.timestampTypeInfo, oi.getTypeInfo());
     TimestampWritable res = (TimestampWritable) udf.evaluate(args);
-    Assert.assertEquals(Timestamp.valueOf("2001-01-02 2:3:4.567"), res.getTimestamp());
+    Assert.assertEquals(HiveTimestamp.valueOf("2001-01-02 2:3:4.567"), res.getTimestamp());
   }
 }
