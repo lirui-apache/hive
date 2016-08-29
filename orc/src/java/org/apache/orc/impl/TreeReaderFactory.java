@@ -813,6 +813,7 @@ public class TreeReaderFactory {
   public static class TimestampTreeReader extends TreeReader {
     protected IntegerReader data = null;
     protected IntegerReader nanos = null;
+    protected IntegerReader offset = null;
     private final boolean skipCorrupt;
     private Map<String, Long> baseTimestampMap;
     protected long base_timestamp;
@@ -821,12 +822,12 @@ public class TreeReaderFactory {
     private boolean hasSameTZRules;
 
     TimestampTreeReader(int columnId, boolean skipCorrupt) throws IOException {
-      this(columnId, null, null, null, null, skipCorrupt, null);
+      this(columnId, null, null, null,null, null, skipCorrupt, null);
     }
 
     protected TimestampTreeReader(int columnId, InStream presentStream, InStream dataStream,
-        InStream nanosStream, OrcProto.ColumnEncoding encoding, boolean skipCorrupt, String writerTimezone)
-        throws IOException {
+        InStream nanosStream, InStream offsetStream, OrcProto.ColumnEncoding encoding,
+        boolean skipCorrupt, String writerTimezone) throws IOException {
       super(columnId, presentStream);
       this.skipCorrupt = skipCorrupt;
       this.baseTimestampMap = new HashMap<>();
@@ -843,6 +844,10 @@ public class TreeReaderFactory {
 
         if (nanosStream != null) {
           this.nanos = createIntegerReader(encoding.getKind(), nanosStream, false, skipCorrupt);
+        }
+
+        if (offsetStream != null) {
+          this.offset = createIntegerReader(encoding.getKind(), offsetStream, true, skipCorrupt);
         }
         base_timestamp = getBaseTimestamp(writerTimezone);
       }
@@ -868,6 +873,8 @@ public class TreeReaderFactory {
       nanos = createIntegerReader(stripeFooter.getColumnsList().get(columnId).getKind(),
           streams.get(new StreamName(columnId,
               OrcProto.Stream.Kind.SECONDARY)), false, skipCorrupt);
+      offset = createIntegerReader(stripeFooter.getColumnsList().get(columnId).getKind(),
+          streams.get(new StreamName(columnId, OrcProto.Stream.Kind.TERTIARY)), true, skipCorrupt);
       base_timestamp = getBaseTimestamp(stripeFooter.getWriterTimezone());
     }
 
@@ -907,6 +914,7 @@ public class TreeReaderFactory {
       super.seek(index);
       data.seek(index);
       nanos.seek(index);
+      offset.seek(index);
     }
 
     @Override
@@ -920,6 +928,7 @@ public class TreeReaderFactory {
         if (result.noNulls || !result.isNull[i]) {
           long millis = data.next() + base_timestamp;
           int newNanos = parseNanos(nanos.next());
+          int tzOffset = (int) offset.next();
           if (millis < 0 && newNanos != 0) {
             millis -= 1;
           }
@@ -942,9 +951,10 @@ public class TreeReaderFactory {
           }
           result.time[i] = adjustedMillis;
           result.nanos[i] = newNanos;
+          result.tzOffset[i] = tzOffset;
           if (result.isRepeating && i != 0 &&
               (result.time[0] != result.time[i] ||
-                  result.nanos[0] != result.nanos[i])) {
+                  result.nanos[0] != result.nanos[i] || result.tzOffset[0] != result.tzOffset[i])) {
             result.isRepeating = false;
           }
         }

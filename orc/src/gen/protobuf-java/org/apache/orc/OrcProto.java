@@ -9436,13 +9436,17 @@ public final class OrcProto {
        */
       SECONDARY(5, 5),
       /**
+       * <code>TERTIARY = 6;</code>
+       */
+      TERTIARY(6, 6),
+      /**
        * <code>ROW_INDEX = 6;</code>
        */
-      ROW_INDEX(6, 6),
+      ROW_INDEX(7, 7),
       /**
        * <code>BLOOM_FILTER = 7;</code>
        */
-      BLOOM_FILTER(7, 7),
+      BLOOM_FILTER(8, 8),
       ;
 
       /**
