@@ -22,7 +22,9 @@ import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 import org.antlr.runtime.Token;
 import org.antlr.runtime.tree.CommonTree;
@@ -246,6 +248,7 @@ public class ASTNode extends CommonTree implements Node,Serializable {
 
   @Override
   public void addChild(Tree t) {
+    clearRootNodeForSubTree(t);
     super.addChild(t);
     resetRootInformation();
   }
@@ -345,6 +348,27 @@ public class ASTNode extends CommonTree implements Node,Serializable {
     }
 
     return rootNode.getMemoizedSubString(startIndx, endIndx);
+  }
+
+  private static void clearRootNodeForSubTree(final Tree tree) {
+    if (tree == null) {
+      return;
+    }
+
+    Queue<Tree> queue = new LinkedList<>();
+    queue.add(tree);
+    while (!queue.isEmpty()) {
+      Tree node = queue.remove();
+      if (node instanceof ASTNode) {
+        ((ASTNode) node).rootNode = null;
+      }
+      for (int i = 0; i < node.getChildCount(); i++) {
+        Tree child = node.getChild(i);
+        if (child != null) {
+          queue.add(child);
+        }
+      }
+    }
   }
 
 }
