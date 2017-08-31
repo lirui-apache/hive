@@ -67,7 +67,7 @@ public class VectorGroupKeyHelper extends VectorColumnSetInfo {
     for(int i = 0; i< longIndices.length; ++i) {
       final int columnIndex = outputColumnNums[longIndices[i]];
       LongColumnVector inputColumnVector = (LongColumnVector) inputBatch.cols[columnIndex];
-      LongColumnVector outputColumnVector = (LongColumnVector) outputBatch.cols[columnIndex];
+      LongColumnVector outputColumnVector = (LongColumnVector) outputBatch.cols[longIndices[i]];
 
       // This vectorized code pattern says: 
       //    If the input batch has no nulls at all (noNulls is true) OR
@@ -93,7 +93,7 @@ public class VectorGroupKeyHelper extends VectorColumnSetInfo {
     for(int i=0;i<doubleIndices.length; ++i) {
       final int columnIndex = outputColumnNums[doubleIndices[i]];
       DoubleColumnVector inputColumnVector = (DoubleColumnVector) inputBatch.cols[columnIndex];
-      DoubleColumnVector outputColumnVector = (DoubleColumnVector) outputBatch.cols[columnIndex];
+      DoubleColumnVector outputColumnVector = (DoubleColumnVector) outputBatch.cols[doubleIndices[i]];
       if (inputColumnVector.noNulls || !inputColumnVector.isNull[0]) {
         outputColumnVector.vector[outputBatch.size] = inputColumnVector.vector[0];
       } else {
@@ -104,7 +104,7 @@ public class VectorGroupKeyHelper extends VectorColumnSetInfo {
     for(int i=0;i<stringIndices.length; ++i) {
       final int columnIndex = outputColumnNums[stringIndices[i]];
       BytesColumnVector inputColumnVector = (BytesColumnVector) inputBatch.cols[columnIndex];
-      BytesColumnVector outputColumnVector = (BytesColumnVector) outputBatch.cols[columnIndex];
+      BytesColumnVector outputColumnVector = (BytesColumnVector) outputBatch.cols[stringIndices[i]];
       if (inputColumnVector.noNulls || !inputColumnVector.isNull[0]) {
         // Copy bytes into scratch buffer.
         int start = buffer.getLength();
@@ -123,7 +123,7 @@ public class VectorGroupKeyHelper extends VectorColumnSetInfo {
     for(int i=0;i<decimalIndices.length; ++i) {
       final int columnIndex = outputColumnNums[decimalIndices[i]];
       DecimalColumnVector inputColumnVector = (DecimalColumnVector) inputBatch.cols[columnIndex];
-      DecimalColumnVector outputColumnVector = (DecimalColumnVector) outputBatch.cols[columnIndex];
+      DecimalColumnVector outputColumnVector = (DecimalColumnVector) outputBatch.cols[decimalIndices[i]];
       if (inputColumnVector.noNulls || !inputColumnVector.isNull[0]) {
 
         // Since we store references to HiveDecimalWritable instances, we must use the update method instead
@@ -137,7 +137,7 @@ public class VectorGroupKeyHelper extends VectorColumnSetInfo {
     for(int i=0;i<timestampIndices.length; ++i) {
       final int columnIndex = outputColumnNums[timestampIndices[i]];
       TimestampColumnVector inputColumnVector = (TimestampColumnVector) inputBatch.cols[columnIndex];
-      TimestampColumnVector outputColumnVector = (TimestampColumnVector) outputBatch.cols[columnIndex];
+      TimestampColumnVector outputColumnVector = (TimestampColumnVector) outputBatch.cols[timestampIndices[i]];
       if (inputColumnVector.noNulls || !inputColumnVector.isNull[0]) {
 
         outputColumnVector.setElement(outputBatch.size, 0, inputColumnVector);
@@ -149,7 +149,7 @@ public class VectorGroupKeyHelper extends VectorColumnSetInfo {
     for(int i=0;i<intervalDayTimeIndices.length; ++i) {
       final int columnIndex = outputColumnNums[intervalDayTimeIndices[i]];
       IntervalDayTimeColumnVector inputColumnVector = (IntervalDayTimeColumnVector) inputBatch.cols[columnIndex];
-      IntervalDayTimeColumnVector outputColumnVector = (IntervalDayTimeColumnVector) outputBatch.cols[columnIndex];
+      IntervalDayTimeColumnVector outputColumnVector = (IntervalDayTimeColumnVector) outputBatch.cols[intervalDayTimeIndices[i]];
       if (inputColumnVector.noNulls || !inputColumnVector.isNull[0]) {
 
         outputColumnVector.setElement(outputBatch.size, 0, inputColumnVector);
