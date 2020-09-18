@@ -984,16 +984,16 @@
         <artifactId>snappy-java</artifactId>
         <version>${snappy.version}</version>
       </dependency>
-      <dependency>
-        <groupId>javax.annotation</groupId>
-        <artifactId>javax.annotation-api</artifactId>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 
   <dependencies>
     <!-- dependencies are always listed in sorted order by groupId, artifectId -->
     <!-- global dependencies -->
+    <dependency>
+      <groupId>javax.annotation</groupId>
+      <artifactId>javax.annotation-api</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
